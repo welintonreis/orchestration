@@ -12,6 +12,7 @@ RUN apt-get update -qq && \
       git \
       libsqlite3-dev \
       libvips \
+      libyaml-dev \
       pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
