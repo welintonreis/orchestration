@@ -64,4 +64,4 @@ RUN useradd --create-home --shell /bin/bash rails && \
 USER rails
 
 EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server", "-b", "0.0.0.0", "-p", "80"]
+CMD ["./bin/thrust", "./bin/rails", "server"]
