@@ -4,12 +4,12 @@
   <div class="flex items-center gap-2">
     <span class="text-xs text-gray-500">Lines:</span>
     <div class="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
-      <%= link_to "100", container_logs_path(@container_id, tail: 100),
-            class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 100 ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
-      <%= link_to "200", container_logs_path(@container_id, tail: 200),
-            class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 200 ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
-      <%= link_to "500", container_logs_path(@container_id, tail: 500),
-            class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 500 ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
+      <%= link_to "100",  container_logs_path(@container_id, tail: 100),
+            class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 100  ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
+      <%= link_to "200",  container_logs_path(@container_id, tail: 200),
+            class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 200  ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
+      <%= link_to "500",  container_logs_path(@container_id, tail: 500),
+            class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 500  ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
       <%= link_to "1000", container_logs_path(@container_id, tail: 1000),
             class: "px-2.5 py-1 rounded text-xs font-medium transition-colors #{@tail == 1000 ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}" %>
     </div>
@@ -22,16 +22,17 @@
   <div class="flex items-center justify-between">
     <div class="text-xs text-gray-500 font-mono">
       Container <span class="text-gray-300"><%= @container_id[0..11] %></span>
-      &mdash; last <%= @tail %> lines
+      &mdash; last <%= @tail %> lines &mdash;
+      <span class="text-cyan-500">live</span>
     </div>
   </div>
 
-  <pre class="log-viewer"><%= @logs.presence || "No log output." %></pre>
+  <div
+    data-controller="log-stream"
+    data-log-stream-container-id-value="<%= @container_id %>"
+    data-log-stream-endpoint-value="<%= active_environment&.endpoint || 'unix:///var/run/docker.sock' %>"
+    data-log-stream-tail-value="<%= @tail %>"
+  >
+    <pre class="log-viewer" data-log-stream-target="output"></pre>
+  </div>
 </div>
-
-<script>
-  (function() {
-    var el = document.querySelector('.log-viewer');
-    if (el) { el.scrollTop = 999999; }
-  })();
-</script>

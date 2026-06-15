@@ -43,8 +43,14 @@ Rails.application.routes.draw do
   namespace :webhooks do
     post ":token/deploy", to: "deploys#create", as: :deploy
   end
-  get  "alerts",          to: "alerts#index",        as: :alerts
+  get  "alerts",               to: "alerts#index",         as: :alerts
   post "alerts/mark_all_read", to: "alerts#mark_all_read", as: :mark_all_read_alerts
+
+  resources :users do
+    member { post :toggle_active }
+  end
+  resources :audit_logs, only: %i[index]
+  get "metrics/latest", to: "metrics#latest", as: :metrics_latest
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

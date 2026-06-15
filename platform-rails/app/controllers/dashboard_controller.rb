@@ -19,6 +19,7 @@ class DashboardController < ApplicationController
     end
 
     @latest_metric  = HostMetric.latest
+    @metrics_24h    = HostMetric.last_24h.order(:created_at)
     @unread_alerts  = Alert.unread.recent.limit(5)
     @unread_count   = Alert.unread.count
   end

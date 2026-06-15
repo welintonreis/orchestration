@@ -75,6 +75,10 @@
             <%= nav_link "Git Deploy", git_stacks_path, icon: :git, sidebar_open_expr: "sidebarOpen" %>
             <%= nav_link "Environments", environments_path, icon: :environments, sidebar_open_expr: "sidebarOpen" %>
             <%= nav_link "Alerts", alerts_path, icon: :alerts, sidebar_open_expr: "sidebarOpen" %>
+            <% if Current.user&.admin? %>
+              <%= nav_link "Users", users_path, icon: :users, sidebar_open_expr: "sidebarOpen" %>
+              <%= nav_link "Audit Log", audit_logs_path, icon: :audit, sidebar_open_expr: "sidebarOpen" %>
+            <% end %>
           </div>
 
           <%# User section %>
@@ -115,12 +119,22 @@
               <%= content_for?(:title) ? yield(:title) : "Dashboard" %>
             </h1>
             <div class="flex items-center gap-3">
+              <%# Environment indicator %>
+              <% if active_environment.present? %>
+                <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-gray-800 border border-gray-700 rounded-lg text-xs text-gray-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block flex-shrink-0"></span>
+                  <span class="font-mono truncate max-w-[120px]"><%= active_environment.name %></span>
+                </div>
+              <% end %>
               <% if content_for?(:actions) %>
                 <%= yield :actions %>
               <% end %>
               <%= render "shared/alert_badge" %>
             </div>
           </header>
+
+          <%# Breadcrumbs %>
+          <%= render "shared/breadcrumb" %>
 
           <%# Flash messages %>
           <%= render "shared/flash" %>

@@ -1,4 +1,5 @@
 class ImagesController < ApplicationController
+  before_action :require_operator!, only: %i[remove]
   def index
     @images = current_docker_client.images
   rescue => e

@@ -1,4 +1,6 @@
 class ContainersController < ApplicationController
+  before_action :require_operator!, only: %i[start stop restart kill pause unpause remove]
+
   def index
     @all = params[:filter] != "running"
     @containers = current_docker_client.containers(all: @all)
@@ -25,6 +27,9 @@ class ContainersController < ApplicationController
   %w[start stop restart kill pause unpause].each do |action|
     define_method(action) do
       current_docker_client.public_send("container_#{action}", params[:id])
+      AuditLog.record(user: Current.user, action: "container_#{action}",
+                      target_type: "Container", target_id: params[:id],
+                      ip_address: request.remote_ip)
       redirect_to containers_path, notice: "Container #{action}ed."
     rescue => e
       redirect_to containers_path, alert: "Error: #{e.message}"
@@ -33,6 +38,9 @@ class ContainersController < ApplicationController
 
   def remove
     current_docker_client.container_remove(params[:id], force: params[:force].present?)
+    AuditLog.record(user: Current.user, action: "container_remove",
+                    target_type: "Container", target_id: params[:id],
+                    ip_address: request.remote_ip)
     redirect_to containers_path, notice: "Container removed."
   rescue => e
     redirect_to containers_path, alert: "Error: #{e.message}"

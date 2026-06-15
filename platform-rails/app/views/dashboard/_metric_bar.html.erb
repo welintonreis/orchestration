@@ -1,16 +1,24 @@
 <%#
   Locals:
-    label — short label (e.g. "CPU", "RAM")
-    value — Float percentage 0-100
+    label     — short label (e.g. "CPU", "RAM")
+    value     — Float percentage 0-100
+    sparkline — optional HTML-safe SVG string from sparkline_svg helper
 %>
 <% pct = value.to_f.clamp(0, 100) %>
 <% bar_color = pct >= 80 ? "bg-red-400" : pct >= 60 ? "bg-yellow-400" : "bg-green-400" %>
-<div class="flex items-center gap-3">
-  <span class="text-sm text-gray-400 w-12 flex-shrink-0"><%= label %></span>
-  <div class="flex-1 bg-gray-800 rounded-full h-2">
-    <div class="h-2 rounded-full <%= bar_color %> transition-all duration-500" style="width: <%= pct %>%"></div>
+<div class="space-y-1">
+  <div class="flex items-center gap-3">
+    <span class="text-sm text-gray-400 w-12 flex-shrink-0"><%= label %></span>
+    <div class="flex-1 bg-gray-800 rounded-full h-2">
+      <div class="h-2 rounded-full <%= bar_color %> transition-all duration-500" style="width: <%= pct %>%"></div>
+    </div>
+    <span class="text-sm font-mono w-14 text-right <%= percent_color(pct) %>">
+      <%= pct.round(1) %>%
+    </span>
   </div>
-  <span class="text-sm font-mono w-14 text-right <%= percent_color(pct) %>">
-    <%= pct.round(1) %>%
-  </span>
+  <% if local_assigns[:sparkline].present? %>
+    <div class="pl-12 pr-14 opacity-60">
+      <%= sparkline %>
+    </div>
+  <% end %>
 </div>

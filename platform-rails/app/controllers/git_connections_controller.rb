@@ -1,4 +1,5 @@
 class GitConnectionsController < ApplicationController
+  before_action :require_admin!
   before_action :set_git_connection, only: %i[edit update destroy]
 
   def index

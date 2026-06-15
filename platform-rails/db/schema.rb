@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_15_202111) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_15_210002) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -20,6 +20,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_202111) do
     t.datetime "updated_at", null: false
     t.index ["level"], name: "index_alerts_on_level"
     t.index ["read_at"], name: "index_alerts_on_read_at"
+  end
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.string "action", null: false
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.json "metadata", default: {}
+    t.string "target_id"
+    t.string "target_type"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
   create_table "environments", force: :cascade do |t|
@@ -87,6 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_202111) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.string "email_address", null: false
     t.string "password_digest", null: false
@@ -95,6 +110,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_202111) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "audit_logs", "users"
   add_foreign_key "git_stacks", "environments"
   add_foreign_key "git_stacks", "git_connections"
   add_foreign_key "sessions", "users"

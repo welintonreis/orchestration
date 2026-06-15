@@ -11,7 +11,7 @@
   </div>
 <% end %>
 
-<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden" data-controller="filter">
   <% if @containers.empty? %>
     <div class="flex flex-col items-center justify-center py-16 text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
@@ -20,7 +20,7 @@
       <p class="text-gray-400 font-medium">No containers found</p>
       <p class="text-sm text-gray-600 mt-1">
         <% if params[:filter] == "running" %>
-          No running containers. <br>
+          No running containers.<br>
           <%= link_to "Show all containers", containers_path, class: "text-cyan-400 hover:text-cyan-300" %>
         <% else %>
           No containers exist on this Docker host.
@@ -28,12 +28,22 @@
       </p>
     </div>
   <% else %>
+    <div class="px-4 pt-3 pb-2 border-b border-gray-800">
+      <input
+        type="text"
+        placeholder="Filter by name…"
+        data-filter-target="input"
+        data-action="input->filter#filter"
+        class="w-64 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-600"
+      >
+    </div>
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-gray-800 text-left">
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Image</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stats</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ports</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -43,7 +53,9 @@
         <% @containers.each do |c| %>
           <% container_name = c["Names"]&.first&.sub(/^\//, "") || c["Id"][0..11] %>
           <% state = c["State"].to_s.downcase %>
-          <tr class="hover:bg-gray-800/40 transition-colors group">
+          <tr class="hover:bg-gray-800/40 transition-colors group"
+              data-filter-target="row"
+              data-name="<%= container_name %>">
             <td class="px-4 py-3">
               <%= link_to container_path(c["Id"]), class: "font-mono text-gray-200 hover:text-cyan-400 transition-colors" do %>
                 <%= container_name %>
@@ -55,6 +67,33 @@
             </td>
             <td class="px-4 py-3">
               <span class="<%= status_badge(c["State"]) %>"><%= c["Status"] %></span>
+            </td>
+            <td class="px-4 py-3">
+              <% if state == "running" %>
+                <div
+                  data-controller="stats"
+                  data-stats-container-id-value="<%= c["Id"] %>"
+                  data-stats-endpoint-value="<%= active_environment&.endpoint || 'unix:///var/run/docker.sock' %>"
+                  class="flex flex-col gap-1 min-w-[90px]"
+                >
+                  <div class="flex items-center gap-1">
+                    <span class="text-[10px] text-gray-600 w-7">CPU</span>
+                    <div class="flex-1 bg-gray-800 rounded-full h-1.5">
+                      <div data-stats-target="cpuBar" class="h-1.5 rounded-full bg-green-400 transition-all duration-500" style="width:0%"></div>
+                    </div>
+                    <span data-stats-target="cpuText" class="text-[10px] font-mono text-gray-600 w-9 text-right">—</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[10px] text-gray-600 w-7">MEM</span>
+                    <div class="flex-1 bg-gray-800 rounded-full h-1.5">
+                      <div data-stats-target="memBar" class="h-1.5 rounded-full bg-blue-400 transition-all duration-500" style="width:0%"></div>
+                    </div>
+                    <span data-stats-target="memText" class="text-[10px] font-mono text-gray-600 w-9 text-right">—</span>
+                  </div>
+                </div>
+              <% else %>
+                <span class="text-gray-700 text-xs">—</span>
+              <% end %>
             </td>
             <td class="px-4 py-3">
               <% ports = c["Ports"]&.select { |p| p["PublicPort"] }&.map { |p| "#{p["PublicPort"]}:#{p["PrivatePort"]}" } || [] %>
@@ -75,28 +114,33 @@
               <%= human_age(Time.at(c["Created"].to_i)) %>
             </td>
             <td class="px-4 py-3">
-              <div class="flex items-center justify-end gap-1 flex-wrap">
-                <% if state == "running" %>
-                  <%= button_to "Stop", stop_container_path(c["Id"]), method: :post,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-yellow-900/40 text-gray-300 hover:text-yellow-300 border border-gray-700 hover:border-yellow-800 transition-colors",
-                        data: { turbo_confirm: "Stop container #{container_name}?" } %>
-                  <%= button_to "Restart", restart_container_path(c["Id"]), method: :post,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-cyan-900/40 text-gray-300 hover:text-cyan-300 border border-gray-700 hover:border-cyan-800 transition-colors",
-                        data: { turbo_confirm: "Restart container #{container_name}?" } %>
-                  <%= button_to "Kill", kill_container_path(c["Id"]), method: :post,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
-                        data: { turbo_confirm: "Force kill container #{container_name}? This is immediate and ungraceful." } %>
-                  <%= button_to "Pause", pause_container_path(c["Id"]), method: :post,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-blue-900/40 text-gray-300 hover:text-blue-300 border border-gray-700 hover:border-blue-800 transition-colors" %>
-                <% elsif state == "paused" %>
-                  <%= button_to "Unpause", unpause_container_path(c["Id"]), method: :post,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-green-900/40 text-gray-300 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors" %>
-                <% else %>
-                  <%= button_to "Start", start_container_path(c["Id"]), method: :post,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-green-900/40 text-gray-300 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors" %>
-                  <%= button_to "Remove", remove_container_path(c["Id"]), method: :delete,
-                        class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
-                        data: { turbo_confirm: "Remove container #{container_name}? This cannot be undone." } %>
+              <div class="flex items-center justify-end gap-1 flex-wrap" data-controller="loading">
+                <% if Current.user&.admin? || Current.user&.operator? %>
+                  <% if state == "running" %>
+                    <%= button_to "Stop", stop_container_path(c["Id"]), method: :post,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-yellow-900/40 text-gray-300 hover:text-yellow-300 border border-gray-700 hover:border-yellow-800 transition-colors",
+                          data: { turbo_confirm: "Stop container #{container_name}?", action: "click->loading#start" } %>
+                    <%= button_to "Restart", restart_container_path(c["Id"]), method: :post,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-cyan-900/40 text-gray-300 hover:text-cyan-300 border border-gray-700 hover:border-cyan-800 transition-colors",
+                          data: { turbo_confirm: "Restart container #{container_name}?", action: "click->loading#start" } %>
+                    <%= button_to "Kill", kill_container_path(c["Id"]), method: :post,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
+                          data: { turbo_confirm: "Force kill container #{container_name}? This is immediate and ungraceful.", action: "click->loading#start" } %>
+                    <%= button_to "Pause", pause_container_path(c["Id"]), method: :post,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-blue-900/40 text-gray-300 hover:text-blue-300 border border-gray-700 hover:border-blue-800 transition-colors",
+                          data: { action: "click->loading#start" } %>
+                  <% elsif state == "paused" %>
+                    <%= button_to "Unpause", unpause_container_path(c["Id"]), method: :post,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-green-900/40 text-gray-300 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
+                          data: { action: "click->loading#start" } %>
+                  <% else %>
+                    <%= button_to "Start", start_container_path(c["Id"]), method: :post,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-green-900/40 text-gray-300 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
+                          data: { action: "click->loading#start" } %>
+                    <%= button_to "Remove", remove_container_path(c["Id"]), method: :delete,
+                          class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
+                          data: { turbo_confirm: "Remove container #{container_name}? This cannot be undone.", action: "click->loading#start" } %>
+                  <% end %>
                 <% end %>
                 <%= link_to "Logs", container_logs_path(c["Id"]),
                       class: "px-2 py-1 text-xs rounded bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-200 border border-gray-700 transition-colors" %>
@@ -108,11 +152,7 @@
     </table>
     <div class="px-4 py-2 border-t border-gray-800 text-xs text-gray-600">
       <%= @containers.size %> container<%= @containers.size == 1 ? "" : "s" %>
-      <% if params[:filter] == "running" %>
-        running
-      <% else %>
-        total
-      <% end %>
+      <%= params[:filter] == "running" ? "running" : "total" %>
     </div>
   <% end %>
 </div>

@@ -57,6 +57,52 @@ module ApplicationHelper
     nil
   end
 
+  # Adds breadcrumb items to content_for(:breadcrumbs).
+  # Usage: breadcrumb ["Containers", containers_path], ["Logs", nil]
+  def breadcrumb(*items)
+    content_for(:breadcrumbs) do
+      safe = items.each_with_index.map do |(label, path), i|
+        if path && i < items.length - 1
+          link_to(label, path, class: "text-gray-500 hover:text-gray-300 transition-colors")
+        else
+          tag.span(label, class: "text-gray-300")
+        end
+      end
+      safe_join(safe, tag.span(" / ", class: "text-gray-700 mx-1"))
+    end
+    nil
+  end
+
+  # Generates an inline SVG sparkline for an array of HostMetric records.
+  # attribute: symbol — e.g. :cpu_percent, :ram_percent
+  def sparkline_svg(metrics, attribute, width: 120, height: 20)
+    return "".html_safe if metrics.blank?
+
+    values    = metrics.map { |m| m.public_send(attribute).to_f }
+    min_val   = [values.min, 0].min
+    max_val   = [values.max, 1].max
+    range     = (max_val - min_val).nonzero? || 1
+    n         = values.size - 1
+    n         = 1 if n < 1
+
+    points = values.each_with_index.map do |v, i|
+      x = (i.to_f / n * width).round(2)
+      y = (height - ((v - min_val) / range * height)).round(2)
+      "#{x},#{y}"
+    end.join(" ")
+
+    latest = values.last
+    color  = latest >= 80 ? "#f87171" : latest >= 60 ? "#facc15" : "#4ade80"
+
+    tag.svg(
+      tag.polyline(points: points, fill: "none", stroke: color, "stroke-width": "1.5", "stroke-linejoin": "round"),
+      viewBox: "0 0 #{width} #{height}",
+      class: "w-full",
+      style: "height:#{height}px",
+      preserveAspectRatio: "none"
+    )
+  end
+
   # Renders a sidebar navigation link with optional icon and Alpine.js-aware collapsed state.
   #
   # icon:               one of the symbol keys defined in NAV_ICONS below
@@ -129,6 +175,16 @@ module ApplicationHelper
     alerts: <<~SVG,
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+    SVG
+    users: <<~SVG,
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+      </svg>
+    SVG
+    audit: <<~SVG,
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
       </svg>
     SVG
   }.freeze
