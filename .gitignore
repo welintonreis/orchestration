@@ -1,22 +1,15 @@
-# Deploy secrets — nunca commitar
+# Deploy secrets
 deploy/.env.dev
 deploy/.env.hml
 deploy/.env.prod
 
-# Rails
-platform-rails/log/
-platform-rails/tmp/
-platform-rails/storage/
-platform-rails/.bundle/
-platform-rails/vendor/bundle/
-platform-rails/public/assets/
-platform-rails/public/packs/
-platform-rails/*.db
-platform-rails/config/master.key
-platform-rails/config/credentials/*.key
-platform-rails/.kamal/secrets
+# Built binary
+orchestration
 
-# Local SQLite DBs
+# Node (Tailwind build deps)
+node_modules/
+
+# SQLite DBs
 *.db
 *.sqlite3
 

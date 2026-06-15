@@ -1,0 +1,45 @@
+{{define "page"}}{{template "layout" .}}{{end}}
+
+{{define "page-title"}}Novo Ambiente{{end}}
+
+{{define "content"}}
+<div class="max-w-lg" x-data="{ epType: 'socket' }">
+  {{if .Data}}{{if index .Data "Error"}}
+  <div class="mb-4 bg-red-900/40 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3">
+    {{index .Data "Error"}}
+  </div>
+  {{end}}{{end}}
+
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <form method="POST" action="/environments" class="space-y-5">
+      <div>
+        <label class="block text-gray-400 text-xs font-medium mb-1.5">Nome</label>
+        <input type="text" name="name" required placeholder="local"
+          class="input-field">
+      </div>
+      <div>
+        <label class="block text-gray-400 text-xs font-medium mb-1.5">Tipo</label>
+        <select name="endpoint_type" x-model="epType" class="input-field">
+          <option value="socket">Socket local (unix://)</option>
+          <option value="tcp">TCP remoto</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-400 text-xs font-medium mb-1.5">Endpoint</label>
+        <input type="text" name="endpoint" required
+          :value="epType === 'socket' ? 'unix:///var/run/docker.sock' : ''"
+          :placeholder="epType === 'socket' ? 'unix:///var/run/docker.sock' : 'tcp://192.168.1.10:2376'"
+          class="input-field">
+      </div>
+      <div class="flex gap-3 pt-1">
+        <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors">
+          Criar ambiente
+        </button>
+        <a href="/environments" class="text-gray-500 hover:text-gray-300 text-sm font-medium px-4 py-2 transition-colors">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{{end}}
