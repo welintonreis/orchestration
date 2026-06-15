@@ -1,0 +1,35 @@
+<% page_title "Update password" %>
+
+<div class="text-center mb-8">
+  <h1 class="text-2xl font-bold text-white">Update your password</h1>
+  <p class="mt-1 text-sm text-gray-400">Choose a strong new password for your account.</p>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-2xl px-8 py-8 shadow-xl">
+  <%= form_with url: password_path(params[:token]), method: :put, class: "space-y-5" do |form| %>
+    <div>
+      <%= form.label :password, "New password", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+      <%= form.password_field :password,
+            required: true,
+            autocomplete: "new-password",
+            placeholder: "Enter new password",
+            maxlength: 72,
+            class: "block w-full rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+    </div>
+
+    <div>
+      <%= form.label :password_confirmation, "Confirm password", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+      <%= form.password_field :password_confirmation,
+            required: true,
+            autocomplete: "new-password",
+            placeholder: "Repeat new password",
+            maxlength: 72,
+            class: "block w-full rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+    </div>
+
+    <div>
+      <%= form.submit "Save password",
+            class: "w-full rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold text-sm px-5 py-2.5 transition cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

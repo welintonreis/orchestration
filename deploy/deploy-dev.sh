@@ -1,36 +1,37 @@
 #!/usr/bin/env bash
-# deploy-dev.sh — build local + deploy dev (sem registry).
-# Uso: bash deploy/deploy-dev.sh
+# deploy-dev.sh — build + push + deploy dev stack.
+# Uso: bash deploy/deploy-dev.sh [tag]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ENV_FILE="$ROOT/deploy/.env.dev"
-VERSION="$(cat "$ROOT/platform-rails/VERSION" 2>/dev/null || echo "0.1.0")"
-IMAGE="orchestration:v${VERSION}"
+REPO="registry.gitlab.redhusky.com.br/redhusk/orchestration"
+TAG="${1:-dev}"
+IMAGE="${REPO}:${TAG}"
+STACK="orchestration-dev"
 
-if [[ -f "$ENV_FILE" ]]; then
-  set -a; source "$ENV_FILE"; set +a
-else
-  echo "ERRO: $ENV_FILE não encontrado. Crie a partir de deploy/.env.dev.example"
-  exit 1
-fi
+echo "==> Building Rails image: ${IMAGE}"
+docker build \
+  --platform linux/amd64 \
+  -t "${IMAGE}" \
+  "$ROOT/platform-rails/"
 
-export IMAGE
+echo "==> Pushing to registry"
+docker push "${IMAGE}"
 
-echo "==> Building $IMAGE"
-docker build --no-cache -t "$IMAGE" "$ROOT/platform-rails/"
-
-echo "==> Deploying stack ${STACK_NAME}"
+echo "==> Deploying stack ${STACK}"
+IMAGE="${IMAGE}" \
+RAILS_MASTER_KEY="$(cat "$ROOT/platform-rails/config/master.key" 2>/dev/null || echo "${RAILS_MASTER_KEY}")" \
 docker stack deploy \
-  -c "$ROOT/deploy/orchestration.stack.yml" \
+  --compose-file "$ROOT/deploy/orchestration-dev.stack.yml" \
   --with-registry-auth \
-  "$STACK_NAME"
+  "${STACK}"
 
 echo "==> Force-updating web"
-docker service update --force --detach "${STACK_NAME}_web"
+docker service update --force --detach "${STACK}_web"
 
-echo "✓ Deploy v${VERSION} concluído"
-echo "   web: $(docker service ps ${STACK_NAME}_web --format '{{.CurrentState}}' | head -1)"
+echo "✓ Deploy ${TAG} concluído"
+echo "   URL: https://orchestration-dev.redhusky.com.br"
+echo "   web: $(docker service ps ${STACK}_web --format '{{.CurrentState}}' | head -1)"
 
 echo "==> Limpando imagens antigas"
 docker image prune -af --filter "until=24h" || true

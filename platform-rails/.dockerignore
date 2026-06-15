@@ -1,0 +1,11 @@
+.git
+.gitignore
+log/*
+tmp/*
+test/
+spec/
+.env*
+node_modules/
+.bundle
+coverage/
+*.md

@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  web:
+    image: ${IMAGE:-registry.gitlab.redhusky.com.br/redhusk/orchestration:dev}
+    environment:
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      PROC_PATH: /host/proc
+      CPU_THRESHOLD: ${CPU_THRESHOLD:-85}
+      RAM_THRESHOLD: ${RAM_THRESHOLD:-90}
+      DISK_THRESHOLD: ${DISK_THRESHOLD:-80}
+      RAILS_LOG_TO_STDOUT: "true"
+      RAILS_SERVE_STATIC_FILES: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/host/proc:ro
+      - orchestration-dev-storage:/rails/storage
+    networks:
+      - traefik
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik"
+        # Dev
+        - "traefik.http.routers.orchestration-dev.rule=Host(`orchestration-dev.redhusky.com.br`)"
+        - "traefik.http.routers.orchestration-dev.entrypoints=websecure"
+        - "traefik.http.routers.orchestration-dev.tls.certresolver=letsencrypt"
+        - "traefik.http.services.orchestration-dev.loadbalancer.server.port=80"
+
+volumes:
+  orchestration-dev-storage:
+    external: false
+
+networks:
+  traefik:
+    external: true

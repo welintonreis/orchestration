@@ -1,0 +1,239 @@
+<% page_title "Dashboard" %>
+
+<%# ── Derived counts ── %>
+<% running_count  = @containers.count { |c| c["State"] == "running" } %>
+<% paused_count   = @containers.count { |c| c["State"] == "paused" } %>
+<% stopped_count  = @containers.count { |c| c["State"] == "exited" } %>
+
+<%# ══════════════════════════════════════════════════════════ %>
+<%# Row 1 — Stat cards                                        %>
+<%# ══════════════════════════════════════════════════════════ %>
+<div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+
+  <%# Containers %>
+  <%= render "dashboard/stat_card",
+        count:     @containers.size,
+        label:     "Containers",
+        sub:       "#{running_count} running · #{stopped_count} stopped",
+        link_path: containers_path %>
+
+  <%# Images %>
+  <%= render "dashboard/stat_card",
+        count:     @images.size,
+        label:     "Images",
+        link_path: images_path %>
+
+  <%# Volumes %>
+  <%= render "dashboard/stat_card",
+        count:     @volumes.size,
+        label:     "Volumes",
+        link_path: volumes_path %>
+
+  <%# Networks %>
+  <%= render "dashboard/stat_card",
+        count:     @networks.size,
+        label:     "Networks",
+        link_path: networks_path %>
+
+  <%# Services — only meaningful when Swarm is active %>
+  <% if @swarm_active %>
+    <%= render "dashboard/stat_card",
+          count:     @services.size,
+          label:     "Services",
+          sub:       "Swarm active",
+          link_path: swarm_path %>
+  <% else %>
+    <%= render "dashboard/stat_card",
+          count:     0,
+          label:     "Services",
+          sub:       "Swarm inactive",
+          inactive:  true %>
+  <% end %>
+
+  <%# Nodes — only meaningful when Swarm is active %>
+  <% if @swarm_active %>
+    <%= render "dashboard/stat_card",
+          count:     @nodes.size,
+          label:     "Nodes",
+          link_path: swarm_path %>
+  <% else %>
+    <%= render "dashboard/stat_card",
+          count:     0,
+          label:     "Nodes",
+          sub:       "Swarm inactive",
+          inactive:  true %>
+  <% end %>
+
+</div>
+
+<%# ══════════════════════════════════════════════════════════ %>
+<%# Row 2 — Docker Info + Host Metrics                        %>
+<%# ══════════════════════════════════════════════════════════ %>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+  <%# Docker Info card %>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Docker Info</h2>
+    <dl class="space-y-3">
+
+      <div class="flex items-center justify-between">
+        <dt class="text-sm text-gray-500">Version</dt>
+        <dd class="text-sm font-mono text-gray-200"><%= @docker_info["ServerVersion"] || "—" %></dd>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <dt class="text-sm text-gray-500">OS</dt>
+        <dd class="text-sm text-gray-200 truncate max-w-[60%] text-right"><%= @docker_info["OperatingSystem"] || "—" %></dd>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <dt class="text-sm text-gray-500">Architecture</dt>
+        <dd class="text-sm font-mono text-gray-200"><%= @docker_info["Architecture"] || "—" %></dd>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <dt class="text-sm text-gray-500">Swarm</dt>
+        <dd>
+          <% if @swarm_active %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-cyan-900/60 text-cyan-300 border border-cyan-800/60">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>
+              Active
+            </span>
+          <% else %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-gray-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block"></span>
+              Inactive
+            </span>
+          <% end %>
+        </dd>
+      </div>
+
+      <div class="border-t border-gray-800 pt-3 grid grid-cols-2 gap-3">
+        <div>
+          <div class="text-xs text-gray-500 mb-1">CPUs</div>
+          <div class="text-lg font-bold text-white"><%= @docker_info["NCPU"] || "—" %></div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-500 mb-1">Memory</div>
+          <div class="text-lg font-bold text-white"><%= human_bytes(@docker_info["MemTotal"].to_i) %></div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-800 pt-3">
+        <div class="text-xs text-gray-500 mb-2">Containers</div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+            <span class="text-sm text-gray-300"><%= @docker_info["ContainersRunning"] || running_count %> running</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
+            <span class="text-sm text-gray-300"><%= @docker_info["ContainersPaused"] || paused_count %> paused</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-gray-500 inline-block"></span>
+            <span class="text-sm text-gray-300"><%= @docker_info["ContainersStopped"] || stopped_count %> stopped</span>
+          </div>
+        </div>
+      </div>
+
+    </dl>
+  </div>
+
+  <%# Host Metrics card %>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Host Metrics</h2>
+
+    <% if @latest_metric %>
+      <div class="space-y-4">
+        <%= render "dashboard/metric_bar", label: "CPU",  value: @latest_metric.cpu_percent %>
+        <%= render "dashboard/metric_bar", label: "RAM",  value: @latest_metric.ram_percent %>
+        <%= render "dashboard/metric_bar", label: "Disk", value: @latest_metric.disk_percent %>
+      </div>
+
+      <div class="border-t border-gray-800 mt-5 pt-4">
+        <div class="text-xs text-gray-500 mb-3">Load Average</div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <div class="text-lg font-bold font-mono <%= percent_color(@latest_metric.load_1m * 10) %>">
+              <%= "%.2f" % @latest_metric.load_1m %>
+            </div>
+            <div class="text-xs text-gray-600 mt-0.5">1 min</div>
+          </div>
+          <div>
+            <div class="text-lg font-bold font-mono <%= percent_color(@latest_metric.load_5m * 10) %>">
+              <%= "%.2f" % @latest_metric.load_5m %>
+            </div>
+            <div class="text-xs text-gray-600 mt-0.5">5 min</div>
+          </div>
+          <div>
+            <div class="text-lg font-bold font-mono <%= percent_color(@latest_metric.load_15m * 10) %>">
+              <%= "%.2f" % @latest_metric.load_15m %>
+            </div>
+            <div class="text-xs text-gray-600 mt-0.5">15 min</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 text-xs text-gray-600 text-right">
+        Updated <%= human_age(@latest_metric.created_at) %>
+      </div>
+
+    <% else %>
+      <div class="flex flex-col items-center justify-center h-40 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <p class="text-sm text-gray-500">No metrics yet</p>
+        <p class="text-xs text-gray-600 mt-1">Metrics are collected periodically by the background job</p>
+      </div>
+    <% end %>
+  </div>
+
+</div>
+
+<%# ══════════════════════════════════════════════════════════ %>
+<%# Row 3 — Recent Alerts (only if there are unread alerts)   %>
+<%# ══════════════════════════════════════════════════════════ %>
+<% if @unread_alerts.any? %>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+        Recent Alerts
+        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-900/60 text-red-300 text-xs font-bold border border-red-800/60">
+          <%= @unread_count > 99 ? "99+" : @unread_count %>
+        </span>
+      </h2>
+      <%= link_to "View all", alerts_path, class: "text-xs text-cyan-400 hover:text-cyan-300 transition-colors" %>
+    </div>
+
+    <div class="divide-y divide-gray-800">
+      <% @unread_alerts.each do |alert| %>
+        <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+
+          <%# Level badge %>
+          <% badge_classes = case alert.level
+             when "critical" then "bg-red-900/60 text-red-300 border-red-800/60"
+             when "warning"  then "bg-yellow-900/60 text-yellow-300 border-yellow-800/60"
+             else                 "bg-blue-900/60 text-blue-300 border-blue-800/60"
+             end %>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border flex-shrink-0 mt-0.5 <%= badge_classes %>">
+            <%= alert.level %>
+          </span>
+
+          <%# Resource + message %>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-2">
+              <span class="text-xs font-mono text-gray-500 flex-shrink-0"><%= alert.resource %></span>
+            </div>
+            <p class="text-sm text-gray-300 truncate"><%= alert.message %></p>
+          </div>
+
+          <%# Time ago %>
+          <span class="text-xs text-gray-600 flex-shrink-0 whitespace-nowrap"><%= human_age(alert.created_at) %></span>
+
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

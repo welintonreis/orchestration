@@ -3,15 +3,22 @@ deploy/.env.dev
 deploy/.env.hml
 deploy/.env.prod
 
-# Built binary
-orchestration
-
-# Node (Tailwind build deps)
-node_modules/
-
-# SQLite DBs
-*.db
-*.sqlite3
+# Rails
+/platform-rails/.bundle
+/platform-rails/log/*
+/platform-rails/tmp/*
+!/platform-rails/log/.keep
+!/platform-rails/tmp/.keep
+/platform-rails/storage/*
+!/platform-rails/storage/.keep
+/platform-rails/public/assets
+/platform-rails/public/packs
+/platform-rails/node_modules
+/platform-rails/.env
+/platform-rails/config/master.key
+/platform-rails/config/credentials/*.key
+/platform-rails/db/*.sqlite3
+/platform-rails/db/*.sqlite3-journal
 
 # OS
 .DS_Store
