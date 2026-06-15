@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  web:
+    image: ${IMAGE}
+    environment:
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      RAILS_SERVE_STATIC_FILES: "true"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_PATH: ${DATABASE_PATH:-/data/orchestration.db}
+      RAILS_ALLOWED_HOSTS: ${APP_HOST}
+      APP_HOST: ${APP_HOST}
+      DOCKER_SOCKET: /var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - orchestration-data:/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.${STACK_NAME}.rule=Host(`${APP_HOST}`)"
+        - "traefik.http.routers.${STACK_NAME}.entrypoints=websecure"
+        - "traefik.http.routers.${STACK_NAME}.tls.certresolver=letsencrypt"
+        - "traefik.http.services.${STACK_NAME}.loadbalancer.server.port=80"
+    networks:
+      - traefik
+
+volumes:
+  orchestration-data:
+    driver: local
+
+networks:
+  traefik:
+    external: true
