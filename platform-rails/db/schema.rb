@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_15_190836) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_15_202111) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -30,6 +30,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_190836) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_environments_on_name", unique: true
+  end
+
+  create_table "git_connections", force: :cascade do |t|
+    t.string "auth_type", default: "none"
+    t.string "branch", default: "main"
+    t.datetime "created_at", null: false
+    t.string "last_commit_sha"
+    t.datetime "last_pulled_at"
+    t.string "name", null: false
+    t.string "repo_url", null: false
+    t.text "ssh_key_ciphertext"
+    t.string "token_ciphertext"
+    t.datetime "updated_at", null: false
+    t.string "username"
+    t.index ["name"], name: "index_git_connections_on_name", unique: true
+  end
+
+  create_table "git_stacks", force: :cascade do |t|
+    t.boolean "auto_update", default: false
+    t.string "compose_file", default: "docker-compose.yml"
+    t.datetime "created_at", null: false
+    t.string "deploy_mode", default: "swarm_stack"
+    t.integer "environment_id", null: false
+    t.integer "git_connection_id", null: false
+    t.text "last_deploy_output"
+    t.datetime "last_deployed_at"
+    t.string "name", null: false
+    t.integer "poll_interval", default: 300
+    t.string "status", default: "idle"
+    t.datetime "updated_at", null: false
+    t.string "webhook_token"
+    t.index ["environment_id"], name: "index_git_stacks_on_environment_id"
+    t.index ["git_connection_id"], name: "index_git_stacks_on_git_connection_id"
   end
 
   create_table "host_metrics", force: :cascade do |t|
@@ -62,5 +95,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_190836) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "git_stacks", "environments"
+  add_foreign_key "git_stacks", "git_connections"
   add_foreign_key "sessions", "users"
 end

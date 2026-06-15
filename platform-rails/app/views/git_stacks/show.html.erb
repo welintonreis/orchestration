@@ -1,0 +1,95 @@
+<% page_title @git_stack.name %>
+
+<% content_for :actions do %>
+  <%= button_to "Deploy Now", deploy_git_stack_path(@git_stack), method: :post,
+        class: "inline-flex items-center gap-2 bg-cyan-700 hover:bg-cyan-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
+  <%= link_to "Edit", edit_git_stack_path(@git_stack),
+        class: "inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
+<% end %>
+
+<%# Status badge %>
+<% status_class = case @git_stack.status
+  when "idle"      then "bg-gray-800 text-gray-400"
+  when "deploying" then "bg-blue-900/40 text-blue-400 border border-blue-800/60 animate-pulse"
+  when "deployed"  then "bg-green-900/40 text-green-400 border border-green-800/60"
+  when "failed"    then "bg-red-900/40 text-red-400 border border-red-800/60"
+  else                  "bg-gray-800 text-gray-400"
+  end %>
+
+<div class="flex items-center gap-3 mb-6">
+  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_class %>">
+    <%= @git_stack.status %>
+  </span>
+  <% if @git_stack.last_deployed_at %>
+    <span class="text-sm text-gray-500">Last deployed <%= human_age(@git_stack.last_deployed_at) %></span>
+  <% end %>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <%# Left column: details %>
+  <div class="space-y-4">
+
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Stack Details</h2>
+      <dl class="space-y-3">
+        <div class="flex items-start justify-between gap-4">
+          <dt class="text-sm text-gray-500 flex-shrink-0">Connection</dt>
+          <dd class="text-sm text-white text-right font-medium"><%= @git_stack.git_connection.name %></dd>
+        </div>
+        <div class="flex items-start justify-between gap-4">
+          <dt class="text-sm text-gray-500 flex-shrink-0">Environment</dt>
+          <dd class="text-sm text-white text-right"><%= @git_stack.environment.name %></dd>
+        </div>
+        <div class="flex items-start justify-between gap-4">
+          <dt class="text-sm text-gray-500 flex-shrink-0">Compose File</dt>
+          <dd class="text-sm text-gray-300 font-mono text-right"><%= @git_stack.compose_file %></dd>
+        </div>
+        <div class="flex items-start justify-between gap-4">
+          <dt class="text-sm text-gray-500 flex-shrink-0">Deploy Mode</dt>
+          <dd class="text-sm text-gray-300 font-mono text-right"><%= @git_stack.deploy_mode %></dd>
+        </div>
+        <div class="flex items-start justify-between gap-4">
+          <dt class="text-sm text-gray-500 flex-shrink-0">Auto-update</dt>
+          <dd class="text-sm text-right">
+            <% if @git_stack.auto_update? %>
+              <span class="text-green-400">Enabled</span>
+              <span class="text-gray-500 text-xs ml-1">(every <%= @git_stack.poll_interval %>s)</span>
+            <% else %>
+              <span class="text-gray-500">Disabled</span>
+            <% end %>
+          </dd>
+        </div>
+        <% if @git_stack.git_connection.last_commit_sha.present? %>
+          <div class="flex items-start justify-between gap-4">
+            <dt class="text-sm text-gray-500 flex-shrink-0">Last Commit</dt>
+            <dd class="text-sm text-gray-300 font-mono text-right"><%= @git_stack.git_connection.last_commit_sha.first(12) %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <%# Webhook URL %>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Webhook URL</h2>
+      <p class="text-xs text-gray-500 mb-3">POST to this URL to trigger an auto-deploy (no auth required, token embedded).</p>
+      <div class="flex items-center gap-2">
+        <code id="webhook-url" class="flex-1 text-xs font-mono bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-cyan-400 break-all">
+          <%= @git_stack.webhook_url(request.base_url) %>
+        </code>
+        <button
+          onclick="navigator.clipboard.writeText(document.getElementById('webhook-url').textContent.trim()); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000)"
+          class="flex-shrink-0 text-xs text-gray-400 hover:text-white px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-colors"
+        >Copy</button>
+      </div>
+    </div>
+
+  </div>
+
+  <%# Right column: deploy output %>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Deploy Output</h2>
+    <pre class="text-xs font-mono text-gray-300 bg-gray-950 border border-gray-800 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-words min-h-[200px] max-h-[500px] overflow-y-auto"><%= @git_stack.last_deploy_output.presence || "No deploys yet." %></pre>
+  </div>
+
+</div>

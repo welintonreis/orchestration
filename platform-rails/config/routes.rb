@@ -36,7 +36,13 @@ Rails.application.routes.draw do
   get "swarm",          to: "swarm/services#index", as: :swarm
   get "swarm/nodes",    to: "swarm/nodes#index",    as: :swarm_nodes
   get "swarm/services", to: "swarm/services#index", as: :swarm_services
-  get "git_stacks", to: "git_stacks#index", as: :git_stacks
+  resources :git_connections
+  resources :git_stacks do
+    member { post :deploy }
+  end
+  namespace :webhooks do
+    post ":token/deploy", to: "deploys#create", as: :deploy
+  end
   get  "alerts",          to: "alerts#index",        as: :alerts
   post "alerts/mark_all_read", to: "alerts#mark_all_read", as: :mark_all_read_alerts
 
