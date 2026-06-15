@@ -57,7 +57,9 @@ ENV RAILS_ENV=production \
     RAILS_LOG_TO_STDOUT=true \
     RAILS_SERVE_STATIC_FILES=true
 
-RUN useradd --create-home --shell /bin/bash rails && \
+RUN groupadd -g 988 docker_host 2>/dev/null || true && \
+    useradd --create-home --shell /bin/bash rails && \
+    usermod -aG docker_host rails && \
     mkdir -p db log storage tmp && \
     chown -R rails:rails db log storage tmp
 
