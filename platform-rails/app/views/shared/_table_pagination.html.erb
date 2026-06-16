@@ -1,0 +1,36 @@
+<%# Alpine.js pagination footer. Place inside an x-data wrapper with { perPage, page, total }.
+    Pass local: { alpine_id: "unique_id" } to scope controls. %>
+<div class="px-4 py-3 border-t border-gray-800 flex items-center justify-between flex-wrap gap-3">
+  <div class="flex items-center gap-2">
+    <span class="text-xs text-gray-500">Por página:</span>
+    <% [10, 20, 30, 50, 100].each do |n| %>
+      <button @click="perPage = <%= n %>; page = 1"
+              class="px-2 py-0.5 text-xs rounded transition-colors"
+              :class="perPage === <%= n %> ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'">
+        <%= n %>
+      </button>
+    <% end %>
+    <button @click="perPage = 0; page = 1"
+            class="px-2 py-0.5 text-xs rounded transition-colors"
+            :class="perPage === 0 ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'">
+      Todos
+    </button>
+  </div>
+  <div class="flex items-center gap-1 text-xs text-gray-500">
+    <span>
+      <span x-text="perPage === 0 ? total : Math.min(page * perPage, total)"></span>
+      de <span x-text="total"></span>
+    </span>
+    <template x-if="perPage > 0 && Math.ceil(total / perPage) > 1">
+      <div class="flex items-center gap-1 ml-2">
+        <button @click="if(page > 1) page--"
+                :disabled="page <= 1"
+                class="px-2 py-0.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 disabled:text-gray-700 disabled:cursor-not-allowed">‹</button>
+        <span class="text-gray-400" x-text="`${page} / ${Math.ceil(total / perPage)}`"></span>
+        <button @click="if(page < Math.ceil(total / perPage)) page++"
+                :disabled="page >= Math.ceil(total / perPage)"
+                class="px-2 py-0.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 disabled:text-gray-700 disabled:cursor-not-allowed">›</button>
+      </div>
+    </template>
+  </div>
+</div>

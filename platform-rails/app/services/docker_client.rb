@@ -58,8 +58,8 @@ class DockerClient
     delete("/containers/#{id}", query: { force: force ? 1 : 0 })
   end
 
-  def container_logs(id, tail: 100, &block)
-    params = { stdout: 1, stderr: 1, follow: block_given? ? 1 : 0, tail: tail }
+  def container_logs(id, tail: 100, timestamps: false, &block)
+    params = { stdout: 1, stderr: 1, follow: block_given? ? 1 : 0, tail: tail, timestamps: timestamps ? 1 : 0 }
 
     if block_given?
       stream("/containers/#{id}/logs", query: params, &block)
@@ -67,6 +67,17 @@ class DockerClient
       raw = raw_get("/containers/#{id}/logs", query: params)
       demux_stream(raw)
     end
+  end
+
+  def exec_create(container_id, cmd: ["sh", "-c", "exec bash 2>/dev/null || exec sh"], tty: true, user: nil, env: nil)
+    body = { AttachStdin: true, AttachStdout: true, AttachStderr: true, Tty: tty, Cmd: cmd }
+    body[:User] = user if user.present?
+    body[:Env]  = Array(env).presence || ["TERM=xterm-256color"]
+    post("/containers/#{container_id}/exec", body: body)
+  end
+
+  def exec_resize(exec_id, rows:, cols:)
+    post("/exec/#{exec_id}/resize", query: { h: rows, w: cols })
   end
 
   def container_stats(id, &block)
@@ -100,6 +111,10 @@ class DockerClient
     delete("/volumes/#{name}", query: { force: force ? 1 : 0 })
   end
 
+  def system_df
+    get("/system/df")
+  end
+
   # Networks
 
   def networks
@@ -117,15 +132,78 @@ class DockerClient
   end
 
   def services
-    get("/services")
+    get("/services", query: { status: 1 })
   end
 
   def service(id)
     get("/services/#{id}")
   end
 
+  def service_scale(id, replicas)
+    svc     = service(id)
+    version = svc.dig("Version", "Index")
+    spec    = svc["Spec"].dup
+    spec["Mode"] ||= {}
+    spec["Mode"]["Replicated"] ||= {}
+    spec["Mode"]["Replicated"]["Replicas"] = replicas
+    post("/services/#{id}/update", query: { version: version }, body: spec)
+  end
+
   def nodes
     get("/nodes")
+  end
+
+  # Configs (Swarm)
+
+  def configs
+    get("/configs")
+  end
+
+  def config_create(name:, data:, labels: {})
+    post("/configs/create", body: {
+      Name:   name,
+      Labels: labels,
+      Data:   Base64.strict_encode64(data)
+    })
+  end
+
+  def config_remove(id)
+    delete("/configs/#{id}")
+  end
+
+  # Secrets (Swarm)
+
+  def secrets
+    get("/secrets")
+  end
+
+  def secret_create(name:, data:, labels: {})
+    post("/secrets/create", body: {
+      Name:   name,
+      Labels: labels,
+      Data:   Base64.strict_encode64(data)
+    })
+  end
+
+  def secret_remove(id)
+    delete("/secrets/#{id}")
+  end
+
+  # Stacks (via docker stack ls — parses services label)
+
+  def stacks
+    svcs = services rescue []
+    svcs
+      .group_by { |s| s.dig("Spec", "Labels", "com.docker.stack.namespace") }
+      .reject   { |ns, _| ns.nil? }
+      .map do |ns, group|
+        {
+          "Name"       => ns,
+          "Services"   => group.size,
+          "Orchestrator" => "Swarm",
+          "CreatedAt"  => group.map { |s| s["CreatedAt"] }.min
+        }
+      end
   end
 
   private
@@ -153,6 +231,13 @@ class DockerClient
     opts = { path: "/v1.47#{path}", query: query, headers: headers }
     opts[:body] = body.to_json if body
     response = @connection.post(**opts)
+    parse_response(response)
+  end
+
+  def put(path, query: {}, body: nil)
+    opts = { path: "/v1.47#{path}", query: query, headers: headers }
+    opts[:body] = body.to_json if body
+    response = @connection.put(**opts)
     parse_response(response)
   end
 

@@ -1,0 +1,32 @@
+<% content_for :title, "Políticas: #{@environment.name}" %>
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+    <%= link_to "Políticas", ambiente_policies_path, class: "hover:text-gray-300" %> <span>/</span> <span class="text-gray-300"><%= @environment.name %></span>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-white mb-5">Políticas: <%= @environment.name %></h2>
+    <%= form_with url: ambiente_policy_path(@environment), method: :patch, local: true do |f| %>
+      <% [["allow_bind_mounts", "Permitir Bind Mounts", "Permite montar diretórios do host nos containers"],
+          ["allow_privileged", "Permitir Containers Privilegiados", "Permite containers com acesso total ao host"],
+          ["allow_host_networking", "Permitir Host Networking", "Permite containers usarem a rede do host"],
+          ["allow_container_capabilities", "Permitir Capabilities", "Permite configurar Linux capabilities nos containers"]
+         ].each do |key, label, desc| %>
+        <% current_val = AppSetting.get("env_policy_#{@environment.id}_#{key}", default: "true") == "true" %>
+        <div class="flex items-start justify-between py-3 border-b border-gray-800">
+          <div>
+            <p class="text-sm font-medium text-gray-200"><%= label %></p>
+            <p class="text-xs text-gray-500 mt-0.5"><%= desc %></p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer ml-4 mt-0.5">
+            <input type="checkbox" name="environment[<%= key %>]" value="1" <%= current_val ? "checked" : "" %> class="sr-only peer">
+            <div class="w-10 h-6 bg-gray-700 peer-checked:bg-cyan-600 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+          </label>
+        </div>
+      <% end %>
+      <div class="flex gap-3 mt-5">
+        <%= f.submit "Salvar", class: "btn-primary" %>
+        <%= link_to "Cancelar", ambiente_policies_path, class: "btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

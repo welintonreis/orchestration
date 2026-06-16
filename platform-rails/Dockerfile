@@ -41,6 +41,7 @@ WORKDIR /rails
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       curl \
+      gosu \
       libsqlite3-0 \
       libvips \
       git \
@@ -57,13 +58,12 @@ ENV RAILS_ENV=production \
     RAILS_LOG_TO_STDOUT=true \
     RAILS_SERVE_STATIC_FILES=true
 
-RUN groupadd -g 988 docker_host 2>/dev/null || true && \
-    useradd --create-home --shell /bin/bash rails && \
-    usermod -aG docker_host rails && \
+RUN useradd --create-home --shell /bin/bash rails && \
     mkdir -p db log storage tmp && \
     chown -R rails:rails db log storage tmp
 
-USER rails
+RUN chmod +x ./bin/docker-entrypoint.sh
 
 EXPOSE 80
+ENTRYPOINT ["./bin/docker-entrypoint.sh"]
 CMD ["./bin/thrust", "./bin/rails", "server"]

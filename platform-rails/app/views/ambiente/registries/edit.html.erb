@@ -1,0 +1,31 @@
+<% content_for :title, "Editar Registry" %>
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+    <%= link_to "Registries", ambiente_registries_path, class: "hover:text-gray-300" %> <span>/</span> <span class="text-gray-300">Editar</span>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-white mb-5">Editar Registry</h2>
+    <%= form_with model: [:ambiente, @registry], local: true do |f| %>
+      <div class="mb-4">
+        <%= f.label :environment_id, "Ambiente", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.select :environment_id, options_for_select(@environments.map { |e| [e.name, e.id] }, @registry.environment_id), {}, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div class="mb-4">
+        <%= f.label :url, "URL", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.text_field :url, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div class="mb-4">
+        <%= f.label :username, "Usuário", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.text_field :username, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div class="mb-5">
+        <%= f.label :encrypted_password, "Nova Senha / Token (deixe vazio para manter)", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.password_field :encrypted_password, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div class="flex gap-3">
+        <%= f.submit "Salvar", class: "btn-primary" %>
+        <%= link_to "Cancelar", ambiente_registries_path, class: "btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

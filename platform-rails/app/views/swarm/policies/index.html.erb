@@ -1,0 +1,73 @@
+<% content_for :title, "Políticas do Swarm" %>
+
+<div class="mb-6">
+  <h2 class="text-xl font-bold text-white">Políticas de Placement</h2>
+  <p class="text-sm text-gray-400 mt-0.5">Constraints e preferências de agendamento de tarefas nos serviços Swarm</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Regras Ativas</p>
+    <p class="text-2xl font-bold text-white"><%= @placement_rules.count %></p>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Nós no Cluster</p>
+    <p class="text-2xl font-bold text-white"><%= @nodes.count %></p>
+  </div>
+  <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Labels de Nó</p>
+    <p class="text-2xl font-bold text-white"><%= @node_labels.count %></p>
+    <p class="text-xs text-gray-500 truncate"><%= @node_labels.first(3).join(", ") %></p>
+  </div>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mb-6">
+  <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-gray-200">Regras de Placement por Serviço</h3>
+  </div>
+  <% if @placement_rules.empty? %>
+    <div class="text-center py-12 text-gray-500">
+      <p class="text-sm">Nenhuma regra de placement configurada</p>
+      <p class="text-xs mt-1 text-gray-600">Configure placement constraints nas specs dos serviços Docker</p>
+    </div>
+  <% else %>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-xs text-gray-500 uppercase border-b border-gray-800">
+          <th class="px-4 py-3 text-left">Serviço</th>
+          <th class="px-4 py-3 text-left">Tipo</th>
+          <th class="px-4 py-3 text-left">Regra</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @placement_rules.each do |rule| %>
+          <tr class="border-b border-gray-800/50 hover:bg-gray-800/20">
+            <td class="px-4 py-3 font-mono text-xs text-gray-300"><%= rule[:service] %></td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= rule[:type] == 'Constraint' ? 'bg-orange-900/30 text-orange-300 border border-orange-800/50' : 'bg-blue-900/30 text-blue-300 border border-blue-800/50' %>">
+                <%= rule[:type] %>
+              </span>
+            </td>
+            <td class="px-4 py-3 font-mono text-xs text-gray-400"><%= rule[:rule] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+  <h3 class="text-sm font-semibold text-gray-200 mb-3">Labels dos Nós</h3>
+  <% if @node_labels.empty? %>
+    <p class="text-xs text-gray-500">Nenhum label configurado nos nós</p>
+  <% else %>
+    <div class="flex flex-wrap gap-2">
+      <% @node_labels.each do |label| %>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+          <%= label %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+  <p class="text-xs text-gray-600 mt-3">Use esses labels como constraints: <code class="text-gray-400">node.labels.&lt;label&gt; == value</code></p>
+</div>

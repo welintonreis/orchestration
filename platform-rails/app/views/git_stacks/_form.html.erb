@@ -84,6 +84,18 @@
         <p class="mt-1.5 text-xs text-gray-500">Minimum 30 seconds. Only used when auto-update is enabled.</p>
       </div>
 
+      <%# Webhook info for new records %>
+      <% if git_stack.new_record? %>
+        <div class="rounded-lg bg-cyan-950/40 border border-cyan-800/40 px-4 py-3">
+          <p class="text-xs text-cyan-400 font-medium mb-1">Webhook CI/CD</p>
+          <p class="text-xs text-gray-400">
+            Após criar a stack, um <strong class="text-gray-200">Webhook URL</strong> único será gerado.
+            Use-o em GitHub Actions, GitLab CI, Bitbucket Pipelines ou qualquer sistema de CI/CD para
+            acionar o deploy automaticamente quando a branch for atualizada.
+          </p>
+        </div>
+      <% end %>
+
       <%# Actions %>
       <div class="flex items-center gap-3 pt-2">
         <%= f.submit git_stack.new_record? ? "Create Stack" : "Update Stack",

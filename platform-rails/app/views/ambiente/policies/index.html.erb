@@ -1,0 +1,48 @@
+<% content_for :title, "Políticas de Ambiente" %>
+
+<div class="mb-6">
+  <h2 class="text-xl font-bold text-white">Políticas de Ambiente</h2>
+  <p class="text-sm text-gray-400 mt-0.5">Controle o que é permitido em cada ambiente</p>
+</div>
+
+<% policy_keys = %w[allow_bind_mounts allow_privileged allow_host_networking allow_container_capabilities] %>
+<% policy_labels = { "allow_bind_mounts" => "Bind Mounts", "allow_privileged" => "Containers Privilegiados", "allow_host_networking" => "Host Networking", "allow_container_capabilities" => "Capabilities do Container" } %>
+
+<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-xs text-gray-500 uppercase border-b border-gray-800">
+        <th class="px-4 py-3 text-left">Ambiente</th>
+        <% policy_labels.values.each do |label| %>
+          <th class="px-4 py-3 text-center text-xs"><%= label %></th>
+        <% end %>
+        <th class="px-4 py-3 text-right">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @environments.each do |env| %>
+        <tr class="border-b border-gray-800/50 hover:bg-gray-800/20">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full <%= env.active? ? 'bg-green-400' : 'bg-gray-600' %>"></span>
+              <span class="font-medium text-gray-200"><%= env.name %></span>
+            </div>
+          </td>
+          <% policy_keys.each do |key| %>
+            <% allowed = AppSetting.get("env_policy_#{env.id}_#{key}", default: "true") == "true" %>
+            <td class="px-4 py-3 text-center">
+              <% if allowed %>
+                <svg class="w-4 h-4 text-green-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <% else %>
+                <svg class="w-4 h-4 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              <% end %>
+            </td>
+          <% end %>
+          <td class="px-4 py-3 text-right">
+            <%= link_to edit_ambiente_policy_path(env), class: "text-xs text-cyan-400 hover:text-cyan-300" do %>Editar<% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

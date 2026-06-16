@@ -1,35 +1,233 @@
-<% page_title "Environments" %>
+<% page_title "Ambientes" %>
 
 <% content_for :actions do %>
-  <%= link_to "New Environment", new_environment_path,
-        class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
+  <%= link_to new_environment_path,
+        class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Novo Ambiente
+  <% end %>
 <% end %>
 
 <% if @environments.empty? %>
-  <div class="flex flex-col items-center justify-center py-24 text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+  <div class="flex flex-col items-center justify-center py-32 text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-gray-800 mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
     </svg>
-    <p class="text-gray-400 text-sm">No environments. Create one to get started.</p>
-    <%= link_to "New Environment", new_environment_path,
-          class: "mt-4 inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
+    <p class="text-gray-400 font-medium mb-1">Nenhum ambiente configurado</p>
+    <p class="text-sm text-gray-600 mb-6">Conecte um Docker host para começar a gerenciar</p>
+    <%= link_to "Adicionar ambiente", new_environment_path,
+          class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors" %>
   </div>
 <% else %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-    <table class="w-full text-left">
-      <thead>
-        <tr class="border-b border-gray-800 bg-gray-950/60">
-          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Endpoint</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Active</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <%= render @environments, reachable: @reachable %>
-      </tbody>
-    </table>
+  <div class="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+    <% @environments.each do |env| %>
+      <% s = @stats[env.id] || {} %>
+      <% is_active = active_environment&.id == env.id %>
+      <div class="bg-gray-900 border <%= is_active ? 'border-red-800/70' : 'border-gray-800' %> rounded-xl hover:border-gray-700 transition-colors">
+
+        <%# ── Card header ── %>
+        <div class="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-800/60">
+          <div class="flex items-start gap-3">
+            <%# Status dot + avatar %>
+            <div class="relative flex-shrink-0">
+              <div class="w-10 h-10 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 32 32">
+                  <path fill="#3a4e55" d="M18.191 13.071H20.7v2.566h1.27a5.5 5.5 0 0 0 1.744-.292a4.5 4.5 0 0 0 .848-.383a3.15 3.15 0 0 1-.589-1.623a3.43 3.43 0 0 1 .616-2.416l.264-.305l.314.253a4 4 0 0 1 1.575 2.538a3.84 3.84 0 0 1 2.913.271l.345.2l-.181.354a3.63 3.63 0 0 1-3.648 1.74c-2.173 5.413-6.9 7.976-12.642 7.976A7.96 7.96 0 0 1 6.3 20.211l-.025-.043l-.226-.459a7.3 7.3 0 0 1-.579-3.693l.035-.38h2.143v-2.565h2.51v-2.51h5.02v-2.51h3.012v5.02Z" />
+                  <path fill="#00aada" d="M26.324 14.021a3.31 3.31 0 0 0-1.418-2.821a3.07 3.07 0 0 0 .289 3.821a5.28 5.28 0 0 1-3.225 1.037H5.883a6.8 6.8 0 0 0 .667 3.737l.183.335a6 6 0 0 0 .379.569q.992.064 1.829.045a9 9 0 0 0 2.669-.389a.193.193 0 1 1 .126.365q-.135.047-.281.088a8.4 8.4 0 0 1-1.845.3c.044 0-.046.007-.046.007l-.082.007a22 22 0 0 1-2.008-.006l-.01.007a7.88 7.88 0 0 0 6.063 2.41c5.56 0 10.276-2.465 12.365-8c1.482.152 2.906-.226 3.553-1.49a3.5 3.5 0 0 0-3.122-.022" />
+                  <path fill="#27b9ec" d="M26.324 14.021a3.31 3.31 0 0 0-1.418-2.821a3.07 3.07 0 0 0 .289 3.821a5.28 5.28 0 0 1-3.225 1.037H6.836a5.22 5.22 0 0 0 2.106 4.686a9 9 0 0 0 2.669-.389a.193.193 0 1 1 .126.365q-.135.047-.281.088a9 9 0 0 1-1.894.314l-.019-.022c1.892.971 4.636.967 7.782-.241a21.87 21.87 0 0 0 9.1-6.889l-.1.048" />
+                  <path fill="#088cb9" d="M5.913 17.732a6.4 6.4 0 0 0 .637 2.061l.183.335a6 6 0 0 0 .379.569q.992.064 1.829.045a9 9 0 0 0 2.669-.389a.193.193 0 1 1 .126.365q-.135.047-.281.088a8.8 8.8 0 0 1-1.891.307h-.1q-.438.025-.922.026c-.351 0-.709-.007-1.1-.026a7.9 7.9 0 0 0 6.076 2.413c4.76 0 8.9-1.807 11.3-5.8Z" />
+                  <path fill="#d5eef2" d="M12.616 19.193a.6.6 0 1 1-.6.6a.6.6 0 0 1 .6-.6" />
+                </svg>
+              </div>
+              <% if s[:up] %>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full"></span>
+              <% else %>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-gray-600 border-2 border-gray-900 rounded-full"></span>
+              <% end %>
+            </div>
+
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="font-semibold text-white text-sm leading-tight"><%= env.name %></h2>
+                <% if is_active %>
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-900/50 text-red-300 border border-red-800/50">
+                    ativo
+                  </span>
+                <% end %>
+                <% if s[:up] && s[:swarm] %>
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-cyan-900/40 text-cyan-300 border border-cyan-800/40">
+                    Swarm <%= s[:docker_ver] %>
+                  </span>
+                <% elsif s[:up] %>
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-800 text-gray-400 border border-gray-700">
+                    Standalone <%= s[:docker_ver] %>
+                  </span>
+                <% end %>
+              </div>
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                <span class="font-mono"><%= env.endpoint_type&.upcase %></span>
+                <span>·</span>
+                <span class="font-mono truncate max-w-[180px]"><%= env.endpoint %></span>
+              </div>
+              <% unless s[:up] %>
+                <div class="mt-1 flex items-center gap-1 text-[11px] text-red-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                  </svg>
+                  Inacessível
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <%# Actions menu %>
+          <div class="flex items-center gap-1 flex-shrink-0 ml-2" x-data="{ menu: false }">
+            <% unless is_active %>
+              <%= button_to activate_environment_path(env), method: :post,
+                    class: "px-3 py-1.5 text-xs font-medium bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors",
+                    title: "Definir como ativo" do %>
+                Conectar
+              <% end %>
+            <% end %>
+            <div class="relative">
+              <button @click="menu = !menu" @click.outside="menu = false"
+                      class="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </button>
+              <div x-show="menu"
+                   x-transition:enter="transition ease-out duration-100"
+                   x-transition:enter-start="opacity-0 scale-95"
+                   x-transition:enter-end="opacity-100 scale-100"
+                   class="absolute right-0 top-full mt-1 w-40 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-20 overflow-hidden">
+                <%= button_to environment_path(env), method: :delete,
+                      class: "flex items-center gap-2 w-full px-3 py-2.5 text-sm text-red-400 hover:bg-red-950/40 transition-colors text-left",
+                      data: { turbo_confirm: "Remover ambiente #{env.name}?" } do %>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  Remover
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <%# ── Stats grid ── %>
+        <% if s[:up] %>
+          <div class="px-5 py-4">
+            <%# Row 1: Stacks / Services / Containers %>
+            <div class="grid grid-cols-3 gap-3 mb-3">
+              <div class="text-center">
+                <div class="text-xl font-bold text-white"><%= s[:stacks] || 0 %></div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Stacks</div>
+              </div>
+              <div class="text-center">
+                <div class="text-xl font-bold text-white"><%= s[:services] || 0 %></div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Serviços</div>
+              </div>
+              <div class="text-center">
+                <div class="text-xl font-bold text-white"><%= s[:containers] || 0 %></div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Containers</div>
+              </div>
+            </div>
+
+            <%# Row 2: status pills %>
+            <div class="flex items-center gap-2 mb-4 flex-wrap">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-900/40 text-green-300 border border-green-800/40">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
+                <%= s[:running] %> rodando
+              </span>
+              <% if s[:healthy].to_i > 0 %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-900/40 text-blue-300 border border-blue-800/40">
+                  <%= s[:healthy] %> saudáveis
+                </span>
+              <% end %>
+              <% if s[:unhealthy].to_i > 0 %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-900/40 text-red-300 border border-red-800/40">
+                  <%= s[:unhealthy] %> não saudáveis
+                </span>
+              <% end %>
+            </div>
+
+            <%# Row 3: resource pills %>
+            <div class="flex flex-wrap gap-3 text-xs text-gray-400 border-t border-gray-800/60 pt-4">
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span><%= s[:images] %> imagens</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                </svg>
+                <span><%= s[:volumes] %> volumes</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                </svg>
+                <span><%= s[:networks] %> redes</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                </svg>
+                <span><%= s[:ncpu] %> CPU</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <span><%= human_bytes(s[:mem_total].to_i) %> RAM</span>
+              </span>
+              <% if s[:swarm] %>
+                <span class="flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                  </svg>
+                  <span><%= s[:nodes] %> nó<%= s[:nodes] == 1 ? "" : "s" %></span>
+                </span>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <%# Unreachable state %>
+          <div class="px-5 py-6 flex flex-col items-center text-center text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+            </svg>
+            <p class="text-sm">Docker inacessível</p>
+            <p class="text-xs mt-1 text-gray-700 font-mono break-all"><%= s[:error]&.truncate(80) %></p>
+          </div>
+        <% end %>
+
+        <%# ── Footer: quick nav if active ── %>
+        <% if is_active && s[:up] %>
+          <div class="px-5 py-3 border-t border-gray-800/60 flex items-center gap-3 overflow-x-auto">
+            <%= link_to "Dashboard",  root_path,         class: "flex-shrink-0 text-xs text-gray-500 hover:text-gray-300 transition-colors" %>
+            <%= link_to "Containers", containers_path,   class: "flex-shrink-0 text-xs text-gray-500 hover:text-gray-300 transition-colors" %>
+            <%= link_to "Serviços",   swarm_services_path, class: "flex-shrink-0 text-xs text-gray-500 hover:text-gray-300 transition-colors" %>
+            <%= link_to "Imagens",    images_path,       class: "flex-shrink-0 text-xs text-gray-500 hover:text-gray-300 transition-colors" %>
+            <%= link_to "Volumes",    volumes_path,      class: "flex-shrink-0 text-xs text-gray-500 hover:text-gray-300 transition-colors" %>
+          </div>
+        <% end %>
+
+      </div>
+    <% end %>
+  </div>
+
+  <%# Add environment CTA %>
+  <div class="mt-6 border-2 border-dashed border-gray-800 rounded-xl p-8 flex flex-col items-center text-center hover:border-gray-700 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    <p class="text-sm text-gray-600 mb-3">Adicionar outro ambiente</p>
+    <%= link_to "Conectar Docker host", new_environment_path,
+          class: "text-sm text-red-500 hover:text-red-400 font-medium transition-colors" %>
   </div>
 <% end %>

@@ -1,6 +1,12 @@
 class Environment < ApplicationRecord
   ENDPOINT_TYPES = %w[unix tcp].freeze
 
+  has_many :environment_group_memberships, dependent: :destroy
+  has_many :environment_groups, through: :environment_group_memberships
+  has_many :environment_tag_assignments, dependent: :destroy
+  has_many :environment_tags, through: :environment_tag_assignments
+  has_many :environment_registries, dependent: :destroy
+
   validates :name, presence: true, uniqueness: true
   validates :endpoint_type, inclusion: { in: ENDPOINT_TYPES }
   validates :endpoint, presence: true, format: {

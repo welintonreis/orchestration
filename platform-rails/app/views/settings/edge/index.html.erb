@@ -1,0 +1,70 @@
+<% content_for :title, "Edge Compute" %>
+
+<div class="mb-6">
+  <h2 class="text-xl font-bold text-white">Edge Compute</h2>
+  <p class="text-sm text-gray-400 mt-0.5">Gerencie agentes Docker em locais remotos e com conectividade limitada</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-semibold text-gray-200">Configuração Edge</h3>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= @edge_enabled ? 'bg-green-900/40 text-green-300 border border-green-800/50' : 'bg-gray-800 text-gray-400 border border-gray-700' %>">
+          <%= @edge_enabled ? "Habilitado" : "Desabilitado" %>
+        </span>
+      </div>
+
+      <%= form_with url: settings_edge_path, method: :post, local: true do %>
+        <div class="flex items-center justify-between py-3 border-b border-gray-800 mb-4">
+          <div>
+            <p class="text-sm text-gray-200">Habilitar Edge Compute</p>
+            <p class="text-xs text-gray-500">Permite conexão de agentes remotos</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="edge_enabled" value="1" <%= @edge_enabled ? "checked" : "" %> class="sr-only peer">
+            <div class="w-10 h-6 bg-gray-700 peer-checked:bg-cyan-600 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+          </label>
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-medium text-gray-400 mb-1">Intervalo de Polling (segundos)</label>
+          <input type="number" name="edge_polling_interval" value="<%= AppSetting.get('edge_polling_interval', default: '60') %>" min="5"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+        </div>
+        <button type="submit" class="btn-primary">Salvar</button>
+      <% end %>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <h3 class="text-sm font-semibold text-gray-200 mb-3">Chave Edge</h3>
+      <p class="text-xs text-gray-400 mb-3">Use esta chave para registrar agentes edge. Mantenha-a segura.</p>
+      <div class="flex items-center gap-2 mb-3">
+        <code class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-xs font-mono text-gray-300 break-all"><%= @edge_key %></code>
+        <%= button_to "Copiar", "#", onclick: "navigator.clipboard.writeText('#{@edge_key}'); this.textContent='Copiado!'; setTimeout(() => this.textContent='Copiar', 2000); return false;", class: "btn-secondary text-xs px-3 py-2" %>
+      </div>
+      <%= button_to settings_edge_regenerate_key_path, method: :post,
+          data: { turbo_confirm: "Regenerar a chave edge invalidará todos os agentes existentes. Continuar?" },
+          class: "text-xs text-red-400 hover:text-red-300 flex items-center gap-1" do %>
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Regenerar Chave
+      <% end %>
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-gray-200 mb-2">Nós Edge</h3>
+      <p class="text-3xl font-bold text-white"><%= @edge_nodes %></p>
+      <p class="text-xs text-gray-500 mt-1">registrado(s)</p>
+    </div>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-gray-200 mb-2">Como usar</h3>
+      <ol class="text-xs text-gray-400 space-y-2 list-decimal list-inside">
+        <li>Habilite o Edge Compute acima</li>
+        <li>Copie a chave Edge</li>
+        <li>No host remoto, instale o agente Docker</li>
+        <li>Configure o agente com a chave e URL desta instância</li>
+      </ol>
+    </div>
+  </div>
+</div>

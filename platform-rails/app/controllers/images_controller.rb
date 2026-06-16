@@ -1,5 +1,6 @@
 class ImagesController < ApplicationController
-  before_action :require_operator!, only: %i[remove]
+  before_action :require_operator!, only: %i[remove batch_remove]
+
   def index
     @images = current_docker_client.images
   rescue => e
@@ -18,5 +19,21 @@ class ImagesController < ApplicationController
     redirect_to images_path, notice: "Image removed."
   rescue => e
     redirect_to images_path, alert: "Error: #{e.message}"
+  end
+
+  def batch_remove
+    ids    = Array(params[:ids])
+    errors = []
+    ids.each do |id|
+      current_docker_client.image_remove(id, force: true)
+    rescue => e
+      errors << e.message
+    end
+    removed = ids.size - errors.size
+    if errors.any?
+      redirect_to images_path, alert: "#{removed} removida(s). Erros: #{errors.first(3).join('; ')}"
+    else
+      redirect_to images_path, notice: "#{removed} imagem(ns) removida(s)."
+    end
   end
 end

@@ -6,7 +6,7 @@
 }
 
 .badge-exited {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-gray-700;
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-900/50 text-red-400 border border-red-800/60;
 }
 
 .badge-paused {
@@ -49,6 +49,38 @@
 
 .log-viewer::-webkit-scrollbar-thumb:hover {
   background-color: #4b5563;
+}
+
+/* ── xterm.js dark scrollbar ── */
+.xterm-viewport {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background-color: #374151;
+  border-radius: 3px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background-color: #4b5563;
+}
+
+/* ── Button utilities ── */
+.btn-primary {
+  @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-red-700 hover:bg-red-600 text-white transition-colors cursor-pointer;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer;
 }
 
 /* ── Thin scrollbar utility (for sidebar and other panels) ── */

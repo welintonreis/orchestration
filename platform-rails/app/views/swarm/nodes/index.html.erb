@@ -1,5 +1,14 @@
 <% page_title "Swarm Nodes" %>
 
+<% content_for :page_icon do %>
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 32 32">
+    <path d="M0 0h32v32H0z" fill="none" />
+    <path fill="currentColor" d="M17 13V6H8v16h16v-9Zm-7-5h5v5h-5Zm0 7h5v5h-5Zm12 5h-5v-5h5Z" />
+    <path fill="currentColor" d="M28 11h-9V2h9Zm-7-2h5V4h-5Zm7 11h-2v2h2v6H4v-6h2v-2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2" />
+    <circle cx="7" cy="25" r="1" fill="currentColor" />
+  </svg>
+<% end %>
+
 <% content_for :actions do %>
   <%= link_to swarm_path,
         class: "inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium px-4 py-2 rounded-lg border border-gray-700 transition-colors" do %>

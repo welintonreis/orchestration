@@ -1,0 +1,48 @@
+<% content_for :title, "Notificações" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-xl font-bold text-white">Notificações</h2>
+    <p class="text-sm text-gray-400 mt-0.5"><%= @unread_count %> não lida(s)</p>
+  </div>
+  <% if @unread_count > 0 %>
+    <%= button_to mark_all_read_notifications_path, method: :post, class: "btn-secondary text-sm" do %>
+      Marcar todas como lidas
+    <% end %>
+  <% end %>
+</div>
+
+<div class="space-y-2">
+  <% if @alerts.empty? %>
+    <div class="text-center py-16 bg-gray-900 border border-gray-800 rounded-xl text-gray-500">
+      <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <p>Sem notificações</p>
+    </div>
+  <% else %>
+    <% @alerts.each do |alert| %>
+      <% severity_class = case alert.level
+         when "critical" then "border-l-red-500 bg-red-950/20"
+         when "warning" then "border-l-yellow-500 bg-yellow-950/20"
+         when "success" then "border-l-green-500 bg-green-950/20"
+         else "border-l-cyan-500 bg-cyan-950/10"
+         end %>
+      <div class="flex items-start gap-4 p-4 bg-gray-900 border border-gray-800 border-l-4 <%= severity_class %> rounded-r-xl <%= alert.read_at ? 'opacity-60' : '' %>">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-semibold uppercase tracking-wider <%= alert.level == 'critical' ? 'text-red-400' : alert.level == 'warning' ? 'text-yellow-400' : 'text-cyan-400' %>"><%= alert.level %></span>
+            <% unless alert.read_at %>
+              <span class="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0"></span>
+            <% end %>
+          </div>
+          <p class="text-sm text-gray-200"><%= alert.message %></p>
+          <div class="flex items-center gap-3 mt-1">
+            <span class="text-xs text-gray-600"><%= time_ago_in_words(alert.created_at) %> atrás</span>
+            <% if alert.resource.present? %>
+              <span class="text-xs text-gray-500 font-mono"><%= alert.resource %></span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

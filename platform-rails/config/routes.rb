@@ -7,6 +7,9 @@ Rails.application.routes.draw do
   root "dashboard#index"
 
   resources :containers, only: %i[index show] do
+    collection do
+      post :bulk_action
+    end
     member do
       post :start
       post :stop
@@ -17,12 +20,15 @@ Rails.application.routes.draw do
       delete :remove
     end
   end
-  get "containers/:id/logs", to: "containers#logs", as: :container_logs
+  get "containers/:id/logs",     to: "containers#logs",     as: :container_logs
+  get "containers/:id/terminal", to: "containers#terminal", as: :container_terminal
   resources :images, only: %i[index show] do
     member { delete :remove }
+    collection { delete :batch_remove }
   end
   resources :volumes, only: %i[index show] do
     member { delete :remove }
+    collection { delete :batch_remove }
   end
   resources :networks, only: %i[index show] do
     member { delete :remove }
@@ -33,9 +39,11 @@ Rails.application.routes.draw do
     end
   end
 
-  get "swarm",          to: "swarm/services#index", as: :swarm
-  get "swarm/nodes",    to: "swarm/nodes#index",    as: :swarm_nodes
-  get "swarm/services", to: "swarm/services#index", as: :swarm_services
+  get  "swarm",                    to: "swarm/dashboard#index", as: :swarm
+  get  "swarm/nodes",              to: "swarm/nodes#index",     as: :swarm_nodes
+  get  "swarm/services",           to: "swarm/services#index",  as: :swarm_services
+  post "swarm/services/:id/scale", to: "swarm/services#scale",  as: :scale_swarm_service
+  post "swarm/services/:id/drain", to: "swarm/services#drain",  as: :drain_swarm_service
   resources :git_connections
   resources :git_stacks do
     member { post :deploy }
@@ -46,17 +54,80 @@ Rails.application.routes.draw do
   get  "alerts",               to: "alerts#index",         as: :alerts
   post "alerts/mark_all_read", to: "alerts#mark_all_read", as: :mark_all_read_alerts
 
+  resources :stacks, only: %i[index] do
+    collection do
+      post "services/:service_id/scale", action: :scale_service,  as: :scale_stack_service
+      post "services/:service_id/drain", action: :drain_stack_service, as: :drain_stack_service
+    end
+  end
+  resources :configs, only: %i[index] do
+    member { delete :remove }
+  end
+  resources :secrets, only: %i[index] do
+    member { delete :remove }
+  end
+
   resources :users do
     member { post :toggle_active }
   end
   resources :audit_logs, only: %i[index]
   get "metrics/latest", to: "metrics#latest", as: :metrics_latest
 
+  # ── Teams & Roles ──
+  resources :teams do
+    member do
+      post  :add_member
+      delete :remove_member
+    end
+  end
+  get "roles", to: "roles#index", as: :roles
+
+  # ── Swarm extras ──
+  get  "swarm/registries",      to: "swarm/registries#index",   as: :swarm_registries
+  get  "swarm/registries/new",  to: "swarm/registries#new",     as: :new_swarm_registry
+  post "swarm/registries",      to: "swarm/registries#create"
+  get  "swarm/registries/:id/edit", to: "swarm/registries#edit", as: :edit_swarm_registry
+  patch "swarm/registries/:id",     to: "swarm/registries#update", as: :swarm_registry
+  delete "swarm/registries/:id",    to: "swarm/registries#destroy"
+  get  "swarm/policies",        to: "swarm/policies#index",     as: :swarm_policies
+
+  # ── Ambiente extras ──
+  namespace :ambiente do
+    resources :groups, except: [:show] do
+      member do
+        post   :add_environment
+        delete :remove_environment
+      end
+    end
+    resources :policies, only: %i[index edit update]
+    resources :tags,     except: [:show]
+    resources :registries, except: [:show]
+    get "licenses", to: "licenses#index", as: :licenses
+  end
+
+  # ── Notifications ──
+  get  "notifications",          to: "notifications#index",    as: :notifications
+  post "notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_read_notifications
+
+  # ── Settings ──
+  namespace :settings do
+    get  "general",   to: "general#index",  as: :general
+    post "general",   to: "general#update"
+    get  "auth",      to: "auth#index",     as: :auth
+    post "auth",      to: "auth#update"
+    resources :credentials, except: [:show]
+    get  "edge",      to: "edge#index",     as: :edge
+    post "edge",      to: "edge#update"
+    post "edge/regenerate_key", to: "edge#regenerate_key", as: :edge_regenerate_key
+    get  "help",      to: "help#index",     as: :help
+  end
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
+  get "app-assets/:key", to: "app_assets#show", as: :app_asset
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
