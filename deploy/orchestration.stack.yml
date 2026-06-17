@@ -12,6 +12,12 @@ services:
       RAILS_LOG_TO_STDOUT: "true"
       RAILS_SERVE_STATIC_FILES: "true"
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-16}
+      # Without this, Puma never loads the Solid Queue plugin (see
+      # config/puma.rb) — GitDeployJob and any other perform_later just
+      # sit in the jobs table forever with nothing to pick them up. This
+      # is what made every Git deploy get stuck on "deploying" with no
+      # output: the job that's supposed to actually run it never started.
+      SOLID_QUEUE_IN_PUMA: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
