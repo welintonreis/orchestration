@@ -19,6 +19,7 @@
     <table class="w-full text-left">
       <thead>
         <tr class="border-b border-gray-800 bg-gray-950/60">
+          <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Status</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">URL</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Branch</th>
@@ -31,6 +32,11 @@
       <tbody class="divide-y divide-gray-800">
         <% @git_connections.each do |conn| %>
           <tr class="hover:bg-gray-800/40 transition-colors">
+            <td class="px-4 py-3 text-center">
+              <%= turbo_frame_tag "git_connection_status_#{conn.id}", src: status_git_connection_path(conn), loading: :lazy do %>
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-gray-700 animate-pulse"></span>
+              <% end %>
+            </td>
             <td class="px-4 py-3 text-sm font-medium text-white"><%= conn.name %></td>
             <td class="px-4 py-3 text-sm text-gray-300 font-mono truncate max-w-xs"><%= conn.repo_url %></td>
             <td class="px-4 py-3 text-sm text-gray-300">

@@ -73,7 +73,9 @@ Rails.application.routes.draw do
   post "swarm/services/:id/update_image",     to: "swarm/services#update_image",       as: :update_image_swarm_service
   post "swarm/services/:id/rollback",         to: "swarm/services#rollback",           as: :rollback_swarm_service
   post "swarm/services/bulk_scale",           to: "swarm/services#bulk_scale",         as: :bulk_scale_swarm_services
-  resources :git_connections
+  resources :git_connections do
+    member { get :status }
+  end
   resources :git_stacks do
     member { post :deploy }
   end

@@ -47,6 +47,23 @@ RUN apt-get update -qq && \
       git \
     && rm -rf /var/lib/apt/lists/*
 
+# GitDeployer shells out to the docker CLI ("docker stack deploy" / "docker
+# compose") — everything else in this app talks to the daemon over the
+# socket via the Excon-based DockerClient, so this is the only thing in the
+# image that needed the actual binary, and it was never installed. Static
+# binary (no daemon bundled) — docker CLI negotiates API version with
+# whatever daemon it connects to, so an exact version match isn't required.
+RUN ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in \
+      amd64) DARCH=x86_64 ;; \
+      arm64) DARCH=aarch64 ;; \
+      *) echo "unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${DARCH}/docker-27.3.1.tgz" -o /tmp/docker.tgz && \
+    tar xzf /tmp/docker.tgz --strip-components=1 -C /usr/local/bin docker/docker && \
+    rm /tmp/docker.tgz && \
+    chmod +x /usr/local/bin/docker
+
 COPY --from=deps  /usr/local/bundle /usr/local/bundle
 COPY --from=assets /rails/public/assets ./public/assets
 COPY . .

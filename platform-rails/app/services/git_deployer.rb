@@ -38,18 +38,21 @@ class GitDeployer
   private
 
   def run_deploy
-    cmd = build_command
-    out, err, status = Open3.capture3(cmd)
+    out, err, status = Open3.capture3(*build_command)
     combined = [out, err].reject(&:empty?).join("\n")
     [combined, status.success?]
   end
 
+  # Array form, not a single interpolated string — Open3.capture3 with one
+  # string runs it through a shell, and @stack.name/@compose (both
+  # user-supplied) weren't escaped, which was a command injection hole.
+  # Array args go straight to exec, no shell involved.
   def build_command
     case @stack.deploy_mode
     when "swarm_stack"
-      "docker stack deploy --compose-file #{@compose} --with-registry-auth #{@stack.name}"
+      ["docker", "stack", "deploy", "--compose-file", @compose, "--with-registry-auth", @stack.name]
     when "compose"
-      "docker compose -f #{@compose} up -d --remove-orphans"
+      ["docker", "compose", "-f", @compose, "up", "-d", "--remove-orphans"]
     end
   end
 

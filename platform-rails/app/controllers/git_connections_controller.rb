@@ -1,9 +1,16 @@
 class GitConnectionsController < ApplicationController
   before_action :require_admin!
-  before_action :set_git_connection, only: %i[edit update destroy]
+  before_action :set_git_connection, only: %i[edit update destroy status]
 
   def index
     @git_connections = GitConnection.order(:name)
+  end
+
+  # Lazy-loaded per row (turbo-frame, loading: :lazy) so the index page
+  # renders instantly instead of blocking on N git network round-trips.
+  def status
+    @online = GitConnectionChecker.call(@git_connection)
+    render layout: false
   end
 
   def new
