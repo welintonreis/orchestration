@@ -108,7 +108,7 @@ jobs:
     steps:
       - name: Trigger RedHusky deploy
         run: |
-          curl -X POST <%= @git_stack.webhook_url(request.base_url) %>
+          curl -X POST #{@git_stack.webhook_url(request.base_url)}
 YAML
           %></pre>
         </div>
@@ -121,7 +121,7 @@ deploy:
   only:
     - main
   script:
-    - curl -X POST <%= @git_stack.webhook_url(request.base_url) %>
+    - curl -X POST #{@git_stack.webhook_url(request.base_url)}
 YAML
           %></pre>
         </div>
