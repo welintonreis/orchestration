@@ -18,10 +18,17 @@ services:
       # is what made every Git deploy get stuck on "deploying" with no
       # output: the job that's supposed to actually run it never started.
       SOLID_QUEUE_IN_PUMA: "true"
+      # Git stacks get cloned here. Must be the SAME path inside the
+      # container and on the host (see bind mount below + entrypoint
+      # comment) so compose files with relative bind mounts (./app:/app)
+      # resolve to a real location once the host's own daemon picks up
+      # the "docker stack deploy" this container issues over the socket.
+      GIT_WORKSPACE_HOST_PATH: ${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
       - orchestration-storage:/rails/storage
+      - ${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}:${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}
     networks:
       - traefik
     deploy:

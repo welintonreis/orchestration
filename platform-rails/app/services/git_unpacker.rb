@@ -1,7 +1,14 @@
 require "open3"
 
 class GitUnpacker
-  TMP_DIR = Rails.root.join("tmp", "git_repos")
+  # GIT_WORKSPACE_HOST_PATH, when set, is a host bind mount at the same
+  # absolute path on both sides (see docker-entrypoint.sh) — required for
+  # compose files with relative bind mounts to resolve correctly against
+  # the real host filesystem when GitDeployer's "docker stack deploy"
+  # (running in this container) talks to the daemon on the bare host.
+  # Falls back to the container-local tmp dir for compose-mode/dev/yaml
+  # sources that don't rely on host bind-mount paths.
+  TMP_DIR = Pathname.new(ENV.fetch("GIT_WORKSPACE_HOST_PATH", Rails.root.join("tmp", "git_repos").to_s))
 
   def self.call(git_connection)
     new(git_connection).unpack

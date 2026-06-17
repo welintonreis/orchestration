@@ -13,10 +13,12 @@ services:
       RAILS_SERVE_STATIC_FILES: "true"
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-16}
       SOLID_QUEUE_IN_PUMA: "true"
+      GIT_WORKSPACE_HOST_PATH: ${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks-dev}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
       - orchestration-dev-storage:/rails/storage
+      - ${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks-dev}:${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks-dev}
     networks:
       - traefik
     deploy:
