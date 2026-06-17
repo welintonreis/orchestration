@@ -9,3 +9,10 @@ node_modules/
 .bundle
 coverage/
 *.md
+# Locally precompiled assets must never leak into the build context —
+# Propshaft doesn't clear stale digested files before compiling, so a
+# pre-existing public/assets here (from running assets:precompile
+# locally) gets copied into the assets build stage and merges with the
+# fresh compile, leaving the manifest pointing at old/stale CSS+JS
+# hashes that don't match the latest view/asset source changes.
+public/assets
