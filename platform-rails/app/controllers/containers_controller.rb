@@ -134,9 +134,9 @@ class ContainersController < ApplicationController
 
   CONCURRENCY = 12
 
-  def fetch_container_resource(id)
+  def fetch_container_resource(id, client = current_docker_client)
     Rails.cache.fetch("container_resource/#{active_environment&.id}/#{id}", expires_in: 20.seconds) do
-      detail    = current_docker_client.container(id)
+      detail    = client.container(id)
       memory    = detail.dig("HostConfig", "Memory").to_i
       nano_cpus = detail.dig("HostConfig", "NanoCpus").to_i
       cpu_quota = detail.dig("HostConfig", "CpuQuota").to_i
@@ -155,10 +155,14 @@ class ContainersController < ApplicationController
   # Inspects many containers concurrently — sequential inspects (one HTTP
   # round-trip per container) is what made /containers freeze with the
   # "infra" filter or "Todos" page size on hosts with many containers.
+  # Each thread gets its own DockerClient: a single Excon connection isn't
+  # safe to share across concurrent threads (that's what actually caused
+  # the freeze — not raw Docker daemon latency).
   def fetch_container_resources(ids)
-    results = Concurrent::Hash.new
+    results  = Concurrent::Hash.new
+    endpoint = docker_endpoint
     ids.each_slice(CONCURRENCY) do |batch|
-      batch.map { |id| Thread.new { results[id] = fetch_container_resource(id) } }.each(&:join)
+      batch.map { |id| Thread.new { results[id] = fetch_container_resource(id, DockerClient.new(endpoint: endpoint)) } }.each(&:join)
     end
     results
   end

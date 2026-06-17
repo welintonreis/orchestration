@@ -1,4 +1,5 @@
 class ImagesController < ApplicationController
+  include DockerCache
   before_action :require_operator!, only: %i[remove batch_remove prune_orphans]
 
   def index
@@ -8,7 +9,8 @@ class ImagesController < ApplicationController
     images_result = nil
     df_result     = nil
 
-    t1 = Thread.new { images_result = current_docker_client.images }
+    endpoint = docker_endpoint
+    t1 = Thread.new { images_result = DockerClient.new(endpoint: endpoint).images }
     t2 = Thread.new { df_result     = cached_system_df("image") rescue {} }
     t1.join
     t2.join
@@ -63,16 +65,5 @@ class ImagesController < ApplicationController
     redirect_to images_path, notice: "#{count} imagem(ns) órfã(s) removida(s).#{freed_mb}"
   rescue => e
     redirect_to images_path, alert: "Erro ao limpar órfãos: #{e.message}"
-  end
-
-  private
-
-  # Docker's /system/df is expensive (walks every image's layers to
-  # compute usage), so cache it briefly instead of recomputing on every
-  # filter/per-page change in the rows turbo-frame.
-  def cached_system_df(type)
-    Rails.cache.fetch("docker_system_df/#{type}/#{active_environment&.id}", expires_in: 20.seconds) do
-      current_docker_client.system_df(type: type)
-    end
   end
 end

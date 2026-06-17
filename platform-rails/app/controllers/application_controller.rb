@@ -29,9 +29,14 @@ class ApplicationController < ActionController::Base
   end
 
   def current_docker_client
-    @current_docker_client ||= begin
-      endpoint = active_environment&.endpoint || "unix:///var/run/docker.sock"
-      DockerClient.new(endpoint: endpoint)
-    end
+    @current_docker_client ||= DockerClient.new(endpoint: docker_endpoint)
+  end
+
+  # A fresh DockerClient — one Excon connection isn't safe to share across
+  # threads, so any code firing concurrent Docker calls (rows actions that
+  # Thread.new multiple requests) must give each thread its own client
+  # built from this rather than reusing current_docker_client.
+  def docker_endpoint
+    active_environment&.endpoint || "unix:///var/run/docker.sock"
   end
 end

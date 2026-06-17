@@ -289,13 +289,20 @@ class DockerClient
 
   private
 
+  # persistent: false — controllers fan requests out across threads
+  # (containers/images/volumes/networks rows) sharing this one DockerClient
+  # instance. A persistent Excon connection is a single socket and isn't
+  # thread-safe for concurrent requests; reusing it from multiple threads
+  # serialized/deadlocked the requests, which is what caused the page to
+  # hang on filter clicks. Non-persistent costs a socket setup per call,
+  # negligible on a unix socket.
   def build_connection
     if @endpoint.start_with?("unix://")
       socket_path = @endpoint.sub("unix://", "")
-      Excon.new("unix:///", socket: socket_path, persistent: true)
+      Excon.new("unix:///", socket: socket_path, persistent: false)
     elsif @endpoint.start_with?("tcp://")
       host = @endpoint.sub("tcp://", "http://")
-      Excon.new(host, persistent: true)
+      Excon.new(host, persistent: false)
     else
       raise ArgumentError, "Unsupported endpoint: #{@endpoint}"
     end

@@ -8,10 +8,11 @@ class NetworksController < ApplicationController
 
   def rows
     raw_nets = nil; raw_conts = nil; info = nil
+    endpoint = docker_endpoint
 
-    t1 = Thread.new { raw_nets  = current_docker_client.networks             rescue [] }
-    t2 = Thread.new { raw_conts = current_docker_client.containers(all: false) rescue [] }
-    t3 = Thread.new { info      = current_docker_client.info                 rescue {} }
+    t1 = Thread.new { raw_nets  = DockerClient.new(endpoint: endpoint).networks             rescue [] }
+    t2 = Thread.new { raw_conts = DockerClient.new(endpoint: endpoint).containers(all: false) rescue [] }
+    t3 = Thread.new { info      = DockerClient.new(endpoint: endpoint).info                 rescue {} }
     t1.join; t2.join; t3.join
 
     @node_name = info["Name"] || "—"

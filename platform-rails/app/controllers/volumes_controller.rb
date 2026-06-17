@@ -1,4 +1,5 @@
 class VolumesController < ApplicationController
+  include DockerCache
   before_action :require_operator!, only: %i[remove batch_remove upload file_delete file_mkdir file_rename]
 
   # Image used for ephemeral containers when no running container has the volume mounted.
@@ -11,7 +12,8 @@ class VolumesController < ApplicationController
     vols_result = nil
     df_result   = nil
 
-    t1 = Thread.new { vols_result = current_docker_client.volumes["Volumes"] || [] rescue [] }
+    endpoint = docker_endpoint
+    t1 = Thread.new { vols_result = DockerClient.new(endpoint: endpoint).volumes["Volumes"] || [] rescue [] }
     t2 = Thread.new { df_result   = cached_system_df("volume") rescue {} }
     t1.join; t2.join
 
@@ -150,15 +152,6 @@ class VolumesController < ApplicationController
   end
 
   private
-
-  # Docker's /system/df is expensive (walks every volume's mountpoint to
-  # compute usage), so cache it briefly instead of recomputing on every
-  # filter/per-page change in the rows turbo-frame.
-  def cached_system_df(type)
-    Rails.cache.fetch("docker_system_df/#{type}/#{active_environment&.id}", expires_in: 20.seconds) do
-      current_docker_client.system_df(type: type)
-    end
-  end
 
   # Yields [container_id, mountpoint] for the volume.
   # If a running container has it mounted → use that.
