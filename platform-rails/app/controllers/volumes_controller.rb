@@ -5,7 +5,11 @@ class VolumesController < ApplicationController
   # Image used for ephemeral containers when no running container has the volume mounted.
   HELPER_IMAGE = "busybox:latest".freeze
 
+  # remove/batch_remove redirect back here from inside the lazy
+  # turbo-frame (volumes-content) — same self-referential nested-frame
+  # bug fixed for ContainersController et al.
   def index
+    rows if turbo_frame_request?
   end
 
   def rows
@@ -21,10 +25,10 @@ class VolumesController < ApplicationController
       h[v["Name"]] = { size: v.dig("UsageData", "Size").to_i, refs: v.dig("UsageData", "RefCount").to_i }
     end
     @volumes = vols_result.map { |v| v.merge("_size" => df_map.dig(v["Name"], :size).to_i, "_refs" => df_map.dig(v["Name"], :refs)) }
-    render layout: false
+    render "rows", layout: false
   rescue => e
     @volumes = []
-    render layout: false
+    render "rows", layout: false
   end
 
   def show

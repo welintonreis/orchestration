@@ -1,5 +1,11 @@
 class StacksController < ApplicationController
+  # scale_service/drain_stack_service redirect back here from inside the
+  # lazy turbo-frame (stacks-content) — same self-referential nested-frame
+  # bug fixed for ContainersController/Swarm::ServicesController: a
+  # Turbo-Frame-header redirect rendering the skeleton+nested lazy-frame
+  # shell never re-fires the follow-up fetch. Render rows directly instead.
   def index
+    rows if turbo_frame_request?
   end
 
   def rows
@@ -20,11 +26,11 @@ class StacksController < ApplicationController
         }
       end
       .sort_by { |s| s["Name"] }
-    render layout: false
+    render "rows", layout: false
   rescue => e
     @stacks = []
     @nodes  = []
-    render layout: false
+    render "rows", layout: false
   end
 
   def scale_service

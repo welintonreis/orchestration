@@ -26,7 +26,7 @@ module Ui
     }.freeze
 
     def initialize(url:, method: :get, variant: :gray, size: :icon, label: nil, icon: nil,
-                   title: nil, confirm: nil, frame: nil, loading: false, disabled: false,
+                   title: nil, confirm: nil, frame: nil, turbo: nil, loading: false, disabled: false,
                    css_class: nil, form_class: nil, icon_css_class: "w-4 h-4")
       @url            = url
       @method         = method
@@ -37,6 +37,7 @@ module Ui
       @title          = title
       @confirm        = confirm
       @frame          = frame
+      @turbo          = turbo
       @loading        = loading
       @disabled       = disabled
       @css_class      = css_class
@@ -83,6 +84,7 @@ module Ui
 
     def data_attrs
       {
+        turbo: @turbo,
         turbo_confirm: @confirm,
         turbo_frame: @frame,
         action: (@loading ? "click->loading#start" : nil),

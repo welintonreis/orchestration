@@ -2,7 +2,13 @@ class ImagesController < ApplicationController
   include DockerCache
   before_action :require_operator!, only: %i[remove batch_remove prune_orphans]
 
+  # remove/batch_remove/prune_orphans redirect back here from inside the
+  # lazy turbo-frame (images-content) — same self-referential nested-frame
+  # bug fixed for ContainersController et al: a Turbo-Frame-header redirect
+  # rendering the skeleton+nested lazy-frame shell never re-fires the
+  # follow-up fetch. Render rows directly instead.
   def index
+    rows if turbo_frame_request?
   end
 
   def rows
@@ -21,10 +27,10 @@ class ImagesController < ApplicationController
       dangling = img["RepoTags"].nil? || img["RepoTags"] == ["<none>:<none>"]
       img.merge("_containers" => containers_count, "_dangling" => dangling, "_unused" => containers_count == 0)
     end
-    render layout: false
+    render "rows", layout: false
   rescue => e
     @images = []
-    render layout: false
+    render "rows", layout: false
   end
 
   def show

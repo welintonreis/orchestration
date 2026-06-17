@@ -2,17 +2,24 @@ module Swarm
   class ServicesController < ApplicationController
     include SwarmGuard
 
+    # Drain/rollback/scale redirect back here from inside the lazy
+    # turbo-frame (services-content), so the redirect's follow-up GET
+    # carries the same Turbo-Frame header — rendering the skeleton+nested
+    # lazy-frame shell in response to that (same self-referential frame
+    # bug fixed for ContainersController) just showed the skeleton forever
+    # with no follow-up fetch. Render rows content directly instead.
     def index
+      rows if turbo_frame_request?
     end
 
     def rows
       @services = current_docker_client.services
       @nodes    = current_docker_client.nodes
-      render layout: false
+      render "rows", layout: false
     rescue => e
       @services = []
       @nodes    = []
-      render layout: false
+      render "rows", layout: false
     end
 
     def show

@@ -1,15 +1,19 @@
 class SecretsController < ApplicationController
   before_action :require_operator!, only: %i[remove batch_remove]
 
+  # remove/batch_remove redirect back here from inside the lazy
+  # turbo-frame (secrets-content) — same self-referential nested-frame
+  # bug fixed for ContainersController et al.
   def index
+    rows if turbo_frame_request?
   end
 
   def rows
     @secrets = current_docker_client.secrets
-    render layout: false
+    render "rows", layout: false
   rescue => e
     @secrets = []
-    render layout: false
+    render "rows", layout: false
   end
 
   def remove

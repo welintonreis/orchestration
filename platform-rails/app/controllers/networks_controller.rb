@@ -3,7 +3,11 @@ class NetworksController < ApplicationController
   SYSTEM_NETWORKS    = %w[bridge host none docker_gwbridge ingress].freeze
   before_action :require_operator!, only: %i[remove create]
 
+  # create/remove redirect back here from inside the lazy turbo-frame
+  # (networks-content) — same self-referential nested-frame bug fixed for
+  # ContainersController et al.
   def index
+    rows if turbo_frame_request?
   end
 
   def rows
@@ -34,10 +38,10 @@ class NetworksController < ApplicationController
     end
 
     @networks = raw_nets.map { |n| enrich_network(n).merge("_containers" => net_containers[n["Name"]] || []) }
-    render layout: false
+    render "rows", layout: false
   rescue => e
     @networks = []
-    render layout: false
+    render "rows", layout: false
   end
 
   def show
