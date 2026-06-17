@@ -308,8 +308,10 @@ module ApplicationHelper
   # action_icon/sidebar_icon are called with an explicit receiver
   # (helpers.action_icon) from ViewComponent components, which Ruby
   # disallows for private methods — public from here on.
-  def sidebar_icon(key)
-    SIDEBAR_ICONS.fetch(key, "")
+  def sidebar_icon(key, css_class: nil)
+    svg = SIDEBAR_ICONS.fetch(key, "")
+    svg = svg.gsub(/class="w-\S+ h-\S+"/, %{class="#{css_class}"}) if css_class
+    svg.html_safe
   end
 
   def action_icon(key, css_class: nil)
