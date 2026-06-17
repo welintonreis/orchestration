@@ -82,8 +82,8 @@
             </svg>
           </button>
 
-          <%# ── Scroll area ── %>
-          <div class="flex-1 overflow-y-auto overflow-x-hidden py-2">
+          <%# ── Scroll area (scroll-thin: same custom scrollbar Ui::ScrollAreaComponent uses) ── %>
+          <div class="flex-1 overflow-y-auto overflow-x-hidden py-2 scroll-thin">
 
             <%# Home (environments list) %>
             <%= sidebar_link "Home", environments_path, icon: :home, open: "sb" %>

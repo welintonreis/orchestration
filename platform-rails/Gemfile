@@ -21,6 +21,9 @@ gem "excon"
 gem "turbo-rails"
 gem "stimulus-rails"
 
+# Reusable UI components (Button, Badge, Table, etc.)
+gem "view_component"
+
 # CSS without Node
 gem "tailwindcss-rails"
 

@@ -79,7 +79,7 @@
             <div class="min-w-0">
               <h1 class="text-xl font-bold text-gray-100 font-mono truncate"><%= service_name %></h1>
               <div class="flex items-center gap-3 mt-2 flex-wrap">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-800 text-gray-400 border border-gray-700 uppercase tracking-widest"><%= mode_key %></span>
+                <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs, css_class: "uppercase tracking-widest")) { mode_key } %>
                 <% dots = [desired, 12].min %>
                 <div class="flex items-center gap-0.5">
                   <% dots.times do |i| %>
@@ -124,24 +124,25 @@
                 <div class="flex items-center gap-1.5 mr-1">
                   <span class="text-xs text-gray-500 font-medium">Replicas</span>
                 </div>
-                <input type="number" name="replicas" value="<%= current_replicas %>"
-                       min="0" max="99"
-                       class="w-16 px-2 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded-l text-gray-200 focus:outline-none focus:border-cyan-600 text-center tabular-nums">
+                <%= render Ui::InputComponent.new(name: "replicas", type: :number, value: current_replicas, min: 0, max: 99,
+                      css_class: "w-16 px-2 py-1.5 text-sm rounded-l text-center tabular-nums") %>
                 <button type="submit"
                         class="px-3 py-1.5 text-xs font-semibold bg-cyan-900/60 hover:bg-cyan-800/70 text-cyan-300 border border-cyan-800/60 border-l-0 rounded-r transition-colors">
                   Scale
                 </button>
               <% end %>
               <div class="h-5 w-px bg-gray-700 mx-1 flex-shrink-0"></div>
-              <%= button_to drain_swarm_service_path(id: @service["ID"]), method: :post,
-                  class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-orange-950/40 hover:bg-orange-900/60 text-orange-400 border border-orange-900/50 rounded-lg transition-colors flex-shrink-0",
-                  form: { data: { turbo_confirm: "Desidratar #{service_name}? Zera réplicas." } } do %>
+              <%= render Ui::ButtonComponent.new(url: drain_swarm_service_path(id: @service["ID"]), method: :post,
+                    variant: "bg-orange-950/40 hover:bg-orange-900/60 text-orange-400 border-orange-900/50",
+                    size: "px-3 py-1.5 text-xs font-semibold rounded-lg",
+                    css_class: "flex-shrink-0", confirm: "Desidratar #{service_name}? Zera réplicas.") do %>
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                 Desidratar
               <% end %>
-              <%= button_to rollback_swarm_service_path(id: @service["ID"]), method: :post,
-                  class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-purple-950/40 hover:bg-purple-900/60 text-purple-400 border border-purple-900/50 rounded-lg transition-colors flex-shrink-0",
-                  form: { data: { turbo_confirm: "Iniciar rollback de #{service_name}?" } } do %>
+              <%= render Ui::ButtonComponent.new(url: rollback_swarm_service_path(id: @service["ID"]), method: :post,
+                    variant: "bg-purple-950/40 hover:bg-purple-900/60 text-purple-400 border-purple-900/50",
+                    size: "px-3 py-1.5 text-xs font-semibold rounded-lg",
+                    css_class: "flex-shrink-0", confirm: "Iniciar rollback de #{service_name}?") do %>
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                 Rollback
               <% end %>
@@ -169,8 +170,8 @@
         <%= form_with url: update_image_swarm_service_path(id: @service["ID"]), method: :post, data: { turbo: false } do |f| %>
           <label class="<%= lbl %>">Image</label>
           <div class="flex gap-2 mt-1">
-            <input type="text" name="image" value="<%= image %>" placeholder="nginx:latest"
-                   class="<%= inp %> flex-1 font-mono">
+            <%= render Ui::InputComponent.new(name: "image", value: image, placeholder: "nginx:latest",
+                  css_class: "flex-1 font-mono rounded px-2.5 py-1.5") %>
             <button type="submit" class="<%= apply %>">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               Apply changes
@@ -270,7 +271,7 @@
           <tbody class="divide-y divide-gray-800/60">
             <% mounts.each do |m| %>
               <tr class="hover:bg-gray-800/30">
-                <td class="px-5 py-2"><span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-800 text-gray-400 border border-gray-700"><%= m["Type"] || "bind" %></span></td>
+                <td class="px-5 py-2"><%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs)) { m["Type"] || "bind" } %></td>
                 <td class="px-5 py-2 font-mono text-gray-300 break-all"><%= m["Source"].presence || "—" %></td>
                 <td class="px-5 py-2 font-mono text-gray-300 break-all"><%= m["Target"] %></td>
                 <td class="px-5 py-2 text-gray-400"><%= m["ReadOnly"] ? "Sim" : "Não" %></td>
@@ -369,18 +370,16 @@
                 <div>
                   <label class="<%= lbl %>">Memory Reservation</label>
                   <div class="flex items-center gap-1.5 mt-1">
-                    <input type="number" name="mem_res_mb" min="0" step="1"
-                           value="<%= res_mem / 1_048_576 %>"
-                           class="<%= inp %> w-full text-right">
+                    <%= render Ui::InputComponent.new(name: "mem_res_mb", type: :number, min: 0, step: 1,
+                          value: res_mem / 1_048_576, css_class: "w-full text-right rounded px-2.5 py-1.5") %>
                     <span class="text-xs text-gray-600 flex-shrink-0">MB</span>
                   </div>
                 </div>
                 <div>
                   <label class="<%= lbl %>">Memory Limit</label>
                   <div class="flex items-center gap-1.5 mt-1">
-                    <input type="number" name="mem_limit_mb" min="0" step="1"
-                           value="<%= lim_mem / 1_048_576 %>"
-                           class="<%= inp %> w-full text-right">
+                    <%= render Ui::InputComponent.new(name: "mem_limit_mb", type: :number, min: 0, step: 1,
+                          value: lim_mem / 1_048_576, css_class: "w-full text-right rounded px-2.5 py-1.5") %>
                     <span class="text-xs text-gray-600 flex-shrink-0">MB</span>
                   </div>
                   <div class="text-[10px] text-gray-700 mt-0.5">0 = unlimited</div>
@@ -393,10 +392,8 @@
                     <label class="<%= lbl %> mb-0">CPU Reservation</label>
                     <span id="cpu_res_val" class="font-mono text-sm text-cyan-300 tabular-nums"><%= "%.2f" % res_cpu %></span>
                   </div>
-                  <input type="range" name="cpu_res"
-                         min="0" max="<%= max_cpu %>" step="0.01" value="<%= res_cpu %>"
-                         class="w-full h-1.5 rounded cursor-pointer accent-cyan-500"
-                         oninput="document.getElementById('cpu_res_val').textContent = parseFloat(this.value).toFixed(2)">
+                  <%= render Ui::SliderComponent.new(name: "cpu_res", min: 0, max: max_cpu, step: 0.01, value: res_cpu,
+                        oninput: "document.getElementById('cpu_res_val').textContent = parseFloat(this.value).toFixed(2)") %>
                   <div class="flex justify-between text-[10px] text-gray-700 mt-0.5">
                     <span>0</span><span><%= max_cpu %> cores</span>
                   </div>
@@ -406,10 +403,8 @@
                     <label class="<%= lbl %> mb-0">CPU Limit</label>
                     <span id="cpu_limit_val" class="font-mono text-sm text-cyan-300 tabular-nums"><%= lim_cpu > 0 ? ("%.2f" % lim_cpu) : "∞" %></span>
                   </div>
-                  <input type="range" name="cpu_limit"
-                         min="0" max="<%= max_cpu %>" step="0.01" value="<%= lim_cpu %>"
-                         class="w-full h-1.5 rounded cursor-pointer accent-cyan-500"
-                         oninput="document.getElementById('cpu_limit_val').textContent = parseFloat(this.value) === 0 ? '∞' : parseFloat(this.value).toFixed(2)">
+                  <%= render Ui::SliderComponent.new(name: "cpu_limit", min: 0, max: max_cpu, step: 0.01, value: lim_cpu,
+                        oninput: "document.getElementById('cpu_limit_val').textContent = parseFloat(this.value) === 0 ? '∞' : parseFloat(this.value).toFixed(2)") %>
                   <div class="flex justify-between text-[10px] text-gray-700 mt-0.5">
                     <span>0 (∞)</span><span><%= max_cpu %> cores</span>
                   </div>
@@ -436,9 +431,8 @@
             <div class="grid grid-cols-2 gap-3 mb-4">
               <div>
                 <label class="<%= lbl %>">Parallelism</label>
-                <input type="number" name="parallelism" min="0" step="1"
-                       value="<%= update_cfg["Parallelism"] || 1 %>"
-                       class="<%= inp %> w-full text-right mt-1">
+                <%= render Ui::InputComponent.new(name: "parallelism", type: :number, min: 0, step: 1,
+                      value: update_cfg["Parallelism"] || 1, css_class: "w-full text-right mt-1 rounded px-2.5 py-1.5") %>
               </div>
               <div>
                 <label class="<%= lbl %>">Delay</label>
@@ -446,9 +440,8 @@
                   upd_delay_s = update_cfg["Delay"].to_i > 0 ? update_cfg["Delay"].to_i / 1_000_000_000 : 0
                 %>
                 <div class="flex items-center gap-1.5 mt-1">
-                  <input type="number" name="delay_s" min="0" step="1"
-                         value="<%= upd_delay_s %>"
-                         class="<%= inp %> w-full text-right">
+                  <%= render Ui::InputComponent.new(name: "delay_s", type: :number, min: 0, step: 1,
+                        value: upd_delay_s, css_class: "w-full text-right rounded px-2.5 py-1.5") %>
                   <span class="text-xs text-gray-600 flex-shrink-0">s</span>
                 </div>
               </div>
@@ -500,7 +493,7 @@
         <div class="<%= body %> grid grid-cols-2 gap-4 text-sm">
           <div>
             <div class="<%= lbl %>">Condition</div>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700"><%= restart["Condition"] || "any" %></span>
+            <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-300 border-gray-700")) { restart["Condition"] || "any" } %>
           </div>
           <div>
             <div class="<%= lbl %>">Delay</div>
@@ -711,9 +704,9 @@
           <h2 class="text-sm font-semibold text-gray-200">Tasks</h2>
           <span class="font-mono text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded"><%= @tasks.size %></span>
         </div>
-        <input type="text" placeholder="Filtrar…"
-               oninput="filterTasks(this.value)"
-               class="bg-gray-800 border border-gray-700 rounded text-gray-300 text-xs px-2.5 py-1.5 focus:outline-none focus:border-cyan-600 w-40 placeholder-gray-600">
+        <%= render Ui::InputComponent.new(name: "tasks_filter", placeholder: "Filtrar…",
+              css_class: "rounded text-xs px-2.5 py-1.5 w-40 placeholder-gray-600",
+              html_attrs: { "oninput" => "filterTasks(this.value)" }) %>
       </div>
       <% if @tasks.empty? %>
         <p class="<%= body %> text-xs text-gray-600">Nenhuma task encontrada.</p>
@@ -751,7 +744,7 @@
               %>
               <tr class="hover:bg-gray-800/30 border-l-2 <%= state_left %>">
                 <td class="px-4 py-2.5">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border <%= state_badge %>"><%= t_state %></span>
+                  <%= render(Ui::BadgeComponent.new(color: state_badge, size: :xs)) { t_state } %>
                 </td>
                 <td class="px-4 py-2.5 font-mono text-gray-500"><%= t["ID"]&.first(12) %></td>
                 <td class="px-4 py-2.5 text-gray-400"><%= t["Slot"] || "—" %></td>

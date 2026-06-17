@@ -20,13 +20,9 @@
   <% else %>
     <div class="px-4 pt-3 pb-2 border-b border-gray-800 flex items-center justify-between gap-3 flex-wrap">
       <div class="flex items-center gap-2 flex-wrap">
-        <input
-          type="text"
-          placeholder="Filter by name…"
-          data-filter-target="input"
-          data-action="input->filter#filter"
-          class="w-56 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-600"
-        >
+        <%= render Ui::InputComponent.new(name: "filter_query", placeholder: "Filter by name…",
+              css_class: "w-56 px-3 py-1.5 rounded-lg placeholder-gray-600",
+              data: { filter_target: "input", action: "input->filter#filter" }) %>
         <div class="flex items-center bg-gray-800 border border-gray-700 rounded-lg p-0.5 gap-0.5">
           <%= link_to "Todos", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: nil, page: 1),
                 class: "px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter.blank? ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" %>
@@ -85,10 +81,7 @@
       <thead>
         <tr class="border-b border-gray-800 text-left">
           <th class="px-4 py-3 w-8">
-            <input type="checkbox"
-                   data-bulk-select-target="selectAll"
-                   data-action="change->bulk-select#toggleAll"
-                   class="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 text-cyan-500 cursor-pointer accent-cyan-500">
+            <%= render Ui::CheckboxComponent.new(data: { bulk_select_target: "selectAll", action: "change->bulk-select#toggleAll" }) %>
           </th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name / ID / Image</th>
           <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
@@ -131,11 +124,7 @@
               data-name="<%= container_name %>"
               data-infra="<%= infra_status %>">
             <td class="px-4 py-3 w-8">
-              <input type="checkbox"
-                     value="<%= c["Id"] %>"
-                     data-bulk-select-target="checkbox"
-                     data-action="change->bulk-select#toggle"
-                     class="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 text-cyan-500 cursor-pointer accent-cyan-500">
+              <%= render Ui::CheckboxComponent.new(value: c["Id"], data: { bulk_select_target: "checkbox", action: "change->bulk-select#toggle" }) %>
             </td>
             <td class="px-4 py-3">
               <div class="flex items-start gap-2">
@@ -177,9 +166,9 @@
                   <span class="<%= health_sym == :healthy ? 'text-green-400' : health_sym == :unhealthy ? 'text-red-400' : 'text-yellow-400' %> capitalize font-medium"><%= health_sym %></span>
                 </span>
               <% elsif state == "running" %>
-                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-900/30 text-yellow-600 border border-yellow-800/40" title="Container sem healthcheck configurado">
-                  Sem HC
-                </span>
+                <%= render(Ui::BadgeComponent.new(color: "bg-yellow-900/30 text-yellow-600 border-yellow-800/40", size: :md)) do %>
+                  <span title="Container sem healthcheck configurado">Sem HC</span>
+                <% end %>
               <% else %>
                 <span class="text-gray-700 text-xs">—</span>
               <% end %>
@@ -256,57 +245,33 @@
               <div class="flex items-center justify-end gap-2" data-controller="loading">
                 <% if Current.user&.admin? || Current.user&.operator? %>
                   <% if state == "running" %>
-                    <%= button_to stop_container_path(c["Id"]), method: :post,
-                          class: "p-1 rounded bg-gray-800 hover:bg-yellow-900/40 text-gray-400 hover:text-yellow-300 border border-gray-700 hover:border-yellow-800 transition-colors",
-                          title: "Stop", data: { turbo_confirm: "Stop container #{container_name}?", action: "click->loading#start" } do %>
-                      <%= action_icon(:stop, css_class: "w-4 h-4") %>
-                    <% end %>
-                    <%= button_to restart_container_path(c["Id"]), method: :post,
-                          class: "p-1 rounded bg-gray-800 hover:bg-cyan-900/40 text-gray-400 hover:text-cyan-300 border border-gray-700 hover:border-cyan-800 transition-colors",
-                          title: "Restart", data: { turbo_confirm: "Restart container #{container_name}?", action: "click->loading#start" } do %>
-                      <%= action_icon(:restart, css_class: "w-4 h-4") %>
-                    <% end %>
-                    <%= button_to kill_container_path(c["Id"]), method: :post,
-                          class: "p-1 rounded bg-gray-800 hover:bg-red-900/40 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
-                          title: "Kill", form: { class: "inline-flex" },
-                          data: { turbo_confirm: "Force kill #{container_name}? Immediate and ungraceful.", action: "click->loading#start" } do %>
-                      <%= action_icon(:kill, css_class: "w-4 h-4") %>
-                    <% end %>
-                    <%= button_to pause_container_path(c["Id"]), method: :post,
-                          class: "p-1 rounded bg-gray-800 hover:bg-blue-900/40 text-gray-400 hover:text-blue-300 border border-gray-700 hover:border-blue-800 transition-colors",
-                          title: "Pause", data: { action: "click->loading#start" } do %>
-                      <%= action_icon(:pause, css_class: "w-4 h-4") %>
-                    <% end %>
+                    <%= render Ui::ButtonComponent.new(url: stop_container_path(c["Id"]), method: :post,
+                          variant: :yellow, icon: :stop, title: "Stop", loading: true,
+                          confirm: "Stop container #{container_name}?") %>
+                    <%= render Ui::ButtonComponent.new(url: restart_container_path(c["Id"]), method: :post,
+                          variant: :cyan, icon: :restart, title: "Restart", loading: true,
+                          confirm: "Restart container #{container_name}?") %>
+                    <%= render Ui::ButtonComponent.new(url: kill_container_path(c["Id"]), method: :post,
+                          variant: :red, icon: :kill, title: "Kill", loading: true, form_class: "inline-flex",
+                          confirm: "Force kill #{container_name}? Immediate and ungraceful.") %>
+                    <%= render Ui::ButtonComponent.new(url: pause_container_path(c["Id"]), method: :post,
+                          variant: :blue, icon: :pause, title: "Pause", loading: true) %>
                   <% elsif state == "paused" %>
-                    <%= button_to unpause_container_path(c["Id"]), method: :post,
-                          class: "p-1 rounded bg-gray-800 hover:bg-green-900/40 text-gray-400 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
-                          title: "Unpause", data: { action: "click->loading#start" } do %>
-                      <%= action_icon(:unpause, css_class: "w-4 h-4") %>
-                    <% end %>
+                    <%= render Ui::ButtonComponent.new(url: unpause_container_path(c["Id"]), method: :post,
+                          variant: :green, icon: :unpause, title: "Unpause", loading: true) %>
                   <% else %>
-                    <%= button_to start_container_path(c["Id"]), method: :post,
-                          class: "p-1 rounded bg-gray-800 hover:bg-green-900/40 text-gray-400 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
-                          title: "Start", data: { action: "click->loading#start" } do %>
-                      <%= action_icon(:play, css_class: "w-4 h-4") %>
-                    <% end %>
-                    <%= button_to remove_container_path(c["Id"]), method: :delete,
-                          class: "p-1 rounded bg-gray-800 hover:bg-red-900/40 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
-                          title: "Remove", data: { turbo_confirm: "Remove container #{container_name}? Cannot be undone.", action: "click->loading#start" } do %>
-                      <%= action_icon(:remove, css_class: "w-4 h-4") %>
-                    <% end %>
+                    <%= render Ui::ButtonComponent.new(url: start_container_path(c["Id"]), method: :post,
+                          variant: :green, icon: :play, title: "Start", loading: true) %>
+                    <%= render Ui::ButtonComponent.new(url: remove_container_path(c["Id"]), method: :delete,
+                          variant: :red, icon: :remove, title: "Remove", loading: true,
+                          confirm: "Remove container #{container_name}? Cannot be undone.") %>
                   <% end %>
                 <% end %>
-                <%= link_to container_logs_path(c["Id"]),
-                      class: "p-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-200 border border-gray-700 transition-colors",
-                      title: "Logs", data: { turbo_frame: "_top" } do %>
-                  <%= action_icon(:logs, css_class: "w-4 h-4") %>
-                <% end %>
+                <%= render Ui::ButtonComponent.new(url: container_logs_path(c["Id"]),
+                      variant: :gray, icon: :logs, title: "Logs", frame: "_top") %>
                 <% if state == "running" %>
-                  <%= link_to container_terminal_path(c["Id"]),
-                        class: "p-1 rounded bg-gray-800 hover:bg-green-900/40 text-gray-400 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
-                        title: "Terminal", data: { turbo_frame: "_top" } do %>
-                    <%= action_icon(:terminal, css_class: "w-4 h-4") %>
-                  <% end %>
+                  <%= render Ui::ButtonComponent.new(url: container_terminal_path(c["Id"]),
+                        variant: :green, icon: :terminal, title: "Terminal", frame: "_top") %>
                 <% end %>
               </div>
             </td>
