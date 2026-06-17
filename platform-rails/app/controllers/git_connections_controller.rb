@@ -1,16 +1,27 @@
 class GitConnectionsController < ApplicationController
   before_action :require_admin!
-  before_action :set_git_connection, only: %i[edit update destroy status]
+  before_action :set_git_connection, only: %i[edit update destroy status files]
 
   def index
     @git_connections = GitConnection.order(:name)
   end
 
   # Lazy-loaded per row (turbo-frame, loading: :lazy) so the index page
-  # renders instantly instead of blocking on N git network round-trips.
+  # doesn't block on N git network round-trips.
   def status
     @online = GitConnectionChecker.call(@git_connection)
     render layout: false
+  end
+
+  # Backs the compose-file autocomplete/validator on git_stacks/new —
+  # ensures the repo is cloned (or pulls if already present, via the same
+  # GitUnpacker the actual deploy uses) and lists every yml/yaml path so
+  # the wizard can tell the user whether what they typed actually exists.
+  def files
+    repo_path = GitUnpacker.call(@git_connection)
+    render json: Dir.glob("**/*.{yml,yaml}", base: repo_path.to_s).sort
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   def new
