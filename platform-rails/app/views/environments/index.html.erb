@@ -35,7 +35,7 @@
     <% @environments.each do |env| %>
       <% s = @stats[env.id] || {} %>
       <% is_active = active_environment&.id == env.id %>
-      <div class="bg-gray-900 border <%= is_active ? 'border-cyan-700/60' : 'border-gray-800' %> rounded-xl hover:border-gray-700 transition-colors">
+      <div class="min-w-0 bg-gray-900 border <%= is_active ? 'border-cyan-700/60' : 'border-gray-800' %> rounded-xl hover:border-gray-700 transition-colors">
 
         <%# ── Card header ── %>
         <div class="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-800/60">
