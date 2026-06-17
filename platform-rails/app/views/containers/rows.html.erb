@@ -11,7 +11,7 @@
       <p class="text-sm text-gray-600 mt-1">
         <% if @selected_statuses.any? %>
           No containers match selected filters.<br>
-          <%= link_to "Show all containers", containers_path, class: "text-cyan-400 hover:text-cyan-300", data: { turbo_frame: "_top" } %>
+          <%= link_to "Show all containers", containers_path, class: "text-cyan-400 hover:text-cyan-300" %>
         <% else %>
           No containers exist on this Docker host.
         <% end %>
@@ -29,17 +29,14 @@
         >
         <div class="flex items-center bg-gray-800 border border-gray-700 rounded-lg p-0.5 gap-0.5">
           <%= link_to "Todos", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: nil, page: 1),
-                class: "px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter.blank? ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}",
-                data: { turbo_frame: "_top" } %>
+                class: "px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter.blank? ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" %>
           <%= link_to containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: "limited", page: 1),
-                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'limited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}",
-                data: { turbo_frame: "_top" } do %>
+                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'limited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" do %>
             <%= infra_icon(parametrized: true, css_class: "w-4 h-4") %>
             Parametrizado
           <% end %>
           <%= link_to containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: "unlimited", page: 1),
-                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'unlimited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}",
-                data: { turbo_frame: "_top" } do %>
+                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'unlimited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" do %>
             <%= infra_icon(parametrized: false, css_class: "w-4 h-4") %>
             Ilimitado
           <% end %>
@@ -322,24 +319,20 @@
         <span class="text-xs text-gray-500">Por página:</span>
         <% [10, 20, 30, 50, 100].each do |n| %>
           <%= link_to n, containers_path(statuses: @selected_statuses, per_page: n, infra: @infra_filter, page: 1),
-                class: "px-2 py-0.5 text-xs rounded transition-colors #{(@per_page || 10) == n ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}",
-                data: { turbo_frame: "_top" } %>
+                class: "px-2 py-0.5 text-xs rounded transition-colors #{(@per_page || 10) == n ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}" %>
         <% end %>
         <%= link_to "Todos", containers_path(statuses: @selected_statuses, per_page: 0, infra: @infra_filter, page: 1),
-              class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}",
-              data: { turbo_frame: "_top" } %>
+              class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}" %>
       </div>
       <div class="flex items-center gap-1 text-xs text-gray-500">
         <span><%= @total %> container<%= @total == 1 ? "" : "s" %><%= @selected_statuses.any? ? " (#{@selected_statuses.join(", ")})" : " total" %></span>
         <% if @per_page && @total_pages > 1 %>
           <span class="mx-1 text-gray-700">·</span>
           <%= link_to "‹", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: @infra_filter, page: @page - 1),
-                class: "px-2 py-0.5 rounded #{@page <= 1 ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}",
-                data: { turbo_frame: "_top" } %>
+                class: "px-2 py-0.5 rounded #{@page <= 1 ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}" %>
           <span class="text-gray-400"><%= @page %> / <%= @total_pages %></span>
           <%= link_to "›", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: @infra_filter, page: @page + 1),
-                class: "px-2 py-0.5 rounded #{@page >= @total_pages ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}",
-                data: { turbo_frame: "_top" } %>
+                class: "px-2 py-0.5 rounded #{@page >= @total_pages ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}" %>
         <% end %>
       </div>
     </div>

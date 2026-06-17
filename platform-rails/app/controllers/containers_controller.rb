@@ -1,7 +1,16 @@
 class ContainersController < ApplicationController
   before_action :require_operator!, only: %i[start stop restart kill pause unpause remove bulk_action prune]
 
+  # Filter/per_page/pagination links inside rows.html.erb point back here
+  # (not directly at rows_containers_path) so the URL bar reflects the
+  # current filter state. When that request arrives as a turbo-frame
+  # navigation (clicked from inside the already-loaded frame, not a
+  # fresh page load), render the rows content directly instead of the
+  # skeleton+lazy-frame shell — nesting a turbo-frame inside the very
+  # frame being re-navigated is an unreliable pattern that silently
+  # never re-fired the follow-up fetch.
   def index
+    rows if turbo_frame_request?
   end
 
   def rows
@@ -32,14 +41,14 @@ class ContainersController < ApplicationController
     missing_ids = @containers.map { |c| c["Id"] } - resources_cache.keys
     resources_cache.merge!(fetch_container_resources(missing_ids)) if missing_ids.any?
     @container_resources = resources_cache.slice(*@containers.map { |c| c["Id"] })
-    render layout: false
+    render "rows", layout: false
   rescue => e
     @containers = []
     @container_resources = {}
     @total = @page = @total_pages = 0
     @selected_statuses = []
     @infra_filter = nil
-    render layout: false
+    render "rows", layout: false
   end
 
   def show
