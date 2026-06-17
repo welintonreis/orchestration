@@ -1,6 +1,6 @@
 <% page_title @git_stack.name %>
 
-<% content_for :actions do %>
+<% content_for :title_actions do %>
   <%= button_to "Deploy Now", deploy_git_stack_path(@git_stack), method: :post,
         class: "inline-flex items-center gap-2 bg-cyan-700 hover:bg-cyan-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
   <%= link_to "Edit", edit_git_stack_path(@git_stack),

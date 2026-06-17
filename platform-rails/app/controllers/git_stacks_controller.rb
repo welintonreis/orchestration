@@ -55,7 +55,7 @@ class GitStacksController < ApplicationController
   private
 
   def set_git_stack
-    @git_stack = GitStack.find(params[:id])
+    @git_stack = GitStack.find_by!(uuid: params[:id])
   end
 
   def git_stack_params

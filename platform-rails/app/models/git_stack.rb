@@ -15,6 +15,12 @@ class GitStack < ApplicationRecord
   validates :yaml_content, presence: true, if: -> { source_type == "yaml" }
 
   before_create :generate_webhook_token
+  before_create :generate_uuid
+
+  # URLs show the uuid (git_stacks/<uuid>) instead of the sequential
+  # integer PK — keeps the PK itself untouched (no FK migration risk)
+  # while not leaking "stack #1" / enumerable IDs in the address bar.
+  def to_param = uuid
 
   def webhook_url(base_url)
     "#{base_url}/webhooks/#{webhook_token}/deploy"
@@ -24,5 +30,9 @@ class GitStack < ApplicationRecord
 
   def generate_webhook_token
     self.webhook_token = SecureRandom.hex(32)
+  end
+
+  def generate_uuid
+    self.uuid = SecureRandom.uuid
   end
 end
