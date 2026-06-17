@@ -131,6 +131,10 @@ class DockerClient
     end
   end
 
+  def container_stats_snapshot(id)
+    get("/containers/#{id}/stats", query: { stream: false })
+  end
+
   # Images
 
   def images

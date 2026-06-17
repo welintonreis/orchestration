@@ -18,7 +18,7 @@ module Swarm
     def show
       @service = current_docker_client.service(params[:id])
       @tasks   = current_docker_client.service_tasks(params[:id])
-                   .sort_by { |t| -(Time.parse(t["UpdatedAt"]) rescue 0) }
+                   .sort_by { |t| -(Time.parse(t["UpdatedAt"]).to_f rescue 0.0) }
       @nodes   = current_docker_client.nodes.index_by { |n| n["ID"] }
       @max_cpu = [@nodes.values.sum { |n| n.dig("Description", "Resources", "NanoCPUs").to_f / 1_000_000_000 }.ceil, 1].max
     rescue => e

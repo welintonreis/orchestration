@@ -135,7 +135,12 @@ class ContainersController < ApplicationController
   CONCURRENCY = 12
 
   def fetch_container_resource(id, client = current_docker_client)
-    Rails.cache.fetch("container_resource/#{active_environment&.id}/#{id}", expires_in: 20.seconds) do
+    # Memory/CPU limits never change for a running container without
+    # recreating it (which gets a new Id, naturally busting this key), so
+    # a long TTL is safe and makes the infra filter fast on repeat use —
+    # it has to inspect every container (not just the current page) to
+    # filter+paginate correctly, which is the expensive part otherwise.
+    Rails.cache.fetch("container_resource/#{active_environment&.id}/#{id}", expires_in: 1.hour) do
       detail    = client.container(id)
       memory    = detail.dig("HostConfig", "Memory").to_i
       nano_cpus = detail.dig("HostConfig", "NanoCpus").to_i
