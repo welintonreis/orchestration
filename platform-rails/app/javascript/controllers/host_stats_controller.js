@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { createConsumer } from "@rails/actioncable"
+import consumer from "channels/consumer"
 
 const COLORS = { cpu: "#39FF14", ram: "#22d3ee", disk: "#e8f4f8" }
 const EMPTY  = "#1f2937"
@@ -9,8 +9,7 @@ export default class extends Controller {
   static targets = ["cpuBar", "cpuPct", "ramBar", "ramPct", "diskBar", "diskPct"]
 
   connect() {
-    this.consumer     = createConsumer()
-    this.subscription = this.consumer.subscriptions.create(
+    this.subscription = consumer.subscriptions.create(
       { channel: "HostStatsChannel" },
       { received: (data) => { if (!data.error) this.update(data) } }
     )
@@ -18,7 +17,6 @@ export default class extends Controller {
 
   disconnect() {
     this.subscription?.unsubscribe()
-    this.consumer?.disconnect()
   }
 
   update({ cpu, ram, disk }) {

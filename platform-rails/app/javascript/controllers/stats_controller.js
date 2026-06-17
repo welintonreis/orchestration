@@ -1,13 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
-import { createConsumer } from "@rails/actioncable"
+import consumer from "channels/consumer"
 
 export default class extends Controller {
   static targets = ["cpuBar", "cpuText", "memBar", "memText"]
   static values  = { containerId: String, endpoint: String }
 
   connect() {
-    this.consumer     = createConsumer()
-    this.subscription = this.consumer.subscriptions.create(
+    this.subscription = consumer.subscriptions.create(
       {
         channel:      "StatsChannel",
         container_id: this.containerIdValue,
@@ -23,7 +22,6 @@ export default class extends Controller {
 
   disconnect() {
     this.subscription?.unsubscribe()
-    this.consumer?.disconnect()
   }
 
   updateStats(stats) {

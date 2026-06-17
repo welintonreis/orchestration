@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { createConsumer } from "@rails/actioncable"
+import consumer from "channels/consumer"
 
 const XTERM_VERSION    = "5.3.0"
 const XTERM_FIT_VER    = "0.8.0"
@@ -20,7 +20,6 @@ export default class extends Controller {
   disconnect() {
     this.running = false
     this.subscription?.unsubscribe()
-    this.consumer?.disconnect()
     this.term?.dispose()
     this.resizeObserver?.disconnect()
   }
@@ -83,8 +82,7 @@ export default class extends Controller {
   }
 
   #setupCable() {
-    this.consumer     = createConsumer()
-    this.subscription = this.consumer.subscriptions.create(
+    this.subscription = consumer.subscriptions.create(
       { channel: "TerminalChannel", container_id: this.containerIdValue, endpoint: this.endpointValue, user: this.userValue || null },
       {
         connected:    ()     => this.term.write("\x1b[1;32m● Connected\x1b[0m\r\n"),

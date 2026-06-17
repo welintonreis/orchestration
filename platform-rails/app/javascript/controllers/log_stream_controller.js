@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { createConsumer } from "@rails/actioncable"
+import consumer from "channels/consumer"
 
 const ERROR_RE  = /\b(error|exception|fatal|panic|critical)\b/i
 const WARN_RE   = /\b(warn(?:ing)?|deprecated)\b/i
@@ -12,8 +12,7 @@ export default class extends Controller {
   connect() {
     this.lines      = []
     this.autoScroll = true
-    this.consumer   = createConsumer()
-    this.subscription = this.consumer.subscriptions.create(
+    this.subscription = consumer.subscriptions.create(
       {
         channel:      "LogsChannel",
         container_id: this.containerIdValue,
@@ -37,7 +36,6 @@ export default class extends Controller {
 
   disconnect() {
     this.subscription?.unsubscribe()
-    this.consumer?.disconnect()
   }
 
   filter() {
