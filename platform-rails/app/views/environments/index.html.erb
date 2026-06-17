@@ -31,7 +31,7 @@
       forcing 3 columns on wide screens stretched each card to fill its
       slot and left it looking sparse/empty — auto-fill sizes columns to
       a sane card width and only adds more as there's content to fill them. %>
-  <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,380px))]">
+  <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(380px,440px))]">
     <% @environments.each do |env| %>
       <% s = @stats[env.id] || {} %>
       <% is_active = active_environment&.id == env.id %>
@@ -199,19 +199,19 @@
         <%# ── Footer: quick nav if active ── %>
         <% if is_active && s[:up] %>
           <div class="px-5 py-3 border-t border-gray-800/60 flex items-center gap-1 overflow-x-auto">
-            <%= link_to root_path, class: "flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to root_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
               <%= sidebar_icon(:dashboard, css_class: "w-3.5 h-3.5") %>Dashboard
             <% end %>
-            <%= link_to containers_path, class: "flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to containers_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
               <%= sidebar_icon(:containers, css_class: "w-3.5 h-3.5") %>Containers
             <% end %>
-            <%= link_to swarm_services_path, class: "flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to swarm_services_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
               <%= sidebar_icon(:services, css_class: "w-3.5 h-3.5") %>Serviços
             <% end %>
-            <%= link_to images_path, class: "flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to images_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
               <%= sidebar_icon(:images, css_class: "w-3.5 h-3.5") %>Imagens
             <% end %>
-            <%= link_to volumes_path, class: "flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to volumes_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
               <%= sidebar_icon(:volumes, css_class: "w-3.5 h-3.5") %>Volumes
             <% end %>
           </div>
