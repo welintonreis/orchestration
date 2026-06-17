@@ -49,15 +49,20 @@
            }">
 
         <%# ══════════════════════════════ SIDEBAR ══════════════════════════════ %>
-        <nav class="relative flex flex-col flex-shrink-0 bg-gray-900 border-r border-gray-800 transition-all duration-200 h-screen sticky top-0"
+        <nav class="relative flex flex-col flex-shrink-0 bg-gray-900 border-r border-gray-800 transition-all duration-200 h-screen sticky top-0 w-56"
              :class="sb ? 'w-56' : 'w-14'">
 
-          <%# ── Brand ── %>
-          <div class="flex items-center h-14 border-b border-gray-800 overflow-hidden flex-shrink-0 transition-all duration-200"
+          <%# ── Brand ──
+              Static fallback classes (w-10 h-10, px-3 gap-3) match the sb:true
+              default below — alpine.min.js loads deferred, so without these
+              the nav/img have no width constraint at all until Alpine's
+              :class bindings evaluate, causing a visible flash of an
+              oversized logo and full-width sidebar on every full page load. %>
+          <div class="flex items-center h-14 border-b border-gray-800 overflow-hidden flex-shrink-0 transition-all duration-200 px-3 gap-3"
                :class="sb ? 'px-3 gap-3' : 'justify-center px-2'">
 
             <img src="/redhusky-logo.png"
-                 class="flex-shrink-0 rounded-full transition-all duration-200"
+                 class="flex-shrink-0 rounded-full transition-all duration-200 w-10 h-10"
                  :class="sb ? 'w-10 h-10' : 'w-8 h-8'"
                  alt="RedHusky">
 
@@ -69,7 +74,7 @@
 
           <%# ── Sidebar toggle ── %>
           <button @click="sb = !sb"
-                  class="flex items-center border-b border-gray-800 text-gray-500 hover:text-gray-200 hover:bg-gray-800/60 transition-colors"
+                  class="flex items-center border-b border-gray-800 text-gray-500 hover:text-gray-200 hover:bg-gray-800/60 transition-colors justify-end px-3 py-1.5 w-full"
                   :class="sb ? 'justify-end px-3 py-1.5 w-full' : 'justify-center py-1.5 w-full'">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0" :class="sb ? '' : 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="11 17 6 12 11 7"/>
