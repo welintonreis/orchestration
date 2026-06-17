@@ -15,6 +15,11 @@ docker build \
   -t "${IMAGE}" \
   "$ROOT/platform-rails/"
 
+# Swarm bind mounts require the host source path to exist before the
+# container starts — the container's own entrypoint can't create it,
+# that's too late (the scheduler already rejected the task by then).
+mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}"
+
 echo "==> Deploying stack ${STACK}"
 IMAGE="${IMAGE}" \
 RAILS_MASTER_KEY="$(cat "$ROOT/platform-rails/config/master.key" 2>/dev/null || echo "${RAILS_MASTER_KEY:-}")" \

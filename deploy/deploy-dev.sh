@@ -15,6 +15,8 @@ docker build \
   -t "${IMAGE}" \
   "$ROOT/platform-rails/"
 
+mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks-dev}"
+
 echo "==> Deploying stack ${STACK}"
 IMAGE="${IMAGE}" \
 RAILS_MASTER_KEY="$(cat "$ROOT/platform-rails/config/master.key" 2>/dev/null || echo "${RAILS_MASTER_KEY:-}")" \
