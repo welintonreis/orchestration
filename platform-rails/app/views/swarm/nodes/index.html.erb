@@ -1,4 +1,5 @@
 <% page_title "Swarm Nodes" %>
+<% page_subtitle "Nós do cluster Swarm — disponibilidade, papel e recursos de cada host" %>
 
 <% content_for :page_icon do %>
   <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 32 32">
@@ -66,7 +67,14 @@
             end
           %>
           <tr class="hover:bg-gray-800/30 transition-colors">
-            <td class="px-4 py-3 font-mono text-gray-100 font-medium"><%= hostname %></td>
+            <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 flex-shrink-0 rounded bg-gray-800 border border-gray-700/60 flex items-center justify-center">
+                    <%= sidebar_icon(:nodes).html_safe %>
+                  </div>
+                  <span class="font-mono text-gray-100 font-medium"><%= hostname %></span>
+                </div>
+              </td>
             <td class="px-4 py-3">
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border <%= role_classes %>">
                 <%= role %>

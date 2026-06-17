@@ -1,4 +1,5 @@
 <% page_title "Swarm" %>
+<% page_subtitle "Visão geral do cluster Swarm — nós, serviços e saúde da orquestração" %>
 
 <% content_for :page_icon do %>
   <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 32 32">
@@ -146,7 +147,7 @@
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Availability</th>
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Engine</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">CPUs / RAM</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"><%= cpu_icon(css_class: "w-3.5 h-3.5 inline") %> CPU / <%= ram_icon(css_class: "w-3.5 h-3.5 inline") %> RAM</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-800">

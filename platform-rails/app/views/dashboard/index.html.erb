@@ -1,4 +1,5 @@
 <% page_title "Dashboard" %>
+<% page_subtitle "Visão geral do ambiente Docker — métricas, alertas e status dos serviços" %>
 
 <% content_for :page_icon do %>
   <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24">
@@ -146,56 +147,86 @@
         </div>
       </div>
 
+      <%# ── Resource bars — live via HostStatsChannel ── %>
+      <% cpu_f  = @latest_metric ? [(@latest_metric.cpu_percent  * 40 / 100.0).round, 40].min : 0 %>
+      <% ram_f  = @latest_metric ? [(@latest_metric.ram_percent  * 40 / 100.0).round, 40].min : 0 %>
+      <% disk_f = @latest_metric ? [(@latest_metric.disk_percent * 40 / 100.0).round, 40].min : 0 %>
+      <% cpu_v  = @latest_metric ? ("%.1f" % @latest_metric.cpu_percent)  : "—" %>
+      <% ram_v  = @latest_metric ? ("%.1f" % @latest_metric.ram_percent)  : "—" %>
+      <% disk_v = @latest_metric ? ("%.1f" % @latest_metric.disk_percent) : "—" %>
+
+      <div class="border-t border-gray-800 pt-3 space-y-3"
+           data-controller="host-stats">
+
+        <%# CPU %>
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs text-gray-500">CPU</span>
+            <span class="text-xs font-mono font-semibold" style="color:#39FF14"
+                  data-host-stats-target="cpuPct"><%= cpu_v %>%</span>
+          </div>
+          <div class="flex gap-[2px]" data-host-stats-target="cpuBar">
+            <% 40.times do |i| %>
+              <div class="h-2 flex-1 rounded-[1px]" style="background:<%= i < cpu_f ? '#39FF14' : '#1f2937' %>"></div>
+            <% end %>
+          </div>
+        </div>
+
+        <%# RAM %>
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs text-gray-500">RAM</span>
+            <span class="text-xs font-mono font-semibold text-cyan-400"
+                  data-host-stats-target="ramPct"><%= ram_v %>%</span>
+          </div>
+          <div class="flex gap-[2px]" data-host-stats-target="ramBar">
+            <% 40.times do |i| %>
+              <div class="h-2 flex-1 rounded-[1px]" style="background:<%= i < ram_f ? '#22d3ee' : '#1f2937' %>"></div>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Disk %>
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-xs text-gray-500">Disk</span>
+            <span class="text-xs font-mono font-semibold" style="color:#e8f4f8"
+                  data-host-stats-target="diskPct"><%= disk_v %>%</span>
+          </div>
+          <div class="flex gap-[2px]" data-host-stats-target="diskBar">
+            <% 40.times do |i| %>
+              <div class="h-2 flex-1 rounded-[1px]" style="background:<%= i < disk_f ? '#e8f4f8' : '#1f2937' %>"></div>
+            <% end %>
+          </div>
+        </div>
+
+      </div>
+
+      <%# ── Uptime / Last reboot ── %>
+      <div class="border-t border-gray-800 pt-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500">Último Boot</span>
+          <span class="text-xs font-mono text-gray-300"><%= @last_boot_at.strftime("%d/%m/%Y %H:%M") %></span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500">Uptime</span>
+          <% ud = @uptime_secs / 86400; uh = (@uptime_secs % 86400) / 3600; um = (@uptime_secs % 3600) / 60 %>
+          <span class="text-xs font-mono font-bold text-white tracking-wider">
+            <%= "%02dD %02dH %02dMIN" % [ud, uh, um] %>
+          </span>
+        </div>
+      </div>
+
     </dl>
   </div>
 
-  <%# Host Metrics card — auto-refreshes via Turbo Frame every 30s %>
+  <%# Top Processes card — auto-refreshes via Turbo Frame every 10s %>
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-    <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Host Metrics</h2>
-    <%= turbo_frame_tag "host-metrics",
-          src: metrics_latest_path,
-          data: { controller: "metrics-refresh", "metrics-refresh-interval-value": 30000 } do %>
-      <% if @latest_metric %>
-        <div class="space-y-4">
-          <%= render "dashboard/metric_bar", label: "CPU",  value: @latest_metric.cpu_percent,
-                sparkline: sparkline_svg(@metrics_24h, :cpu_percent) %>
-          <%= render "dashboard/metric_bar", label: "RAM",  value: @latest_metric.ram_percent,
-                sparkline: sparkline_svg(@metrics_24h, :ram_percent) %>
-          <%= render "dashboard/metric_bar", label: "Disk", value: @latest_metric.disk_percent,
-                sparkline: sparkline_svg(@metrics_24h, :disk_percent) %>
-        </div>
-        <div class="border-t border-gray-800 mt-5 pt-4">
-          <div class="text-xs text-gray-500 mb-3">Load Average</div>
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <div class="text-lg font-bold font-mono <%= percent_color(@latest_metric.load_1m * 10) %>">
-                <%= "%.2f" % @latest_metric.load_1m %>
-              </div>
-              <div class="text-xs text-gray-600 mt-0.5">1 min</div>
-            </div>
-            <div>
-              <div class="text-lg font-bold font-mono <%= percent_color(@latest_metric.load_5m * 10) %>">
-                <%= "%.2f" % @latest_metric.load_5m %>
-              </div>
-              <div class="text-xs text-gray-600 mt-0.5">5 min</div>
-            </div>
-            <div>
-              <div class="text-lg font-bold font-mono <%= percent_color(@latest_metric.load_15m * 10) %>">
-                <%= "%.2f" % @latest_metric.load_15m %>
-              </div>
-              <div class="text-xs text-gray-600 mt-0.5">15 min</div>
-            </div>
-          </div>
-        </div>
-        <div class="mt-3 text-xs text-gray-600 text-right">
-          Updated <%= human_age(@latest_metric.created_at) %>
-        </div>
-      <% else %>
-        <div class="flex flex-col items-center justify-center h-40 text-center">
-          <p class="text-sm text-gray-500">No metrics yet</p>
-          <p class="text-xs text-gray-600 mt-1">Metrics are collected periodically by the background job</p>
-        </div>
-      <% end %>
+    <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Top Processes</h2>
+    <%= turbo_frame_tag "top-processes",
+          src: metrics_processes_path,
+          data: { controller: "metrics-refresh", "metrics-refresh-interval-value": 10000 } do %>
+      <div class="flex items-center justify-center h-40 text-sm text-gray-600">Carregando...</div>
     <% end %>
   </div>
 

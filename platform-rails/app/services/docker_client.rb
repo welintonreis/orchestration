@@ -58,6 +58,16 @@ class DockerClient
     delete("/containers/#{id}", query: { force: force ? 1 : 0 })
   end
 
+  def containers_prune
+    post("/containers/prune")
+  end
+
+  def container_create(name: nil, image: "busybox:latest", binds: [], cmd: ["sh"])
+    body = { Image: image, Cmd: cmd, HostConfig: { Binds: binds }, Tty: false, AttachStdout: false, AttachStderr: false }
+    query = name ? { name: name } : {}
+    post("/containers/create", query: query, body: body)
+  end
+
   def container_logs(id, tail: 100, timestamps: false, &block)
     params = { stdout: 1, stderr: 1, follow: block_given? ? 1 : 0, tail: tail, timestamps: timestamps ? 1 : 0 }
 
@@ -74,6 +84,40 @@ class DockerClient
     body[:User] = user if user.present?
     body[:Env]  = Array(env).presence || ["TERM=xterm-256color"]
     post("/containers/#{container_id}/exec", body: body)
+  end
+
+  def exec_run_output(container_id, cmd)
+    body = { AttachStdin: false, AttachStdout: true, AttachStderr: true, Tty: false, Cmd: cmd }
+    exec_resp = post("/containers/#{container_id}/exec", body: body)
+    exec_id = exec_resp["Id"]
+    opts = {
+      path:    "/v1.47/exec/#{exec_id}/start",
+      headers: headers,
+      body:    { Detach: false, Tty: false }.to_json
+    }
+    response = @connection.post(**opts)
+    raise_for_status(response)
+    demux_stream(response.body)
+  end
+
+  def container_archive_get(id, path)
+    response = @connection.get(
+      path:    "/v1.47/containers/#{id}/archive",
+      query:   { path: path },
+      headers: { "Accept" => "application/x-tar" }
+    )
+    raise_for_status(response)
+    response.body
+  end
+
+  def container_archive_put(id, path, tar_data)
+    response = @connection.put(
+      path:    "/v1.47/containers/#{id}/archive",
+      query:   { path: path },
+      headers: { "Content-Type" => "application/x-tar" },
+      body:    tar_data
+    )
+    raise_for_status(response)
   end
 
   def exec_resize(exec_id, rows:, cols:)
@@ -97,8 +141,16 @@ class DockerClient
     get("/images/#{id}/json")
   end
 
+  def image_history(id)
+    get("/images/#{id}/history")
+  end
+
   def image_remove(id, force: false)
     delete("/images/#{id}", query: { force: force ? 1 : 0 })
+  end
+
+  def images_prune
+    post("/images/prune")
   end
 
   # Volumes
@@ -111,8 +163,9 @@ class DockerClient
     delete("/volumes/#{name}", query: { force: force ? 1 : 0 })
   end
 
-  def system_df
-    get("/system/df")
+  def system_df(type: nil)
+    query = type ? { type: type } : {}
+    get("/system/df", query: query)
   end
 
   # Networks
@@ -123,6 +176,16 @@ class DockerClient
 
   def network_remove(id)
     delete("/networks/#{id}")
+  end
+
+  def network_create(name:, driver: "bridge", attachable: false, subnet: nil, gateway: nil)
+    body = { Name: name, Driver: driver, Attachable: attachable, CheckDuplicate: true }
+    if subnet.present?
+      config = { Subnet: subnet }
+      config[:Gateway] = gateway if gateway.present?
+      body[:IPAM] = { Driver: "default", Config: [config] }
+    end
+    post("/networks/create", body: body)
   end
 
   # Swarm
@@ -147,6 +210,24 @@ class DockerClient
     spec["Mode"]["Replicated"] ||= {}
     spec["Mode"]["Replicated"]["Replicas"] = replicas
     post("/services/#{id}/update", query: { version: version }, body: spec)
+  end
+
+  def service_update(id)
+    svc     = service(id)
+    version = svc.dig("Version", "Index")
+    spec    = JSON.parse(svc["Spec"].to_json)
+    yield spec if block_given?
+    post("/services/#{id}/update", query: { version: version }, body: spec)
+  end
+
+  def service_rollback(id)
+    svc     = service(id)
+    version = svc.dig("Version", "Index")
+    post("/services/#{id}/rollback", query: { version: version }, body: {})
+  end
+
+  def service_tasks(service_id)
+    get("/tasks", query: { filters: { service: { service_id => true } }.to_json })
   end
 
   def nodes

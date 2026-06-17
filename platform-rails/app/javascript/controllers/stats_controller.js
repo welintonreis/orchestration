@@ -30,20 +30,20 @@ export default class extends Controller {
     const cpu = this.calcCpu(stats)
     const mem = this.calcMem(stats)
 
-    if (this.hasCpuBarTarget) {
-      this.cpuBarTarget.style.width = `${cpu.toFixed(1)}%`
-      this.cpuBarTarget.className   = this.cpuBarTarget.className.replace(/bg-\w+-400/, this.barColor(cpu))
-    }
-    if (this.hasCpuTextTarget) {
-      this.cpuTextTarget.textContent = `${cpu.toFixed(1)}%`
-    }
-    if (this.hasMemBarTarget) {
-      this.memBarTarget.style.width = `${mem.toFixed(1)}%`
-      this.memBarTarget.className   = this.memBarTarget.className.replace(/bg-\w+-400/, this.barColor(mem))
-    }
-    if (this.hasMemTextTarget) {
-      this.memTextTarget.textContent = `${mem.toFixed(1)}%`
-    }
+    if (this.hasCpuBarTarget)  this.updateSegments(this.cpuBarTarget, cpu)
+    if (this.hasCpuTextTarget) this.cpuTextTarget.textContent = `${cpu.toFixed(1)}%`
+    if (this.hasMemBarTarget)  this.updateSegments(this.memBarTarget, mem)
+    if (this.hasMemTextTarget) this.memTextTarget.textContent = `${mem.toFixed(1)}%`
+  }
+
+  updateSegments(container, pct) {
+    const segs   = Array.from(container.querySelectorAll("[data-index]"))
+    const filled = Math.round((pct / 100) * segs.length)
+    const color  = this.segColor(pct)
+    segs.forEach((seg, i) => {
+      seg.classList.remove("bg-gray-700", "bg-green-400", "bg-yellow-400", "bg-red-400")
+      seg.classList.add(i < filled ? color : "bg-gray-700")
+    })
   }
 
   calcCpu(stats) {
@@ -65,7 +65,7 @@ export default class extends Controller {
     } catch { return 0 }
   }
 
-  barColor(pct) {
+  segColor(pct) {
     if (pct >= 80) return "bg-red-400"
     if (pct >= 60) return "bg-yellow-400"
     return "bg-green-400"

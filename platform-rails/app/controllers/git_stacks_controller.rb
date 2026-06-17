@@ -9,7 +9,7 @@ class GitStacksController < ApplicationController
   end
 
   def new
-    @git_stack = GitStack.new(compose_file: "docker-compose.yml", deploy_mode: "swarm_stack", auto_update: false, poll_interval: 300)
+    @git_stack = GitStack.new(source_type: "git", compose_file: "docker-compose.yml", deploy_mode: "swarm_stack", auto_update: false, poll_interval: 300)
     @environments    = Environment.order(:name)
     @git_connections = GitConnection.order(:name)
   end
@@ -60,8 +60,8 @@ class GitStacksController < ApplicationController
 
   def git_stack_params
     params.require(:git_stack).permit(
-      :name, :compose_file, :deploy_mode,
-      :auto_update, :poll_interval,
+      :name, :source_type, :compose_file, :deploy_mode,
+      :auto_update, :poll_interval, :yaml_content,
       :environment_id, :git_connection_id
     )
   end

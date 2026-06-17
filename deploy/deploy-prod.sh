@@ -1,27 +1,32 @@
 #!/usr/bin/env bash
+# deploy-prod.sh — build local + deploy prod stack via versioned tag (sem registry)
 set -euo pipefail
 
-REPO="registry.gitlab.redhusky.com.br/redhusk/orchestration"
-TAG="${1:-latest}"
-IMAGE="${REPO}:${TAG}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION="$(cat "$ROOT/VERSION")"
+TAG="v${VERSION}"
+IMAGE="redhusk/orchestration:${TAG}"
 STACK="orchestration-prod"
 
-echo "==> Building Rails image: ${IMAGE}"
+echo "==> Version: ${VERSION}  Image: ${IMAGE}"
+
 docker build \
   --platform linux/amd64 \
   -t "${IMAGE}" \
-  platform-rails/
-
-echo "==> Pushing to registry"
-docker push "${IMAGE}"
+  "$ROOT/platform-rails/"
 
 echo "==> Deploying stack ${STACK}"
 IMAGE="${IMAGE}" \
-RAILS_MASTER_KEY="$(cat platform-rails/config/master.key 2>/dev/null || echo "${RAILS_MASTER_KEY}")" \
+RAILS_MASTER_KEY="$(cat "$ROOT/platform-rails/config/master.key" 2>/dev/null || echo "${RAILS_MASTER_KEY:-}")" \
 docker stack deploy \
-  --compose-file deploy/orchestration.stack.yml \
-  --with-registry-auth \
+  --compose-file "$ROOT/deploy/orchestration.stack.yml" \
+  --resolve-image never \
   "${STACK}"
 
-echo "==> Done. Service:"
-docker service ls --filter "name=${STACK}_web"
+echo "==> Updating service to ${IMAGE}"
+docker service update \
+  --image "${IMAGE}" \
+  "${STACK}_web"
+
+echo "✓ Deploy ${TAG} concluído"
+echo "   URL: https://orchestration.redhusky.com.br"

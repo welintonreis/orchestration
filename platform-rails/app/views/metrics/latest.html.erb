@@ -2,10 +2,10 @@
   <% if @latest_metric %>
     <div class="space-y-4">
       <%= render "dashboard/metric_bar",
-            label: "CPU",  value: @latest_metric.cpu_percent,
+            label: "CPU", icon: cpu_icon(css_class: "w-3.5 h-3.5").html_safe, value: @latest_metric.cpu_percent,
             sparkline: sparkline_svg(@metrics_24h, :cpu_percent) %>
       <%= render "dashboard/metric_bar",
-            label: "RAM",  value: @latest_metric.ram_percent,
+            label: "RAM", icon: ram_icon(css_class: "w-3.5 h-3.5").html_safe, value: @latest_metric.ram_percent,
             sparkline: sparkline_svg(@metrics_24h, :ram_percent) %>
       <%= render "dashboard/metric_bar",
             label: "Disk", value: @latest_metric.disk_percent,

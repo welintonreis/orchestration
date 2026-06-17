@@ -1,0 +1,341 @@
+<turbo-frame id="containers-content">
+<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+     data-controller="filter bulk-select"
+     data-bulk-select-url-value="<%= bulk_action_containers_path %>">
+  <% if @containers.empty? %>
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+      </svg>
+      <p class="text-gray-400 font-medium">No containers found</p>
+      <p class="text-sm text-gray-600 mt-1">
+        <% if @selected_statuses.any? %>
+          No containers match selected filters.<br>
+          <%= link_to "Show all containers", containers_path, class: "text-cyan-400 hover:text-cyan-300" %>
+        <% else %>
+          No containers exist on this Docker host.
+        <% end %>
+      </p>
+    </div>
+  <% else %>
+    <div class="px-4 pt-3 pb-2 border-b border-gray-800 flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
+        <input
+          type="text"
+          placeholder="Filter by name…"
+          data-filter-target="input"
+          data-action="input->filter#filter"
+          class="w-56 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-600"
+        >
+        <div class="flex items-center bg-gray-800 border border-gray-700 rounded-lg p-0.5 gap-0.5">
+          <%= link_to "Todos", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: nil, page: 1),
+                class: "px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter.blank? ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" %>
+          <%= link_to containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: "limited", page: 1),
+                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'limited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" do %>
+            <%= infra_icon(parametrized: true, css_class: "w-4 h-4") %>
+            Parametrizado
+          <% end %>
+          <%= link_to containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: "unlimited", page: 1),
+                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'unlimited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" do %>
+            <%= infra_icon(parametrized: false, css_class: "w-4 h-4") %>
+            Ilimitado
+          <% end %>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span data-bulk-select-target="count" class="hidden text-xs text-gray-400 whitespace-nowrap"></span>
+        <% if Current.user&.admin? || Current.user&.operator? %>
+          <%= button_to prune_containers_path, method: :delete,
+                class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-900/40 hover:bg-orange-800/50 text-orange-300 border border-orange-700/40 rounded-lg transition-colors",
+                data: { turbo_confirm: "Remover todos os containers parados? Esta ação não pode ser desfeita." } do %>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Limpar Parados
+          <% end %>
+          <div class="flex items-center">
+            <%
+              bulk_btns = [
+                { action: "start",   label: "Start",   cls: "bg-green-600 hover:bg-green-500 rounded-l-lg" },
+                { action: "pause",   label: "Pause",   cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
+                { action: "unpause", label: "Resume",  cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
+                { action: "stop",    label: "Stop",    cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
+                { action: "restart", label: "Restart", cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
+                { action: "kill",    label: "Kill",    cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
+                { action: "remove",  label: "Remove",  cls: "bg-red-600   hover:bg-red-500   border-l border-black/30 rounded-r-lg" },
+              ]
+            %>
+            <% bulk_btns.each do |b| %>
+              <button
+                type="button"
+                disabled
+                data-bulk-select-target="btn"
+                data-bulk-action="<%= b[:action] %>"
+                data-action="click->bulk-select#perform"
+                class="w-16 px-1 py-1.5 text-xs font-medium text-white transition-all text-center
+                       disabled:opacity-30 disabled:cursor-not-allowed
+                       <%= b[:cls] %>"
+              ><%= b[:label] %></button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-800 text-left">
+          <th class="px-4 py-3 w-8">
+            <input type="checkbox"
+                   data-bulk-select-target="selectAll"
+                   data-action="change->bulk-select#toggleAll"
+                   class="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 text-cyan-500 cursor-pointer accent-cyan-500">
+          </th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name / ID / Image</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Health</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center" title="Limites de memória e CPU configurados">Infra</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stats</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rede / IP</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ports</th>
+          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800/60">
+        <% @containers.each do |c| %>
+          <% container_name = c["Names"]&.first&.sub(/^\//, "") || c["Id"][0..11] %>
+          <% state = c["State"].to_s.downcase %>
+          <% raw_image = c["Image"] || "" %>
+          <% image_short = raw_image.split("@").first %>
+          <%
+            res = @container_resources[c["Id"]]
+            if res.nil?
+              infra_status = "unknown"
+              infra_parametrized = nil
+              infra_title = "Não foi possível verificar limites"
+            else
+              infra_parametrized = res[:memory] && res[:cpu]
+              infra_status = infra_parametrized ? "limited" : "unlimited"
+              parts = []
+              parts << (res[:memory] ? "✓ Memória: #{human_bytes(res[:mem_bytes])}" : "✗ Memória: ilimitada")
+              if res[:cpu]
+                cpu_val = res[:nano_cpus] > 0 ? "#{"%.2f" % (res[:nano_cpus].to_f / 1_000_000_000)} CPU" : "CpuQuota=#{res[:cpu_quota]}"
+                parts << "✓ CPU: #{cpu_val}"
+              else
+                parts << "✗ CPU: ilimitada"
+              end
+              infra_title = parts.join(" | ")
+            end
+          %>
+          <tr class="hover:bg-gray-800/40 transition-colors group"
+              data-filter-target="row"
+              data-name="<%= container_name %>"
+              data-infra="<%= infra_status %>">
+            <td class="px-4 py-3 w-8">
+              <input type="checkbox"
+                     value="<%= c["Id"] %>"
+                     data-bulk-select-target="checkbox"
+                     data-action="change->bulk-select#toggle"
+                     class="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 text-cyan-500 cursor-pointer accent-cyan-500">
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-start gap-2">
+                <div class="w-10 h-10 flex-shrink-0 rounded bg-gray-800 border border-gray-700/60 flex items-center justify-center mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-cyan-400" viewBox="0 0 256 256">
+                    <path d="M0 0h256v256H0z" fill="none"/>
+                    <path fill="currentColor" d="M236.4 70.65L130.2 40.31a8 8 0 0 0-3.33-.23L21.74 55.1A16.08 16.08 0 0 0 8 70.94v114.12a16.08 16.08 0 0 0 13.74 15.84l105.13 15a8.5 8.5 0 0 0 1.13.1a8 8 0 0 0 2.2-.31l106.2-30.34A16.07 16.07 0 0 0 248 170V86a16.07 16.07 0 0 0-11.6-15.35M96 120H80V62.94l40-5.72v141.56l-40-5.72V136h16a8 8 0 0 0 0-16M24 70.94l40-5.72V120H48a8 8 0 0 0 0 16h16v54.78l-40-5.72Zm112 126.45V58.61L232 86v84Z"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <%= link_to container_path(c["Id"]), class: "font-mono text-gray-200 hover:text-cyan-400 transition-colors font-medium", data: { turbo_frame: "_top" } do %>
+                    <%= container_name %>
+                  <% end %>
+                  <div class="text-xs text-gray-600 font-mono mt-0.5"><%= c["Id"][0..11] %></div>
+                  <div class="text-xs text-gray-500 font-mono mt-0.5 truncate max-w-[240px]" title="<%= image_short %>"><%= image_short %></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="<%= status_badge(c["State"]) %>"><%= c["Status"].to_s.sub(/\s*\(.*?\)\s*$/, "") %></span>
+            </td>
+            <td class="px-4 py-3">
+              <%
+                raw_status = c["Status"].to_s
+                health_sym = if raw_status.include?("(unhealthy)")
+                               :unhealthy
+                             elsif raw_status.include?("(healthy)")
+                               :healthy
+                             elsif raw_status.include?("(health: starting)")
+                               :unknown
+                             else
+                               nil
+                             end
+              %>
+              <% if health_sym %>
+                <span class="inline-flex items-center gap-1.5 text-sm"
+                      title="<%= health_sym %>">
+                  <%= heartbeat_icon(health_sym, css_class: "w-5 h-5") %>
+                  <span class="<%= health_sym == :healthy ? 'text-green-400' : health_sym == :unhealthy ? 'text-red-400' : 'text-yellow-400' %> capitalize font-medium"><%= health_sym %></span>
+                </span>
+              <% elsif state == "running" %>
+                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-900/30 text-yellow-600 border border-yellow-800/40" title="Container sem healthcheck configurado">
+                  Sem HC
+                </span>
+              <% else %>
+                <span class="text-gray-700 text-xs">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <% if infra_parametrized.nil? %>
+                <span class="text-gray-700 text-xs">—</span>
+              <% else %>
+                <%= infra_icon(parametrized: infra_parametrized, css_class: "w-4 h-4 inline-block", title: infra_title) %>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <% if state == "running" %>
+                <div
+                  data-controller="stats"
+                  data-stats-container-id-value="<%= c["Id"] %>"
+                  data-stats-endpoint-value="<%= active_environment&.endpoint || 'unix:///var/run/docker.sock' %>"
+                  class="flex flex-col gap-2 min-w-[130px]"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-gray-500 flex items-center flex-shrink-0"><%= cpu_icon(css_class: "w-6 h-6") %></span>
+                    <div class="flex items-end gap-px" data-stats-target="cpuBar">
+                      <% 20.times do |i| %>
+                        <div class="w-1 h-4 rounded-sm bg-gray-700 transition-colors duration-300" data-index="<%= i %>"></div>
+                      <% end %>
+                    </div>
+                    <span data-stats-target="cpuText" class="text-sm font-mono text-gray-400 w-12 text-right tabular-nums">—</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-gray-500 flex items-center flex-shrink-0"><%= ram_icon(css_class: "w-6 h-6") %></span>
+                    <div class="flex items-end gap-px" data-stats-target="memBar">
+                      <% 20.times do |i| %>
+                        <div class="w-1 h-4 rounded-sm bg-gray-700 transition-colors duration-300" data-index="<%= i %>"></div>
+                      <% end %>
+                    </div>
+                    <span data-stats-target="memText" class="text-sm font-mono text-gray-400 w-12 text-right tabular-nums">—</span>
+                  </div>
+                </div>
+              <% else %>
+                <span class="text-gray-700 text-xs">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <% nets = (c.dig("NetworkSettings", "Networks") || {}).select { |_, n| n["IPAddress"].present? } %>
+              <% if nets.any? %>
+                <div class="flex flex-col gap-1">
+                  <% nets.each do |net_name, n| %>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] text-gray-600 truncate max-w-[90px]" title="<%= net_name %>"><%= net_name %></span>
+                      <span class="text-xs font-mono text-gray-400"><%= n["IPAddress"] %></span>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <span class="text-gray-700">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <% ports = c["Ports"]&.select { |p| p["PublicPort"] }&.map { |p| "#{p["PublicPort"]}:#{p["PrivatePort"]}" } || [] %>
+              <% if ports.any? %>
+                <div class="flex flex-col gap-0.5">
+                  <% ports.first(3).each do |port| %>
+                    <span class="text-xs font-mono text-gray-400"><%= port %></span>
+                  <% end %>
+                  <% if ports.size > 3 %>
+                    <span class="text-xs text-gray-600">+<%= ports.size - 3 %> more</span>
+                  <% end %>
+                </div>
+              <% else %>
+                <span class="text-gray-700">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-2" data-controller="loading">
+                <% if Current.user&.admin? || Current.user&.operator? %>
+                  <% if state == "running" %>
+                    <%= button_to stop_container_path(c["Id"]), method: :post,
+                          class: "p-1 rounded bg-gray-800 hover:bg-yellow-900/40 text-gray-400 hover:text-yellow-300 border border-gray-700 hover:border-yellow-800 transition-colors",
+                          title: "Stop", data: { turbo_confirm: "Stop container #{container_name}?", action: "click->loading#start" } do %>
+                      <%= action_icon(:stop, css_class: "w-4 h-4") %>
+                    <% end %>
+                    <%= button_to restart_container_path(c["Id"]), method: :post,
+                          class: "p-1 rounded bg-gray-800 hover:bg-cyan-900/40 text-gray-400 hover:text-cyan-300 border border-gray-700 hover:border-cyan-800 transition-colors",
+                          title: "Restart", data: { turbo_confirm: "Restart container #{container_name}?", action: "click->loading#start" } do %>
+                      <%= action_icon(:restart, css_class: "w-4 h-4") %>
+                    <% end %>
+                    <%= button_to kill_container_path(c["Id"]), method: :post,
+                          class: "p-1 rounded bg-gray-800 hover:bg-red-900/40 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
+                          title: "Kill", form: { class: "inline-flex" },
+                          data: { turbo_confirm: "Force kill #{container_name}? Immediate and ungraceful.", action: "click->loading#start" } do %>
+                      <%= action_icon(:kill, css_class: "w-4 h-4") %>
+                    <% end %>
+                    <%= button_to pause_container_path(c["Id"]), method: :post,
+                          class: "p-1 rounded bg-gray-800 hover:bg-blue-900/40 text-gray-400 hover:text-blue-300 border border-gray-700 hover:border-blue-800 transition-colors",
+                          title: "Pause", data: { action: "click->loading#start" } do %>
+                      <%= action_icon(:pause, css_class: "w-4 h-4") %>
+                    <% end %>
+                  <% elsif state == "paused" %>
+                    <%= button_to unpause_container_path(c["Id"]), method: :post,
+                          class: "p-1 rounded bg-gray-800 hover:bg-green-900/40 text-gray-400 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
+                          title: "Unpause", data: { action: "click->loading#start" } do %>
+                      <%= action_icon(:unpause, css_class: "w-4 h-4") %>
+                    <% end %>
+                  <% else %>
+                    <%= button_to start_container_path(c["Id"]), method: :post,
+                          class: "p-1 rounded bg-gray-800 hover:bg-green-900/40 text-gray-400 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
+                          title: "Start", data: { action: "click->loading#start" } do %>
+                      <%= action_icon(:play, css_class: "w-4 h-4") %>
+                    <% end %>
+                    <%= button_to remove_container_path(c["Id"]), method: :delete,
+                          class: "p-1 rounded bg-gray-800 hover:bg-red-900/40 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
+                          title: "Remove", data: { turbo_confirm: "Remove container #{container_name}? Cannot be undone.", action: "click->loading#start" } do %>
+                      <%= action_icon(:remove, css_class: "w-4 h-4") %>
+                    <% end %>
+                  <% end %>
+                <% end %>
+                <%= link_to container_logs_path(c["Id"]),
+                      class: "p-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-200 border border-gray-700 transition-colors",
+                      title: "Logs", data: { turbo_frame: "_top" } do %>
+                  <%= action_icon(:logs, css_class: "w-4 h-4") %>
+                <% end %>
+                <% if state == "running" %>
+                  <%= link_to container_terminal_path(c["Id"]),
+                        class: "p-1 rounded bg-gray-800 hover:bg-green-900/40 text-gray-400 hover:text-green-300 border border-gray-700 hover:border-green-800 transition-colors",
+                        title: "Terminal", data: { turbo_frame: "_top" } do %>
+                    <%= action_icon(:terminal, css_class: "w-4 h-4") %>
+                  <% end %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <div class="px-4 py-3 border-t border-gray-800 flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-500">Por página:</span>
+        <% [10, 20, 30, 50, 100].each do |n| %>
+          <%= link_to n, containers_path(statuses: @selected_statuses, per_page: n, infra: @infra_filter, page: 1),
+                class: "px-2 py-0.5 text-xs rounded transition-colors #{(@per_page || 10) == n ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}" %>
+        <% end %>
+        <%= link_to "Todos", containers_path(statuses: @selected_statuses, per_page: 0, infra: @infra_filter, page: 1),
+              class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}" %>
+      </div>
+      <div class="flex items-center gap-1 text-xs text-gray-500">
+        <span><%= @total %> container<%= @total == 1 ? "" : "s" %><%= @selected_statuses.any? ? " (#{@selected_statuses.join(", ")})" : " total" %></span>
+        <% if @per_page && @total_pages > 1 %>
+          <span class="mx-1 text-gray-700">·</span>
+          <%= link_to "‹", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: @infra_filter, page: @page - 1),
+                class: "px-2 py-0.5 rounded #{@page <= 1 ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}" %>
+          <span class="text-gray-400"><%= @page %> / <%= @total_pages %></span>
+          <%= link_to "›", containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: @infra_filter, page: @page + 1),
+                class: "px-2 py-0.5 rounded #{@page >= @total_pages ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+</turbo-frame>

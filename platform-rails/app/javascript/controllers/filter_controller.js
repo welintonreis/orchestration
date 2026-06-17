@@ -6,8 +6,8 @@ export default class extends Controller {
   filter() {
     const q = this.inputTarget.value.toLowerCase().trim()
     this.rowTargets.forEach((row) => {
-      const name = (row.dataset.name || "").toLowerCase()
-      row.hidden = q.length > 0 && !name.includes(q)
+      const name   = (row.dataset.name || "").toLowerCase()
+      row.hidden   = q.length > 0 && !name.includes(q)
     })
   }
 

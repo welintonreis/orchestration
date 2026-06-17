@@ -43,8 +43,8 @@
           ["Versão Docker", @info.dig("ServerVersion") || "—"],
           ["OS", @info.dig("OperatingSystem") || "—"],
           ["Kernel", @info.dig("KernelVersion") || "—"],
-          ["CPUs", @info.dig("NCPU")&.to_s || "—"],
-          ["RAM Total", @info.dig("MemTotal") ? "#{(@info["MemTotal"] / 1024.0 / 1024.0 / 1024.0).round(1)} GB" : "—"],
+          [cpu_icon(css_class: "w-3.5 h-3.5 inline mr-1") + " CPUs".html_safe, @info.dig("NCPU")&.to_s || "—"],
+          [ram_icon(css_class: "w-3.5 h-3.5 inline mr-1") + " RAM Total".html_safe, @info.dig("MemTotal") ? "#{(@info["MemTotal"] / 1024.0 / 1024.0 / 1024.0).round(1)} GB" : "—"],
           ["Containers", @info.dig("Containers")&.to_s || "—"],
         ].each do |label, value| %>
           <div class="flex justify-between py-1.5 border-b border-gray-800">

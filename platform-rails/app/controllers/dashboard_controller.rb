@@ -22,5 +22,9 @@ class DashboardController < ApplicationController
     @metrics_24h    = HostMetric.last_24h.order(:created_at)
     @unread_alerts  = Alert.unread.recent.limit(5)
     @unread_count   = Alert.unread.count
+
+    uptime_s       = File.read("/proc/uptime").split.first.to_f rescue 0
+    @uptime_secs   = uptime_s.to_i
+    @last_boot_at  = Time.now - @uptime_secs
   end
 end

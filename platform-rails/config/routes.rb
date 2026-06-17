@@ -8,7 +8,9 @@ Rails.application.routes.draw do
 
   resources :containers, only: %i[index show] do
     collection do
+      get  :rows
       post :bulk_action
+      delete :prune
     end
     member do
       post :start
@@ -24,14 +26,33 @@ Rails.application.routes.draw do
   get "containers/:id/terminal", to: "containers#terminal", as: :container_terminal
   resources :images, only: %i[index show] do
     member { delete :remove }
-    collection { delete :batch_remove }
+    collection do
+      get  :rows
+      delete :batch_remove
+      delete :prune_orphans
+    end
   end
   resources :volumes, only: %i[index show] do
-    member { delete :remove }
-    collection { delete :batch_remove }
+    member do
+      delete :remove
+      get    :browse
+      get    :download
+      post   :upload
+      delete :file_delete
+      post   :file_mkdir
+      post   :file_rename
+    end
+    collection do
+      get  :rows
+      delete :batch_remove
+    end
   end
   resources :networks, only: %i[index show] do
     member { delete :remove }
+    collection do
+      get  :rows
+      post :create
+    end
   end
   resources :environments do
     member do
@@ -42,8 +63,16 @@ Rails.application.routes.draw do
   get  "swarm",                    to: "swarm/dashboard#index", as: :swarm
   get  "swarm/nodes",              to: "swarm/nodes#index",     as: :swarm_nodes
   get  "swarm/services",           to: "swarm/services#index",  as: :swarm_services
-  post "swarm/services/:id/scale", to: "swarm/services#scale",  as: :scale_swarm_service
-  post "swarm/services/:id/drain", to: "swarm/services#drain",  as: :drain_swarm_service
+  get  "swarm/services/rows",      to: "swarm/services#rows",   as: :rows_swarm_services
+  get  "swarm/services/:id",       to: "swarm/services#show",   as: :swarm_service
+  post "swarm/services/:id/scale",    to: "swarm/services#scale",       as: :scale_swarm_service
+  post "swarm/services/:id/drain",            to: "swarm/services#drain",              as: :drain_swarm_service
+  post "swarm/services/:id/update_resources", to: "swarm/services#update_resources",   as: :update_resources_swarm_service
+  post "swarm/services/:id/update_config",    to: "swarm/services#update_update_config", as: :update_config_swarm_service
+  post "swarm/services/:id/update_logging",   to: "swarm/services#update_logging",     as: :update_logging_swarm_service
+  post "swarm/services/:id/update_image",     to: "swarm/services#update_image",       as: :update_image_swarm_service
+  post "swarm/services/:id/rollback",         to: "swarm/services#rollback",           as: :rollback_swarm_service
+  post "swarm/services/bulk_scale",           to: "swarm/services#bulk_scale",         as: :bulk_scale_swarm_services
   resources :git_connections
   resources :git_stacks do
     member { post :deploy }
@@ -56,6 +85,7 @@ Rails.application.routes.draw do
 
   resources :stacks, only: %i[index] do
     collection do
+      get  :rows
       post "services/:service_id/scale", action: :scale_service,  as: :scale_stack_service
       post "services/:service_id/drain", action: :drain_stack_service, as: :drain_stack_service
     end
@@ -65,13 +95,18 @@ Rails.application.routes.draw do
   end
   resources :secrets, only: %i[index] do
     member { delete :remove }
+    collection do
+      get  :rows
+      delete :batch_remove
+    end
   end
 
   resources :users do
     member { post :toggle_active }
   end
   resources :audit_logs, only: %i[index]
-  get "metrics/latest", to: "metrics#latest", as: :metrics_latest
+  get "metrics/latest",    to: "metrics#latest",    as: :metrics_latest
+  get "metrics/processes", to: "metrics#processes", as: :metrics_processes
 
   # ── Teams & Roles ──
   resources :teams do

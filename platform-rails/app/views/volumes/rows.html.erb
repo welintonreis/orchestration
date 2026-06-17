@@ -1,0 +1,139 @@
+<turbo-frame id="volumes-content">
+<% all_names = @volumes.map { |v| v["Name"] }
+   all_names_js = "[#{all_names.map { |n| "'#{n}'" }.join(',')}]" %>
+
+<% if @volumes.empty? %>
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+    </svg>
+    <p class="text-gray-400 text-sm">No volumes found.</p>
+    <p class="text-gray-600 text-xs mt-1">Create a volume with <span class="font-mono text-gray-500">docker volume create &lt;name&gt;</span></p>
+  </div>
+<% else %>
+  <div x-data="{
+    perPage: 10, page: 1, total: <%= @volumes.size %>,
+    selected: [],
+    toggle(name) {
+      if (this.selected.includes(name)) {
+        this.selected = this.selected.filter(s => s !== name);
+      } else {
+        this.selected.push(name);
+      }
+    },
+    toggleAll(names) {
+      const allSel = names.every(n => this.selected.includes(n));
+      this.selected = allSel ? [] : [...names];
+    }
+  }">
+    <div x-show="selected.length > 0"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="mb-4 flex items-center justify-between bg-red-950/40 border border-red-800/50 rounded-xl px-4 py-3">
+      <span class="text-sm text-red-300">
+        <span x-text="selected.length"></span> volume(s) selecionado(s)
+      </span>
+      <form method="post" action="<%= batch_remove_volumes_path %>"
+            data-turbo-confirm="Remover os volumes selecionados? Esta ação não pode ser desfeita.">
+        <input type="hidden" name="_method" value="delete">
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <template x-for="name in selected" :key="name">
+          <input type="hidden" name="names[]" :value="name">
+        </template>
+        <button type="submit"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-red-700/50 hover:bg-red-600/60 text-red-200 border border-red-600/60 rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Remover selecionados
+        </button>
+      </form>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-800/50">
+          <tr>
+            <th class="px-4 py-3 w-10">
+              <input type="checkbox"
+                     class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-cyan-500 focus:ring-0 cursor-pointer"
+                     :checked="<%= all_names_js %>.every(n => selected.includes(n))"
+                     :indeterminate="selected.length > 0 && !<%= all_names_js %>.every(n => selected.includes(n))"
+                     @change="toggleAll(<%= all_names_js %>)">
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Driver</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Tamanho</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Mountpoint</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Created</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+          <% @volumes.each_with_index do |v, idx| %>
+            <%
+              created_at = begin
+                v["CreatedAt"].present? ? Time.parse(v["CreatedAt"]) : nil
+              rescue
+                nil
+              end
+              vol_size = v["_size"].to_i
+            %>
+            <tr class="hover:bg-gray-800/30 transition-colors"
+              x-show="perPage === 0 || ((<%= idx %>) >= (page - 1) * perPage && (<%= idx %>) < page * perPage)">
+              <td class="px-4 py-3">
+                <input type="checkbox"
+                       class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-cyan-500 focus:ring-0 cursor-pointer"
+                       :checked="selected.includes('<%= v["Name"].gsub("'", "\\\\'") %>')"
+                       @change="toggle('<%= v["Name"].gsub("'", "\\\\'") %>')">
+              </td>
+              <td class="px-4 py-3 font-mono text-gray-200 max-w-[240px]">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="truncate" title="<%= v["Name"] %>"><%= v["Name"] %></span>
+                  <% if v["_refs"] == 0 %>
+                    <span class="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-yellow-900/40 text-yellow-400 border border-yellow-700/50 whitespace-nowrap">Não utilizado</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-gray-400"><%= v["Driver"] %></td>
+              <td class="px-4 py-3 text-gray-300 text-xs">
+                <% if vol_size > 0 %>
+                  <%= human_bytes(vol_size) %>
+                <% else %>
+                  <span class="text-gray-600">—</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 font-mono text-gray-500 text-xs max-w-[180px]">
+                <span class="truncate block" title="<%= v["Mountpoint"] %>"><%= v["Mountpoint"] %></span>
+              </td>
+              <td class="px-4 py-3 text-gray-400 text-xs"><%= human_age(created_at) %></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <%= link_to browse_volume_path(v["Name"]),
+                        class: "p-1.5 rounded bg-gray-800 hover:bg-cyan-900/30 text-gray-400 hover:text-cyan-400 border border-gray-700 hover:border-cyan-800 transition-colors",
+                        title: "Explorar arquivos", data: { turbo_frame: "_top" } do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
+                  <% end %>
+                  <%= button_to remove_volume_path(v["Name"]),
+                        method: :delete,
+                        data: { turbo_confirm: "Remover volume \"#{v["Name"]}\"? Não pode ser desfeito." },
+                        class: "p-1.5 rounded bg-gray-800 hover:bg-red-900/40 text-gray-400 hover:text-red-400 border border-gray-700 hover:border-red-800 transition-colors",
+                        title: "Remover" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <%= render "shared/table_pagination" %>
+    </div>
+  </div>
+<% end %>
+</turbo-frame>

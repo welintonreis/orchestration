@@ -45,6 +45,14 @@
       </div>
 
       <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
+        <dt class="text-sm text-gray-500">Created</dt>
+        <dd class="text-sm text-gray-200">
+          <% created = @container["Created"] %>
+          <%= created.present? ? human_age(Time.parse(created)) : "—" %>
+        </dd>
+      </div>
+
+      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
         <dt class="text-sm text-gray-500">Started</dt>
         <dd class="text-sm text-gray-200">
           <% started = @container.dig("State", "StartedAt") %>

@@ -1,22 +1,30 @@
 class StacksController < ApplicationController
   def index
+  end
+
+  def rows
     all_services = current_docker_client.services rescue []
+    @nodes       = current_docker_client.nodes    rescue []
     @stacks = all_services
       .group_by { |s| s.dig("Spec", "Labels", "com.docker.stack.namespace") }
       .reject    { |ns, _| ns.nil? }
       .map do |ns, svcs|
+        active = svcs.any? { |s| s.dig("ServiceStatus", "RunningTasks").to_i > 0 }
         {
           "Name"        => ns,
           "Services"    => svcs.size,
           "Orchestrator"=> "Swarm",
           "CreatedAt"   => svcs.map { |s| s["CreatedAt"] }.min,
-          "ServiceList" => svcs
+          "ServiceList" => svcs,
+          "Active"      => active
         }
       end
       .sort_by { |s| s["Name"] }
+    render layout: false
   rescue => e
     @stacks = []
-    flash.now[:alert] = "Erro Docker: #{e.message}"
+    @nodes  = []
+    render layout: false
   end
 
   def scale_service

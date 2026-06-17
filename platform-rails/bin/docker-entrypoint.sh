@@ -11,4 +11,6 @@ if [ -S /var/run/docker.sock ]; then
   usermod -aG "$DOCKER_GID" rails 2>/dev/null || true
 fi
 
+gosu rails bin/rails db:migrate 2>&1
+
 exec gosu rails "$@"
