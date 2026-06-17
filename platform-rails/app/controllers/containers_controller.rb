@@ -21,6 +21,19 @@ class ContainersController < ApplicationController
     all_containers  = all_containers.select { |c| selected.include?(c["State"].to_s.downcase) } if selected.any?
     @selected_statuses = selected
 
+    # Was client-side JS filtering only the rows already rendered on the
+    # current page (e.g. 10 of N containers) — search needs to run against
+    # every container before pagination, same as the other filters.
+    @query = params[:q].to_s.strip
+    if @query.present?
+      q = @query.downcase
+      all_containers = all_containers.select do |c|
+        name  = (c["Names"]&.first&.sub(/^\//, "") || "").downcase
+        image = c["Image"].to_s.downcase
+        name.include?(q) || image.include?(q) || c["Id"].to_s.start_with?(q)
+      end
+    end
+
     @sort     = SORTABLE_COLUMNS.include?(params[:sort].to_s) ? params[:sort].to_s : nil
     @sort_dir = params[:dir] == "desc" ? "desc" : "asc"
 
@@ -58,6 +71,7 @@ class ContainersController < ApplicationController
     @total = @page = @total_pages = 0
     @selected_statuses = []
     @infra_filter = nil
+    @query = ""
     @sort = nil
     @sort_dir = "asc"
     render "rows", layout: false

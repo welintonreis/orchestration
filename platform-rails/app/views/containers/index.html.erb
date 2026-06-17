@@ -39,10 +39,11 @@
     <%= hidden_field_tag "infra", params[:infra] if params[:infra].present? %>
     <%= hidden_field_tag "sort", params[:sort] if params[:sort].present? %>
     <%= hidden_field_tag "dir", params[:dir] if params[:dir].present? %>
+    <%= hidden_field_tag "q", params[:q] if params[:q].present? %>
   <% end %>
 <% end %>
 
-<turbo-frame id="containers-content" src="<%= rows_containers_path(statuses: params[:statuses], per_page: params[:per_page], infra: params[:infra], sort: params[:sort], dir: params[:dir], page: params[:page]) %>">
+<turbo-frame id="containers-content" src="<%= rows_containers_path(statuses: params[:statuses], per_page: params[:per_page], infra: params[:infra], sort: params[:sort], dir: params[:dir], q: params[:q], page: params[:page]) %>">
   <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
     <div class="px-4 pt-3 pb-2 border-b border-gray-800 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
