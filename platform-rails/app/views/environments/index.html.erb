@@ -119,39 +119,37 @@
         <%# ── Stats grid ── %>
         <% if s[:up] %>
           <div class="px-5 py-4">
-            <%# Row 1: Stacks / Services / Containers (+ container status, since
-                rodando/saudáveis describe containers specifically — keeping
-                them in their own column instead of a floating row that read
-                as belonging to whichever column it happened to center under) %>
+            <%# Row 1: Stacks / Serviços / Containers, each with its own pair
+                of status badges underneath — same running/stopped-style
+                pairing in all 3 columns instead of one ambiguous floating
+                row that only ever described containers. %>
+            <%
+              stacks_total   = s[:stacks].to_i
+              stopped        = s[:containers].to_i - s[:running].to_i
+            %>
             <div class="grid grid-cols-3 gap-3 mb-4">
               <div class="text-center">
-                <div class="text-xl font-bold text-white"><%= s[:stacks] || 0 %></div>
+                <div class="text-xl font-bold text-white"><%= stacks_total %></div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Stacks</div>
+                <div class="flex flex-col items-center gap-1 mt-1.5">
+                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:stacks_running]} rodando" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:stacks_stopped]} parada#{s[:stacks_stopped] == 1 ? "" : "s"}" } %>
+                </div>
               </div>
               <div class="text-center">
                 <div class="text-xl font-bold text-white"><%= s[:services] || 0 %></div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Serviços</div>
+                <div class="flex flex-col items-center gap-1 mt-1.5">
+                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:services_complete]} completos" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-orange-900/40 text-orange-300 border-orange-800/40", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:services_degraded]} degradado#{s[:services_degraded] == 1 ? "" : "s"}" } %>
+                </div>
               </div>
               <div class="text-center">
                 <div class="text-xl font-bold text-white"><%= s[:containers] || 0 %></div>
                 <div class="text-[10px] text-gray-500 mt-0.5">Containers</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-900/40 text-green-300 border border-green-800/40 whitespace-nowrap">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
-                    <%= s[:running] %> rodando
-                  </span>
-                  <% if s[:healthy].to_i > 0 %>
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-900/40 text-green-300 border border-green-800/40 whitespace-nowrap">
-                      <%= heartbeat_icon(:healthy, css_class: "w-3 h-3") %>
-                      <%= s[:healthy] %> saudáveis
-                    </span>
-                  <% end %>
-                  <% if s[:unhealthy].to_i > 0 %>
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-900/40 text-red-300 border border-red-800/40 whitespace-nowrap">
-                      <%= heartbeat_icon(:unhealthy, css_class: "w-3 h-3") %>
-                      <%= s[:unhealthy] %> não saudáveis
-                    </span>
-                  <% end %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:running]} rodando" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs, css_class: "whitespace-nowrap")) { "#{stopped} parado#{stopped == 1 ? "" : "s"}" } %>
                 </div>
               </div>
             </div>
