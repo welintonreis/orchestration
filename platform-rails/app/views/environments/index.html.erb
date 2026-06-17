@@ -31,7 +31,7 @@
       forcing 3 columns on wide screens stretched each card to fill its
       slot and left it looking sparse/empty — auto-fill sizes columns to
       a sane card width and only adds more as there's content to fill them. %>
-  <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(380px,440px))]">
+  <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(380px,460px))]">
     <% @environments.each do |env| %>
       <% s = @stats[env.id] || {} %>
       <% is_active = active_environment&.id == env.id %>
