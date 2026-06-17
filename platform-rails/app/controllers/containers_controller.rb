@@ -13,18 +13,28 @@ class ContainersController < ApplicationController
     rows if turbo_frame_request?
   end
 
+  SORTABLE_COLUMNS = %w[name status health infra].freeze
+
   def rows
     all_containers  = current_docker_client.containers(all: true)
     selected        = Array(params[:statuses]).map(&:downcase).reject(&:blank?)
     all_containers  = all_containers.select { |c| selected.include?(c["State"].to_s.downcase) } if selected.any?
     @selected_statuses = selected
 
+    @sort     = SORTABLE_COLUMNS.include?(params[:sort].to_s) ? params[:sort].to_s : nil
+    @sort_dir = params[:dir] == "desc" ? "desc" : "asc"
+
     @infra_filter = params[:infra].presence
     resources_cache = {}
-    if @infra_filter.present? && @infra_filter != "all"
+    # infra needs every container inspected up front to filter+sort
+    # correctly (not just the current page) — same fan-out as the filter
+    # already needed, just also triggered by sort=infra now.
+    if (@infra_filter.present? && @infra_filter != "all") || @sort == "infra"
       resources_cache = fetch_container_resources(all_containers.map { |c| c["Id"] })
-      all_containers  = all_containers.select { |c| infra_status_for(resources_cache[c["Id"]]) == @infra_filter }
+      all_containers  = all_containers.select { |c| infra_status_for(resources_cache[c["Id"]]) == @infra_filter } if @infra_filter.present? && @infra_filter != "all"
     end
+
+    all_containers = sort_containers(all_containers, @sort, @sort_dir, resources_cache) if @sort
 
     @total          = all_containers.size
     @per_page       = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 10)
@@ -48,6 +58,8 @@ class ContainersController < ApplicationController
     @total = @page = @total_pages = 0
     @selected_statuses = []
     @infra_filter = nil
+    @sort = nil
+    @sort_dir = "asc"
     render "rows", layout: false
   end
 
@@ -184,5 +196,31 @@ class ContainersController < ApplicationController
   def infra_status_for(res)
     return "unknown" if res.nil?
     (res[:memory] && res[:cpu]) ? "limited" : "unlimited"
+  end
+
+  def sort_containers(containers, sort, dir, resources_cache)
+    sorted = case sort
+             when "name"
+               containers.sort_by { |c| (c["Names"]&.first&.sub(/^\//, "") || c["Id"]).downcase }
+             when "status"
+               containers.sort_by { |c| c["State"].to_s.downcase }
+             when "health"
+               containers.sort_by { |c| health_rank(c) }
+             when "infra"
+               containers.sort_by { |c| infra_status_for(resources_cache[c["Id"]]) }
+             else
+               containers
+             end
+    dir == "desc" ? sorted.reverse : sorted
+  end
+
+  # Lower rank sorts first (ascending): unhealthy surfaces before healthy
+  # so the worst-off containers are visible without flipping direction.
+  def health_rank(c)
+    raw = c["Status"].to_s
+    return 0 if raw.include?("(unhealthy)")
+    return 1 if raw.include?("(health: starting)")
+    return 2 if raw.include?("(healthy)")
+    3
   end
 end
