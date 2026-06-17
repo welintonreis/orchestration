@@ -16,10 +16,14 @@ class GitConnection < ApplicationRecord
   def authenticated_url
     return repo_url unless auth_type == "token"
     uri = URI.parse(repo_url)
-    uri.user = username
-    uri.password = token_ciphertext
+    # URI's user=/password= setters require pre-escaped values — they don't
+    # escape for you. An unescaped "@" in an email-as-username (a common
+    # case for self-hosted GitLab) raises URI::InvalidComponentError, which
+    # this used to not even rescue (only InvalidURIError was caught).
+    uri.user     = URI.encode_www_form_component(username)
+    uri.password = URI.encode_www_form_component(token_ciphertext)
     uri.to_s
-  rescue URI::InvalidURIError
+  rescue URI::Error
     repo_url
   end
 end
