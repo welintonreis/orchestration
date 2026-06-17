@@ -11,6 +11,7 @@ services:
       DISK_THRESHOLD: ${DISK_THRESHOLD:-80}
       RAILS_LOG_TO_STDOUT: "true"
       RAILS_SERVE_STATIC_FILES: "true"
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-16}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
