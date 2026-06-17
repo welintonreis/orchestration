@@ -31,7 +31,7 @@
     <% @environments.each do |env| %>
       <% s = @stats[env.id] || {} %>
       <% is_active = active_environment&.id == env.id %>
-      <div class="bg-gray-900 border <%= is_active ? 'border-red-800/70' : 'border-gray-800' %> rounded-xl hover:border-gray-700 transition-colors">
+      <div class="bg-gray-900 border <%= is_active ? 'border-cyan-700/60' : 'border-gray-800' %> rounded-xl hover:border-gray-700 transition-colors">
 
         <%# ── Card header ── %>
         <div class="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-800/60">
@@ -58,7 +58,7 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <h2 class="font-semibold text-white text-sm leading-tight"><%= env.name %></h2>
                 <% if is_active %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-red-900/50 text-red-300 border-red-800/50", size: :xs)) { "ativo" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/50 text-cyan-300 border-cyan-800/50", size: :xs)) { "ativo" } %>
                 <% end %>
                 <% if s[:up] && s[:swarm] %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-300 border-cyan-800/40", size: :xs)) { "Swarm #{s[:docker_ver]}" } %>
@@ -132,7 +132,7 @@
             </div>
 
             <%# Row 2: status pills %>
-            <div class="flex items-center gap-2 mb-4 flex-wrap">
+            <div class="flex items-center justify-center gap-2 mb-4 flex-wrap">
               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-900/40 text-green-300 border border-green-800/40">
                 <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
                 <%= s[:running] %> rodando
