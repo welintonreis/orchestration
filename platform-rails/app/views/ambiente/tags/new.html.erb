@@ -5,7 +5,9 @@
   </div>
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
     <h2 class="text-lg font-semibold text-white mb-5">Criar Tag</h2>
-    <%= form_with model: [:ambiente, @tag], local: true do |f| %>
+    <%# Model is EnvironmentTag but route is ambiente_tags — same mismatch
+        as ambiente/registries, explicit url: needed. %>
+    <%= form_with model: @tag, url: ambiente_tags_path, local: true do |f| %>
       <div class="mb-4">
         <%= f.label :name, "Nome", class: "block text-xs font-medium text-gray-400 mb-1" %>
         <%= f.text_field :name, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: produção, staging, crítico" %>

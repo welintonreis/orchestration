@@ -5,7 +5,13 @@
   </div>
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
     <h2 class="text-lg font-semibold text-white mb-5">Adicionar Registry</h2>
-    <%= form_with model: [:ambiente, @registry], local: true do |f| %>
+    <%# Model is EnvironmentRegistry but the route is ambiente_registries
+        (namespace :ambiente { resources :registries }) — form_with's
+        polymorphic [:ambiente, @registry] inference derives the route
+        helper from the model's class name (ambiente_environment_registries),
+        not the controller's, so it doesn't exist. Explicit url: sidesteps it;
+        param scoping (environment_registry[...]) still comes from the model. %>
+    <%= form_with model: @registry, url: ambiente_registries_path, local: true do |f| %>
       <div class="mb-4">
         <%= f.label :environment_id, "Ambiente", class: "block text-xs font-medium text-gray-400 mb-1" %>
         <%= f.select :environment_id, options_for_select(@environments.map { |e| [e.name, e.id] }), {}, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
