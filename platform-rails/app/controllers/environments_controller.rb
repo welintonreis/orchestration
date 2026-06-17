@@ -33,10 +33,13 @@ class EnvironmentsController < ApplicationController
         # Service complete/degraded: RunningTasks vs DesiredTasks, which
         # Docker computes from the daemon for both replicated and global
         # modes (status=1 query already requested in DockerClient#services).
+        # A service scaled to 0 replicas (desired=0) is complete, not
+        # degraded — it's exactly matching its (zero) desired state, just
+        # intentionally off. Only desired > running counts as a shortfall.
         services_complete = services.count do |s|
           desired = s.dig("ServiceStatus", "DesiredTasks").to_i
           running_tasks = s.dig("ServiceStatus", "RunningTasks").to_i
-          desired > 0 && running_tasks >= desired
+          running_tasks >= desired
         end
         services_degraded = services.size - services_complete
 
