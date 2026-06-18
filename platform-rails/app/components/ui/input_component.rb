@@ -9,7 +9,7 @@ module Ui
     # not DOM order, so baking in a default here could silently lose to
     # (or beat) whatever a caller passes via css_class. Sizing is always
     # the caller's responsibility.
-    BASE = "bg-gray-800 border border-gray-700 text-gray-200 text-sm focus:outline-none focus:border-cyan-600".freeze
+    BASE = "bg-surface-inset border border-border-subtle text-text-primary text-sm focus:outline-none focus:border-cyan-600".freeze
 
     def initialize(name:, type: :text, value: nil, placeholder: nil, min: nil, max: nil,
                     step: nil, css_class: nil, data: {}, id: nil, autocomplete: nil, html_attrs: {})

@@ -1,36 +1,36 @@
 <% page_title "New User" %>
 
 <div class="max-w-lg">
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
     <%= form_with model: @user, url: users_path do |f| %>
       <div class="space-y-4">
         <div>
-          <%= f.label :email_address, "Email", class: "block text-sm font-medium text-gray-300 mb-1" %>
+          <%= f.label :email_address, "Email", class: "block text-sm font-medium text-text-secondary mb-1" %>
           <%= f.email_field :email_address,
-                class: "w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-600 focus:outline-none focus:border-cyan-600",
+                class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600",
                 placeholder: "user@example.com",
                 required: true %>
         </div>
 
         <div>
-          <%= f.label :password, "Password", class: "block text-sm font-medium text-gray-300 mb-1" %>
+          <%= f.label :password, "Password", class: "block text-sm font-medium text-text-secondary mb-1" %>
           <%= f.password_field :password,
-                class: "w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:border-cyan-600",
+                class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-text-primary focus:outline-none focus:border-cyan-600",
                 required: true %>
         </div>
 
         <div>
-          <%= f.label :password_confirmation, "Confirm Password", class: "block text-sm font-medium text-gray-300 mb-1" %>
+          <%= f.label :password_confirmation, "Confirm Password", class: "block text-sm font-medium text-text-secondary mb-1" %>
           <%= f.password_field :password_confirmation,
-                class: "w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:border-cyan-600",
+                class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-text-primary focus:outline-none focus:border-cyan-600",
                 required: true %>
         </div>
 
         <div>
-          <%= f.label :role, "Role", class: "block text-sm font-medium text-gray-300 mb-1" %>
+          <%= f.label :role, "Role", class: "block text-sm font-medium text-text-secondary mb-1" %>
           <%= f.select :role, User::ROLES.map { |r| [r.capitalize, r] },
                 { selected: @user.role },
-                class: "w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:border-cyan-600" %>
+                class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-text-primary focus:outline-none focus:border-cyan-600" %>
         </div>
 
         <% if @user.errors.any? %>
@@ -43,8 +43,8 @@
 
         <div class="flex items-center gap-3 pt-2">
           <%= f.submit "Create User",
-                class: "px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
-          <%= link_to "Cancel", users_path, class: "text-sm text-gray-400 hover:text-gray-200 transition-colors" %>
+                class: "px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-text-primary text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
+          <%= link_to "Cancel", users_path, class: "text-sm text-text-secondary hover:text-text-primary transition-colors" %>
         </div>
       </div>
     <% end %>

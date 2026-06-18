@@ -1,33 +1,33 @@
 <% content_for :title, "Configurações Gerais" %>
 
 <div class="mb-6">
-  <h2 class="text-xl font-bold text-white">Configurações Gerais</h2>
-  <p class="text-sm text-gray-400 mt-0.5">Configurações da aplicação RedHusky</p>
+  <h2 class="text-xl font-bold text-text-primary">Configurações Gerais</h2>
+  <p class="text-sm text-text-secondary mt-0.5">Configurações da aplicação RedHusky</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <div class="lg:col-span-2 space-y-6">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <h3 class="text-sm font-semibold text-gray-200 mb-4">Identidade da Aplicação</h3>
+    <div class="bg-surface-raised border border-border rounded-xl p-6">
+      <h3 class="text-sm font-semibold text-text-primary mb-4">Identidade da Aplicação</h3>
       <%= form_with url: settings_general_path, method: :post, local: true do |f| %>
         <div class="mb-4">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Nome da Aplicação</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">Nome da Aplicação</label>
           <input type="text" name="app_name" value="<%= @settings[:app_name] %>"
-            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
         </div>
         <div class="mb-4">
-          <label class="block text-xs font-medium text-gray-400 mb-1">URL da Aplicação</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">URL da Aplicação</label>
           <input type="text" name="app_url" value="<%= @settings[:app_url] %>"
-            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500">
         </div>
-        <div class="mb-5 flex items-center justify-between py-2 border-b border-gray-800">
+        <div class="mb-5 flex items-center justify-between py-2 border-b border-border">
           <div>
-            <p class="text-sm text-gray-200">Analytics</p>
-            <p class="text-xs text-gray-500">Coleta estatísticas de uso anônimas</p>
+            <p class="text-sm text-text-primary">Analytics</p>
+            <p class="text-xs text-text-muted">Coleta estatísticas de uso anônimas</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" name="enable_analytics" value="true" <%= @settings[:enable_analytics] ? "checked" : "" %> class="sr-only peer">
-            <div class="w-10 h-6 bg-gray-700 peer-checked:bg-cyan-600 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+            <div class="w-10 h-6 bg-surface-active peer-checked:bg-cyan-600 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
           </label>
         </div>
         <button type="submit" class="btn-primary">Salvar Configurações</button>
@@ -36,8 +36,8 @@
   </div>
 
   <div class="space-y-4">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <h3 class="text-sm font-semibold text-gray-200 mb-3">Informações do Sistema</h3>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-primary mb-3">Informações do Sistema</h3>
       <div class="space-y-2 text-xs">
         <% [
           ["Versão Docker", @info.dig("ServerVersion") || "—"],
@@ -47,18 +47,18 @@
           [ram_icon(css_class: "w-3.5 h-3.5 inline mr-1") + " RAM Total".html_safe, @info.dig("MemTotal") ? "#{(@info["MemTotal"] / 1024.0 / 1024.0 / 1024.0).round(1)} GB" : "—"],
           ["Containers", @info.dig("Containers")&.to_s || "—"],
         ].each do |label, value| %>
-          <div class="flex justify-between py-1.5 border-b border-gray-800">
-            <span class="text-gray-500"><%= label %></span>
-            <span class="text-gray-300 font-mono"><%= value %></span>
+          <div class="flex justify-between py-1.5 border-b border-border">
+            <span class="text-text-muted"><%= label %></span>
+            <span class="text-text-secondary font-mono"><%= value %></span>
           </div>
         <% end %>
       </div>
     </div>
 
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <h3 class="text-sm font-semibold text-gray-200 mb-2">RedHusky</h3>
-      <p class="text-xs text-gray-500">Versão 1.0.0</p>
-      <p class="text-xs text-gray-600 mt-1">© <%= Date.current.year %> RedHusky Platform</p>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-primary mb-2">RedHusky</h3>
+      <p class="text-xs text-text-muted">Versão 1.0.0</p>
+      <p class="text-xs text-text-muted mt-1">© <%= Date.current.year %> RedHusky Platform</p>
     </div>
   </div>
 </div>

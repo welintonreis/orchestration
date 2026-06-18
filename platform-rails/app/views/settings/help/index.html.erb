@@ -1,15 +1,15 @@
 <% content_for :title, "Ajuda" %>
 
 <div class="mb-6">
-  <h2 class="text-xl font-bold text-white">Ajuda & Documentação</h2>
-  <p class="text-sm text-gray-400 mt-0.5">RedHusky v1.0.0 — Plataforma de orquestração Docker</p>
+  <h2 class="text-xl font-bold text-text-primary">Ajuda & Documentação</h2>
+  <p class="text-sm text-text-secondary mt-0.5">RedHusky v1.0.0 — Plataforma de orquestração Docker</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
   <%# Quick Start %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h3 class="text-sm font-semibold text-gray-200 mb-4">Início Rápido</h3>
-    <ol class="space-y-3 text-sm text-gray-400">
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h3 class="text-sm font-semibold text-text-primary mb-4">Início Rápido</h3>
+    <ol class="space-y-3 text-sm text-text-secondary">
       <% [
         ["Configurar Ambiente", "Em /environments, adicione o socket Docker do host (/var/run/docker.sock) ou um endpoint TCP remoto."],
         ["Ativar Ambiente", "Clique em 'Ativar' no card do ambiente para começar a gerenciá-lo."],
@@ -20,8 +20,8 @@
         <li class="flex gap-3">
           <span class="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-900/50 border border-cyan-800/50 text-cyan-400 text-xs font-bold flex items-center justify-center"><%= i + 1 %></span>
           <div>
-            <p class="font-medium text-gray-200"><%= title %></p>
-            <p class="text-xs text-gray-500 mt-0.5"><%= desc %></p>
+            <p class="font-medium text-text-primary"><%= title %></p>
+            <p class="text-xs text-text-muted mt-0.5"><%= desc %></p>
           </div>
         </li>
       <% end %>
@@ -29,8 +29,8 @@
   </div>
 
   <%# Keyboard Shortcuts %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h3 class="text-sm font-semibold text-gray-200 mb-4">Atalhos de Teclado</h3>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h3 class="text-sm font-semibold text-text-primary mb-4">Atalhos de Teclado</h3>
     <div class="space-y-2">
       <% [
         ["Recarregar dados", "R"],
@@ -42,11 +42,11 @@
         ["Colapsar/Expandir sidebar", "[ ]"],
         ["Buscar", "/"],
       ].each do |action, shortcut| %>
-        <div class="flex items-center justify-between py-1.5 border-b border-gray-800">
-          <span class="text-xs text-gray-400"><%= action %></span>
+        <div class="flex items-center justify-between py-1.5 border-b border-border">
+          <span class="text-xs text-text-secondary"><%= action %></span>
           <div class="flex items-center gap-1">
             <% shortcut.split(" ").each do |key| %>
-              <kbd class="px-2 py-0.5 bg-gray-800 border border-gray-700 rounded text-xs font-mono text-gray-300"><%= key %></kbd>
+              <kbd class="px-2 py-0.5 bg-surface-inset border border-border-subtle rounded text-xs font-mono text-text-secondary"><%= key %></kbd>
             <% end %>
           </div>
         </div>
@@ -55,8 +55,8 @@
   </div>
 
   <%# Docker Info %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h3 class="text-sm font-semibold text-gray-200 mb-4">Informações do Docker</h3>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h3 class="text-sm font-semibold text-text-primary mb-4">Informações do Docker</h3>
     <div class="space-y-2 text-xs">
       <% [
         ["Versão", @docker_info.dig("ServerVersion") || "—"],
@@ -66,17 +66,17 @@
         ["Cgroup Driver", @docker_info.dig("CgroupDriver") || "—"],
         ["Runtime", (@docker_info.dig("DefaultRuntime") || "—")],
       ].each do |label, value| %>
-        <div class="flex justify-between py-1.5 border-b border-gray-800">
-          <span class="text-gray-500"><%= label %></span>
-          <span class="text-gray-300 font-mono"><%= value %></span>
+        <div class="flex justify-between py-1.5 border-b border-border">
+          <span class="text-text-muted"><%= label %></span>
+          <span class="text-text-secondary font-mono"><%= value %></span>
         </div>
       <% end %>
     </div>
   </div>
 
   <%# Resources %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h3 class="text-sm font-semibold text-gray-200 mb-4">Recursos Úteis</h3>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h3 class="text-sm font-semibold text-text-primary mb-4">Recursos Úteis</h3>
     <div class="space-y-3">
       <% [
         ["Documentação Docker", "https://docs.docker.com", "Referência completa da API e CLI Docker"],
@@ -84,11 +84,11 @@
         ["Docker Compose Ref.", "https://docs.docker.com/compose/compose-file/", "Formato de arquivos Compose"],
         ["Reportar Bug", "https://github.com/redhusky/platform/issues", "Abra uma issue no GitHub"],
       ].each do |title, url, desc| %>
-        <div class="flex items-start gap-3 py-2 border-b border-gray-800">
-          <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        <div class="flex items-start gap-3 py-2 border-b border-border">
+          <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           <div>
             <p class="text-sm text-cyan-400"><%= title %></p>
-            <p class="text-xs text-gray-500"><%= desc %></p>
+            <p class="text-xs text-text-muted"><%= desc %></p>
           </div>
         </div>
       <% end %>

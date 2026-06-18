@@ -23,7 +23,7 @@ class HostStatsChannel < ApplicationCable::Channel
   private
 
   def collect_stats
-    { cpu: read_cpu, ram: read_ram, disk: read_disk }
+    { cpu: read_cpu, ram: read_ram, disk: read_disk, swap: read_swap }
   end
 
   def read_cpu
@@ -52,5 +52,13 @@ class HostStatsChannel < ApplicationCable::Channel
     `df / 2>/dev/null`.lines.last.to_s.split[4].to_s.tr("%", "").to_f
   rescue
     0.0
+  end
+
+  def read_swap
+    data  = File.read("#{PROC_PATH}/meminfo")
+    total = data[/SwapTotal:\s+(\d+)/, 1].to_i
+    free  = data[/SwapFree:\s+(\d+)/, 1].to_i
+    return 0.0 if total == 0
+    (((total - free).to_f / total) * 100).round(1)
   end
 end

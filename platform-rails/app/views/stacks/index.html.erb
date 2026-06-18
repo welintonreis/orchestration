@@ -11,44 +11,44 @@
   </svg>
 <% end %>
 
-<turbo-frame id="stacks-content" src="<%= rows_stacks_path %>">
+<turbo-frame id="stacks-content" src="<%= rows_stacks_path(q: params[:q], per_page: params[:per_page], page: params[:page]) %>">
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 animate-pulse">
     <% 5.times do %>
-      <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-        <div class="h-8 w-10 bg-gray-800 rounded mb-2"></div>
-        <div class="h-3 w-16 bg-gray-800 rounded"></div>
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <div class="h-8 w-10 bg-surface-inset rounded mb-2"></div>
+        <div class="h-3 w-16 bg-surface-inset rounded"></div>
       </div>
     <% end %>
   </div>
 
-  <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
-    <div class="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
-      <div class="h-3 w-16 bg-gray-800 rounded"></div>
-      <div class="h-3 w-16 bg-gray-800 rounded"></div>
+  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden animate-pulse">
+    <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+      <div class="h-3 w-16 bg-surface-inset rounded"></div>
+      <div class="h-3 w-16 bg-surface-inset rounded"></div>
     </div>
     <table class="w-full text-sm">
       <thead>
-        <tr class="border-b border-gray-800">
+        <tr class="border-b border-border">
           <th class="px-5 py-3 w-6"></th>
-          <th class="px-5 py-3"><div class="h-3 w-12 bg-gray-700 rounded"></div></th>
-          <th class="px-5 py-3"><div class="h-3 w-16 bg-gray-700 rounded"></div></th>
-          <th class="px-5 py-3"><div class="h-3 w-20 bg-gray-700 rounded"></div></th>
-          <th class="px-5 py-3"><div class="h-3 w-16 bg-gray-700 rounded"></div></th>
+          <th class="px-5 py-3"><div class="h-3 w-12 bg-surface-active rounded"></div></th>
+          <th class="px-5 py-3"><div class="h-3 w-16 bg-surface-active rounded"></div></th>
+          <th class="px-5 py-3"><div class="h-3 w-20 bg-surface-active rounded"></div></th>
+          <th class="px-5 py-3"><div class="h-3 w-16 bg-surface-active rounded"></div></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800/60">
+      <tbody class="divide-y divide-border/60">
         <% 6.times do %>
           <tr>
             <td class="pl-4 py-3 w-6"></td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 bg-gray-800 rounded-lg"></div>
-                <div class="h-3.5 w-32 bg-gray-800 rounded"></div>
+                <div class="w-7 h-7 bg-surface-inset rounded-lg"></div>
+                <div class="h-3.5 w-32 bg-surface-inset rounded"></div>
               </div>
             </td>
-            <td class="px-4 py-3"><div class="h-5 w-20 bg-gray-800 rounded"></div></td>
-            <td class="px-4 py-3"><div class="h-3 w-14 bg-gray-800 rounded"></div></td>
-            <td class="px-4 py-3"><div class="h-3 w-28 bg-gray-800 rounded"></div></td>
+            <td class="px-4 py-3"><div class="h-5 w-20 bg-surface-inset rounded"></div></td>
+            <td class="px-4 py-3"><div class="h-3 w-14 bg-surface-inset rounded"></div></td>
+            <td class="px-4 py-3"><div class="h-3 w-28 bg-surface-inset rounded"></div></td>
           </tr>
         <% end %>
       </tbody>

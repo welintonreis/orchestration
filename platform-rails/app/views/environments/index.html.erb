@@ -8,7 +8,7 @@
 
 <% content_for :title_actions do %>
   <%= link_to new_environment_path,
-        class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
+        class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
     </svg>
@@ -18,13 +18,13 @@
 
 <% if @environments.empty? %>
   <div class="flex flex-col items-center justify-center py-32 text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-gray-800 mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-text-muted mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
       <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
     </svg>
-    <p class="text-gray-400 font-medium mb-1">Nenhum ambiente configurado</p>
-    <p class="text-sm text-gray-600 mb-6">Conecte um Docker host para começar a gerenciar</p>
+    <p class="text-text-secondary font-medium mb-1">Nenhum ambiente configurado</p>
+    <p class="text-sm text-text-muted mb-6">Conecte um Docker host para começar a gerenciar</p>
     <%= link_to "Adicionar ambiente", new_environment_path,
-          class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors" %>
+          class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium px-5 py-2.5 rounded-lg transition-colors" %>
   </div>
 <% else %>
   <%# auto-fill instead of a fixed column count: with only 1-2 environments,
@@ -35,14 +35,14 @@
     <% @environments.each do |env| %>
       <% s = @stats[env.id] || {} %>
       <% is_active = active_environment&.id == env.id %>
-      <div class="min-w-0 bg-gray-900 border <%= is_active ? 'border-cyan-700/60' : 'border-gray-800' %> rounded-xl hover:border-gray-700 transition-colors">
+      <div class="min-w-0 bg-surface-raised border <%= is_active ? 'border-cyan-700/60' : 'border-border' %> rounded-xl hover:border-border-subtle transition-colors">
 
         <%# ── Card header ── %>
-        <div class="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-800/60">
+        <div class="flex items-start justify-between px-5 pt-5 pb-4 border-b border-border/60">
           <div class="flex items-start gap-3">
             <%# Status dot + avatar %>
             <div class="relative flex-shrink-0">
-              <div class="w-10 h-10 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center">
+              <div class="w-10 h-10 rounded-xl bg-surface-inset border border-border-subtle flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 32 32">
                   <path fill="#3a4e55" d="M18.191 13.071H20.7v2.566h1.27a5.5 5.5 0 0 0 1.744-.292a4.5 4.5 0 0 0 .848-.383a3.15 3.15 0 0 1-.589-1.623a3.43 3.43 0 0 1 .616-2.416l.264-.305l.314.253a4 4 0 0 1 1.575 2.538a3.84 3.84 0 0 1 2.913.271l.345.2l-.181.354a3.63 3.63 0 0 1-3.648 1.74c-2.173 5.413-6.9 7.976-12.642 7.976A7.96 7.96 0 0 1 6.3 20.211l-.025-.043l-.226-.459a7.3 7.3 0 0 1-.579-3.693l.035-.38h2.143v-2.565h2.51v-2.51h5.02v-2.51h3.012v5.02Z" />
                   <path fill="#00aada" d="M26.324 14.021a3.31 3.31 0 0 0-1.418-2.821a3.07 3.07 0 0 0 .289 3.821a5.28 5.28 0 0 1-3.225 1.037H5.883a6.8 6.8 0 0 0 .667 3.737l.183.335a6 6 0 0 0 .379.569q.992.064 1.829.045a9 9 0 0 0 2.669-.389a.193.193 0 1 1 .126.365q-.135.047-.281.088a8.4 8.4 0 0 1-1.845.3c.044 0-.046.007-.046.007l-.082.007a22 22 0 0 1-2.008-.006l-.01.007a7.88 7.88 0 0 0 6.063 2.41c5.56 0 10.276-2.465 12.365-8c1.482.152 2.906-.226 3.553-1.49a3.5 3.5 0 0 0-3.122-.022" />
@@ -52,25 +52,25 @@
                 </svg>
               </div>
               <% if s[:up] %>
-                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-gray-900 rounded-full"></span>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-border rounded-full"></span>
               <% else %>
-                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-gray-600 border-2 border-gray-900 rounded-full"></span>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-gray-600 border-2 border-border rounded-full"></span>
               <% end %>
             </div>
 
             <div class="min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="font-semibold text-white text-sm leading-tight"><%= env.name %></h2>
+                <h2 class="font-semibold text-text-primary text-sm leading-tight"><%= env.name %></h2>
                 <% if is_active %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/50 text-cyan-300 border-cyan-800/50", size: :xs)) { "ativo" } %>
                 <% end %>
                 <% if s[:up] && s[:swarm] %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-300 border-cyan-800/40", size: :xs)) { "Swarm #{s[:docker_ver]}" } %>
                 <% elsif s[:up] %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs)) { "Standalone #{s[:docker_ver]}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs)) { "Standalone #{s[:docker_ver]}" } %>
                 <% end %>
               </div>
-              <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
+              <div class="flex items-center gap-2 mt-1 text-xs text-text-muted">
                 <span class="font-mono"><%= env.endpoint_type&.upcase %></span>
                 <span>·</span>
                 <span class="font-mono truncate max-w-[180px]"><%= env.endpoint %></span>
@@ -90,13 +90,13 @@
           <div class="flex items-center gap-1 flex-shrink-0 ml-2" x-data="{ menu: false }">
             <% unless is_active %>
               <%= render Ui::ButtonComponent.new(url: activate_environment_path(env), method: :post,
-                    variant: "bg-red-700 hover:bg-red-600 text-white border-transparent",
+                    variant: "bg-red-700 hover:bg-red-600 text-text-primary border-transparent",
                     size: "px-3 py-1.5 text-xs font-medium rounded-lg", label: "Conectar",
                     title: "Definir como ativo") %>
             <% end %>
             <div class="relative">
               <button @click="menu = !menu" @click.outside="menu = false"
-                      class="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-gray-800 rounded-lg transition-colors">
+                      class="p-1.5 text-text-muted hover:text-text-secondary hover:bg-surface-inset rounded-lg transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -105,7 +105,7 @@
                    x-transition:enter="transition ease-out duration-100"
                    x-transition:enter-start="opacity-0 scale-95"
                    x-transition:enter-end="opacity-100 scale-100"
-                   class="absolute right-0 top-full mt-1 w-40 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-20 overflow-hidden">
+                   class="absolute right-0 top-full mt-1 w-40 bg-surface-inset border border-border-subtle rounded-xl shadow-xl z-20 overflow-hidden">
                 <%= render Ui::ButtonComponent.new(url: environment_path(env), method: :delete,
                       variant: "text-red-400 hover:bg-red-950/40 border-transparent",
                       size: "px-3 py-2.5 text-sm rounded-none", icon: :remove, label: "Remover",
@@ -129,55 +129,55 @@
             %>
             <div class="grid grid-cols-3 gap-3 mb-4">
               <div class="text-center">
-                <div class="text-xl font-bold text-white"><%= stacks_total %></div>
-                <div class="text-[10px] text-gray-500 mt-0.5">Stacks</div>
+                <div class="text-xl font-bold text-text-primary"><%= stacks_total %></div>
+                <div class="text-[10px] text-text-muted mt-0.5">Stacks</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
                   <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:stacks_running]} rodando" } %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:stacks_stopped]} parada#{s[:stacks_stopped] == 1 ? "" : "s"}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:stacks_stopped]} parada#{s[:stacks_stopped] == 1 ? "" : "s"}" } %>
                 </div>
               </div>
               <div class="text-center">
-                <div class="text-xl font-bold text-white"><%= s[:services] || 0 %></div>
-                <div class="text-[10px] text-gray-500 mt-0.5">Serviços</div>
+                <div class="text-xl font-bold text-text-primary"><%= s[:services] || 0 %></div>
+                <div class="text-[10px] text-text-muted mt-0.5">Serviços</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
                   <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:services_complete]} completos" } %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-orange-900/40 text-orange-300 border-orange-800/40", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:services_degraded]} degradado#{s[:services_degraded] == 1 ? "" : "s"}" } %>
                 </div>
               </div>
               <div class="text-center">
-                <div class="text-xl font-bold text-white"><%= s[:containers] || 0 %></div>
-                <div class="text-[10px] text-gray-500 mt-0.5">Containers</div>
+                <div class="text-xl font-bold text-text-primary"><%= s[:containers] || 0 %></div>
+                <div class="text-[10px] text-text-muted mt-0.5">Containers</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
                   <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:running]} rodando" } %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-400 border-gray-700", size: :xs, css_class: "whitespace-nowrap")) { "#{stopped} parado#{stopped == 1 ? "" : "s"}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "whitespace-nowrap")) { "#{stopped} parado#{stopped == 1 ? "" : "s"}" } %>
                 </div>
               </div>
             </div>
             <%# Row 3: resource pills %>
-            <div class="flex flex-wrap gap-3 text-xs text-gray-400 border-t border-gray-800/60 pt-4">
+            <div class="flex flex-wrap gap-3 text-xs text-text-secondary border-t border-border/60 pt-4">
               <span class="flex items-center gap-1.5">
-                <%= sidebar_icon(:images, css_class: "w-3.5 h-3.5 text-gray-600") %>
+                <%= sidebar_icon(:images, css_class: "w-3.5 h-3.5 text-text-muted") %>
                 <span><%= s[:images] %> imagens</span>
               </span>
               <span class="flex items-center gap-1.5">
-                <%= sidebar_icon(:volumes, css_class: "w-3.5 h-3.5 text-gray-600") %>
+                <%= sidebar_icon(:volumes, css_class: "w-3.5 h-3.5 text-text-muted") %>
                 <span><%= s[:volumes] %> volumes</span>
               </span>
               <span class="flex items-center gap-1.5">
-                <%= sidebar_icon(:networks, css_class: "w-3.5 h-3.5 text-gray-600") %>
+                <%= sidebar_icon(:networks, css_class: "w-3.5 h-3.5 text-text-muted") %>
                 <span><%= s[:networks] %> redes</span>
               </span>
               <span class="flex items-center gap-1.5">
-                <%= cpu_icon(css_class: "w-3.5 h-3.5 text-gray-600") %>
+                <%= cpu_icon(css_class: "w-3.5 h-3.5 text-text-muted") %>
                 <span><%= s[:ncpu] %> CPU</span>
               </span>
               <span class="flex items-center gap-1.5">
-                <%= ram_icon(css_class: "w-3.5 h-3.5 text-gray-600") %>
+                <%= ram_icon(css_class: "w-3.5 h-3.5 text-text-muted") %>
                 <span><%= human_bytes(s[:mem_total].to_i) %> RAM</span>
               </span>
               <% if s[:swarm] %>
                 <span class="flex items-center gap-1.5">
-                  <%= sidebar_icon(:nodes, css_class: "w-3.5 h-3.5 text-gray-600") %>
+                  <%= sidebar_icon(:nodes, css_class: "w-3.5 h-3.5 text-text-muted") %>
                   <span><%= s[:nodes] %> nó<%= s[:nodes] == 1 ? "" : "s" %></span>
                 </span>
               <% end %>
@@ -185,31 +185,31 @@
           </div>
         <% else %>
           <%# Unreachable state %>
-          <div class="px-5 py-6 flex flex-col items-center text-center text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <div class="px-5 py-6 flex flex-col items-center text-center text-text-muted">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-2 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
             </svg>
             <p class="text-sm">Docker inacessível</p>
-            <p class="text-xs mt-1 text-gray-700 font-mono break-all"><%= s[:error]&.truncate(80) %></p>
+            <p class="text-xs mt-1 text-text-muted font-mono break-all"><%= s[:error]&.truncate(80) %></p>
           </div>
         <% end %>
 
         <%# ── Footer: quick nav if active ── %>
         <% if is_active && s[:up] %>
-          <div class="px-5 py-3 border-t border-gray-800/60 flex items-center gap-1 overflow-x-auto">
-            <%= link_to root_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+          <div class="px-5 py-3 border-t border-border/60 flex items-center gap-1 overflow-x-auto">
+            <%= link_to root_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-text-muted hover:text-text-secondary hover:bg-surface-inset/60 transition-colors" do %>
               <%= sidebar_icon(:dashboard, css_class: "w-3.5 h-3.5") %>Dashboard
             <% end %>
-            <%= link_to containers_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to containers_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-text-muted hover:text-text-secondary hover:bg-surface-inset/60 transition-colors" do %>
               <%= sidebar_icon(:containers, css_class: "w-3.5 h-3.5") %>Containers
             <% end %>
-            <%= link_to swarm_services_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to swarm_services_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-text-muted hover:text-text-secondary hover:bg-surface-inset/60 transition-colors" do %>
               <%= sidebar_icon(:services, css_class: "w-3.5 h-3.5") %>Serviços
             <% end %>
-            <%= link_to images_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to images_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-text-muted hover:text-text-secondary hover:bg-surface-inset/60 transition-colors" do %>
               <%= sidebar_icon(:images, css_class: "w-3.5 h-3.5") %>Imagens
             <% end %>
-            <%= link_to volumes_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors" do %>
+            <%= link_to volumes_path, class: "flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] text-text-muted hover:text-text-secondary hover:bg-surface-inset/60 transition-colors" do %>
               <%= sidebar_icon(:volumes, css_class: "w-3.5 h-3.5") %>Volumes
             <% end %>
           </div>
@@ -220,11 +220,11 @@
   </div>
 
   <%# Add environment CTA %>
-  <div class="mt-6 border-2 border-dashed border-gray-800 rounded-xl p-8 flex flex-col items-center text-center hover:border-gray-700 transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+  <div class="mt-6 border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center text-center hover:border-border-subtle transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-text-muted mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
     </svg>
-    <p class="text-sm text-gray-600 mb-3">Adicionar outro ambiente</p>
+    <p class="text-sm text-text-muted mb-3">Adicionar outro ambiente</p>
     <%= link_to "Conectar Docker host", new_environment_path,
           class: "text-sm text-red-500 hover:text-red-400 font-medium transition-colors" %>
   </div>

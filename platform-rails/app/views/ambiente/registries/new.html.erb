@@ -1,10 +1,10 @@
 <% content_for :title, "Novo Registry" %>
 <div class="max-w-lg mx-auto">
-  <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
-    <%= link_to "Registries", ambiente_registries_path, class: "hover:text-gray-300" %> <span>/</span> <span class="text-gray-300">Novo</span>
+  <div class="flex items-center gap-2 text-sm text-text-muted mb-4">
+    <%= link_to "Registries", ambiente_registries_path, class: "hover:text-text-secondary" %> <span>/</span> <span class="text-text-secondary">Novo</span>
   </div>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h2 class="text-lg font-semibold text-white mb-5">Adicionar Registry</h2>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-text-primary mb-5">Adicionar Registry</h2>
     <%# Model is EnvironmentRegistry but the route is ambiente_registries
         (namespace :ambiente { resources :registries }) — form_with's
         polymorphic [:ambiente, @registry] inference derives the route
@@ -13,20 +13,20 @@
         param scoping (environment_registry[...]) still comes from the model. %>
     <%= form_with model: @registry, url: ambiente_registries_path, local: true do |f| %>
       <div class="mb-4">
-        <%= f.label :environment_id, "Ambiente", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.select :environment_id, options_for_select(@environments.map { |e| [e.name, e.id] }), {}, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        <%= f.label :environment_id, "Ambiente", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.select :environment_id, options_for_select(@environments.map { |e| [e.name, e.id] }), {}, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
       </div>
       <div class="mb-4">
-        <%= f.label :url, "URL", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.text_field :url, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "registry.example.com" %>
+        <%= f.label :url, "URL", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_field :url, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "registry.example.com" %>
       </div>
       <div class="mb-4">
-        <%= f.label :username, "Usuário", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.text_field :username, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        <%= f.label :username, "Usuário", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_field :username, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
       </div>
       <div class="mb-5">
-        <%= f.label :encrypted_password, "Senha / Token", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.password_field :encrypted_password, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        <%= f.label :encrypted_password, "Senha / Token", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.password_field :encrypted_password, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
       </div>
       <div class="flex gap-3">
         <%= f.submit "Adicionar", class: "btn-primary" %>

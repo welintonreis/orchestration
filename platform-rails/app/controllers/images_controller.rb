@@ -22,14 +22,43 @@ class ImagesController < ApplicationController
     t2.join
 
     usage_map = (containers_result || []).each_with_object(Hash.new(0)) { |c, h| h[c["ImageID"]] += 1 if c["ImageID"] }
-    @images = (images_result || []).map do |img|
+    all_images = (images_result || []).map do |img|
       containers_count = usage_map[img["Id"]].to_i
       dangling = img["RepoTags"].nil? || img["RepoTags"] == ["<none>:<none>"]
       img.merge("_containers" => containers_count, "_dangling" => dangling, "_unused" => containers_count == 0)
     end
+
+    # Search needs to run against every image before pagination, same as
+    # containers — otherwise it'd only filter whatever page is currently
+    # rendered. Images don't have a single "name" — match against any repo
+    # tag or the image id.
+    @query = params[:q].to_s.strip
+    if @query.present?
+      q = @query.downcase
+      all_images = all_images.select do |img|
+        tags = Array(img["RepoTags"])
+        tags.any? { |t| t.to_s.downcase.include?(q) } || img["Id"].to_s.downcase.start_with?(q)
+      end
+    end
+
+    @total    = all_images.size
+    @per_page = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 10)
+    @page     = [params[:page]&.to_i || 1, 1].max
+    if @per_page
+      @total_pages = [(@total.to_f / @per_page).ceil, 1].max
+      @page        = [@page, @total_pages].min
+      @images      = all_images.drop((@page - 1) * @per_page).first(@per_page)
+    else
+      @total_pages = 1
+      @images      = all_images
+    end
+
     render "rows", layout: false
   rescue => e
     @images = []
+    @total = @page = @total_pages = 0
+    @per_page = 10
+    @query = ""
     render "rows", layout: false
   end
 

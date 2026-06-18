@@ -1,6 +1,6 @@
 <div class="max-w-xl">
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h2 class="text-base font-semibold text-white mb-6">
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h2 class="text-base font-semibold text-text-primary mb-6">
       <%= git_stack.new_record? ? "New Git Stack" : "Edit Git Stack" %>
     </h2>
 
@@ -19,87 +19,75 @@
 
       <%# Name %>
       <div>
-        <%= f.label :name, "Stack Name", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :name, "Stack Name", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.text_field :name,
               placeholder: "e.g. my-app",
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
       </div>
 
-      <%# Git Connection %>
-      <div>
-        <%= f.label :git_connection_id, "Git Connection", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
-        <%= f.select :git_connection_id,
-              @git_connections.map { |c| [c.name, c.id] },
-              { prompt: "— Select a connection —" },
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
-        <% if @git_connections.empty? %>
-          <p class="mt-1.5 text-xs text-yellow-500">
-            No git connections yet.
-            <%= link_to "Add one first", new_git_connection_path, class: "underline hover:text-yellow-400" %>.
-          </p>
-        <% end %>
-      </div>
+      <%# Git source + credentials %>
+      <%= render "git_credential_fields", f: f, git_stack: git_stack, git_credentials: @git_credentials %>
 
       <%# Environment %>
       <div>
-        <%= f.label :environment_id, "Environment", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :environment_id, "Environment", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.select :environment_id,
               @environments.map { |e| [e.name, e.id] },
               { prompt: "— Select an environment —" },
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
       </div>
 
       <%# Compose file %>
       <div>
-        <%= f.label :compose_file, "Compose File", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :compose_file, "Compose File", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.text_field :compose_file,
               placeholder: "docker-compose.yml",
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
-        <p class="mt-1.5 text-xs text-gray-500">Relative path from the repository root.</p>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+        <p class="mt-1.5 text-xs text-text-muted">Relative path from the repository root.</p>
       </div>
 
       <%# Environment variables (.env) %>
       <div>
-        <%= f.label :env_content, "Environment Variables (.env)", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :env_content, "Environment Variables (.env)", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.text_area :env_content,
               rows: 6,
               placeholder: "DATABASE_URL=postgres://user:pass@host:5432/db\nNEXTAUTH_SECRET=...",
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
-        <p class="mt-1.5 text-xs text-gray-500">Uma variável por linha (formato KEY=VALUE). Escrito como .env ao lado do compose file antes do deploy.</p>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+        <p class="mt-1.5 text-xs text-text-muted">Uma variável por linha (formato KEY=VALUE). Escrito como .env ao lado do compose file antes do deploy.</p>
       </div>
 
       <%# Deploy Mode %>
       <div>
-        <%= f.label :deploy_mode, "Deploy Mode", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :deploy_mode, "Deploy Mode", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.select :deploy_mode,
               [["Docker Swarm Stack", "swarm_stack"], ["Docker Compose", "compose"]],
               {},
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
       </div>
 
       <%# Auto-update %>
       <div class="flex items-center gap-3">
         <%= f.check_box :auto_update,
-              class: "h-4 w-4 rounded border-gray-700 bg-gray-950 text-cyan-600 focus:ring-cyan-600 focus:ring-offset-gray-950" %>
-        <%= f.label :auto_update, "Enable auto-update (poll for changes)", class: "text-sm text-gray-300" %>
+              class: "h-4 w-4 rounded border-border-subtle bg-surface-sunken text-cyan-600 focus:ring-cyan-600 focus:ring-offset-surface-sunken" %>
+        <%= f.label :auto_update, "Enable auto-update (poll for changes)", class: "text-sm text-text-secondary" %>
       </div>
 
       <%# Poll interval %>
       <div>
-        <%= f.label :poll_interval, "Poll Interval (seconds)", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :poll_interval, "Poll Interval (seconds)", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.number_field :poll_interval,
               min: 30,
               step: 1,
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
-        <p class="mt-1.5 text-xs text-gray-500">Minimum 30 seconds. Only used when auto-update is enabled.</p>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+        <p class="mt-1.5 text-xs text-text-muted">Minimum 30 seconds. Only used when auto-update is enabled.</p>
       </div>
 
       <%# Webhook info for new records %>
       <% if git_stack.new_record? %>
         <div class="rounded-lg bg-cyan-950/40 border border-cyan-800/40 px-4 py-3">
           <p class="text-xs text-cyan-400 font-medium mb-1">Webhook CI/CD</p>
-          <p class="text-xs text-gray-400">
-            Após criar a stack, um <strong class="text-gray-200">Webhook URL</strong> único será gerado.
+          <p class="text-xs text-text-secondary">
+            Após criar a stack, um <strong class="text-text-primary">Webhook URL</strong> único será gerado.
             Use-o em GitHub Actions, GitLab CI, Bitbucket Pipelines ou qualquer sistema de CI/CD para
             acionar o deploy automaticamente quando a branch for atualizada.
           </p>
@@ -109,9 +97,9 @@
       <%# Actions %>
       <div class="flex items-center gap-3 pt-2">
         <%= f.submit git_stack.new_record? ? "Create Stack" : "Update Stack",
-              class: "inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
+              class: "inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
         <%= link_to "Cancel", git_stacks_path,
-              class: "inline-flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors" %>
+              class: "inline-flex items-center px-4 py-2 bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary text-sm font-medium rounded-lg transition-colors" %>
       </div>
     <% end %>
   </div>

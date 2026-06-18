@@ -1,4 +1,5 @@
 require "open3"
+require "digest"
 
 class GitUnpacker
   # GIT_WORKSPACE_HOST_PATH, when set, is a host bind mount at the same
@@ -10,17 +11,23 @@ class GitUnpacker
   # sources that don't rely on host bind-mount paths.
   TMP_DIR = Pathname.new(ENV.fetch("GIT_WORKSPACE_HOST_PATH", Rails.root.join("tmp", "git_repos").to_s))
 
-  def self.call(git_connection)
-    new(git_connection).unpack
+  def self.call(git_stack)
+    new(git_stack).unpack
   end
 
-  def self.repo_dir(git_connection)
-    TMP_DIR.join(git_connection.id.to_s)
+  # Keyed by id when the stack is persisted; an unsaved stack (the
+  # compose-file preview/autocomplete on git_stacks/new, before the user
+  # has actually created it) falls back to a digest of its repo_url so
+  # repeated previews of the same repo reuse one clone instead of a fresh
+  # one per keystroke.
+  def self.repo_dir(git_stack)
+    key = git_stack.id&.to_s || "preview-#{Digest::SHA256.hexdigest(git_stack.repo_url.to_s)[0, 16]}"
+    TMP_DIR.join(key)
   end
 
-  def initialize(connection)
-    @connection = connection
-    @repo_dir   = TMP_DIR.join(@connection.id.to_s)
+  def initialize(stack)
+    @stack    = stack
+    @repo_dir = self.class.repo_dir(stack)
   end
 
   def unpack
@@ -37,28 +44,26 @@ class GitUnpacker
   private
 
   def clone
-    run_git("clone", "--depth", "1", "--branch", @connection.branch,
-            authenticated_url, @repo_dir.to_s)
+    run_git("clone", "--depth", "1", "--branch", @stack.branch,
+            @stack.authenticated_url, @repo_dir.to_s)
   end
 
   def pull
-    run_git("-C", @repo_dir.to_s, "fetch", "--depth", "1", "origin", @connection.branch)
+    run_git("-C", @repo_dir.to_s, "fetch", "--depth", "1", "origin", @stack.branch)
     run_git("-C", @repo_dir.to_s, "reset", "--hard", "FETCH_HEAD")
   end
 
   def update_commit_sha
-    sha = `git -C #{@repo_dir} rev-parse HEAD 2>/dev/null`.strip
-    @connection.update_columns(last_commit_sha: sha, last_pulled_at: Time.current)
-  end
+    return unless @stack.persisted?
 
-  def authenticated_url
-    @connection.authenticated_url
+    sha = `git -C #{@repo_dir} rev-parse HEAD 2>/dev/null`.strip
+    @stack.update_columns(last_commit_sha: sha, last_pulled_at: Time.current)
   end
 
   def run_git(*args)
     env = { "GIT_TERMINAL_PROMPT" => "0" }
     key_file = nil
-    if @connection.auth_type == "ssh_key"
+    if @stack.auth_type == "ssh_key"
       key_file = write_ssh_key
       env["GIT_SSH_COMMAND"] = "ssh -i #{key_file} -o StrictHostKeyChecking=no"
     end
@@ -71,8 +76,8 @@ class GitUnpacker
   def write_ssh_key
     key_dir  = Rails.root.join("tmp", "git_keys")
     FileUtils.mkdir_p(key_dir)
-    key_file = key_dir.join("#{@connection.id}.key").to_s
-    File.write(key_file, @connection.ssh_key + "\n")
+    key_file = key_dir.join("#{@stack.id}.key").to_s
+    File.write(key_file, @stack.ssh_key + "\n")
     File.chmod(0o600, key_file)
     key_file
   end

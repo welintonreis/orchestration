@@ -24,35 +24,35 @@
     <%# Header row %>
     <div class="grid grid-cols-[22px_1fr_52px_52px] gap-x-2 px-1 mb-1.5">
       <span></span>
-      <span class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Process</span>
-      <span class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider text-right">CPU%</span>
-      <span class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider text-right">MEM</span>
+      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Process</span>
+      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider text-right">CPU%</span>
+      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider text-right">MEM</span>
     </div>
 
     <div class="space-y-0.5">
       <% @top_processes.each do |p| %>
         <% cpu_color = p[:cpu] >= 80 ? "#f87171" : p[:cpu] >= 40 ? "#facc15" : "#4ade80" %>
         <% mem_mb = (p[:mem_kb] / 1024.0).round(1) %>
-        <div class="grid grid-cols-[22px_1fr_52px_52px] gap-x-2 items-center px-1 py-0.5 rounded hover:bg-gray-800/40 transition-colors">
+        <div class="grid grid-cols-[22px_1fr_52px_52px] gap-x-2 items-center px-1 py-0.5 rounded hover:bg-surface-inset/40 transition-colors">
           <span class="flex items-center justify-center">
             <%= p[:docker] ? docker_svg : host_svg %>
           </span>
-          <span class="text-xs font-mono text-gray-300 truncate"><%= p[:name] %></span>
+          <span class="text-xs font-mono text-text-secondary truncate"><%= p[:name] %></span>
           <span class="text-xs font-mono text-right font-semibold" style="color:<%= cpu_color %>">
             <%= p[:cpu] > 0 ? "%.1f" % p[:cpu] : "0.0" %>
           </span>
-          <span class="text-xs font-mono text-gray-400 text-right">
+          <span class="text-xs font-mono text-text-secondary text-right">
             <%= mem_mb >= 1000 ? "%.1fG" % (mem_mb / 1024.0) : "#{mem_mb}M" %>
           </span>
         </div>
       <% end %>
     </div>
 
-    <div class="mt-2 text-[10px] text-gray-700 text-right">
+    <div class="mt-2 text-[10px] text-text-muted text-right">
       atualizado <%= Time.now.strftime("%H:%M:%S") %>
     </div>
   <% else %>
-    <div class="flex items-center justify-center h-40 text-sm text-gray-600">
+    <div class="flex items-center justify-center h-40 text-sm text-text-muted">
       Sem processos disponíveis
     </div>
   <% end %>

@@ -48,6 +48,11 @@ class NetworksController < ApplicationController
     redirect_to networks_path
   end
 
+  # create's form posts with data-turbo="false" (a plain full-page submit,
+  # not a turbo-frame navigation) since it's a modal whose result should
+  # replace the whole page — turbo_frame_request? is false here, so the
+  # plain redirect_to is correct as-is and doesn't have the swallowed-flash
+  # bug described above for remove.
   def create
     name    = params[:name].to_s.strip
     driver  = params[:driver].presence || "bridge"
@@ -58,6 +63,24 @@ class NetworksController < ApplicationController
     redirect_to networks_path, notice: "Rede \"#{name}\" criada."
   rescue => e
     redirect_to networks_path, alert: "Erro ao criar rede: #{e.message}"
+  end
+
+  # Triggered by the remove button living inside the networks-content
+  # turbo-frame, which redirects back to this same index — a Turbo-Frame
+  # redirect to #index renders "rows" with layout: false (see above), so
+  # shared/_flash (only rendered by the full layout) never displays the
+  # notice/alert and Rails never sweeps it from the session: the message
+  # silently survives into the next unrelated full-page navigation. Render
+  # rows directly instead, using flash.now so this same response shows it.
+  def remove
+    network = current_docker_client.networks.find { |n| n["Id"] == params[:id] }
+    if PROTECTED_NETWORKS.include?(network&.dig("Name"))
+      return render_networks_flash(alert: "Cannot remove built-in network.")
+    end
+    current_docker_client.network_remove(params[:id])
+    render_networks_flash(notice: "Network removed.")
+  rescue => e
+    render_networks_flash(alert: "Error: #{e.message}")
   end
 
   private
@@ -80,17 +103,13 @@ class NetworksController < ApplicationController
     )
   end
 
-  public
-
-  def remove
-    network = current_docker_client.networks.find { |n| n["Id"] == params[:id] }
-    if PROTECTED_NETWORKS.include?(network&.dig("Name"))
-      redirect_to networks_path, alert: "Cannot remove built-in network."
-      return
+  def render_networks_flash(notice: nil, alert: nil)
+    if turbo_frame_request?
+      flash.now[:notice] = notice if notice
+      flash.now[:alert]  = alert  if alert
+      rows
+    else
+      redirect_to networks_path, notice: notice, alert: alert
     end
-    current_docker_client.network_remove(params[:id])
-    redirect_to networks_path, notice: "Network removed."
-  rescue => e
-    redirect_to networks_path, alert: "Error: #{e.message}"
   end
 end

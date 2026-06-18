@@ -3,7 +3,7 @@ module Ui
   # the platform (container status, "Dangling", task state, infra count, etc).
   class BadgeComponent < ApplicationComponent
     COLORS = {
-      gray:   { bg: "bg-gray-800 text-gray-400 border-gray-700",          dot: "bg-gray-400" },
+      gray:   { bg: "bg-surface-inset text-text-secondary border-border-subtle",          dot: "bg-gray-400" },
       green:  { bg: "bg-green-900/50 text-green-300 border-green-800/50", dot: "bg-green-400" },
       red:    { bg: "bg-red-900/50 text-red-300 border-red-800/50",       dot: "bg-red-400" },
       orange: { bg: "bg-orange-900/40 text-orange-400 border-orange-700/50", dot: "bg-orange-400" },

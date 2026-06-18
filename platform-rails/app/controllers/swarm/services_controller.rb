@@ -93,19 +93,31 @@ module Swarm
       redirect_to swarm_service_path(params[:id]), alert: "Erro no rollback: #{e.message}"
     end
 
+    # scale/drain/bulk_scale are triggered by buttons/forms living inside
+    # the services-content turbo-frame (the index's per-row and bulk-action
+    # controls), which redirect back to this same index — a Turbo-Frame
+    # redirect to #index renders "rows" with layout: false (see above), so
+    # shared/_flash (only rendered by the full layout) never displays the
+    # notice/alert and Rails never sweeps it from the session: the message
+    # silently survives into the next unrelated full-page navigation.
+    # Render rows directly instead, using flash.now so this same response
+    # shows it. update_resources/update_update_config/update_logging/
+    # update_image/rollback above are NOT converted: they're only
+    # reachable from #show (a full page, not frame-scoped), so their plain
+    # redirect_to is correct as-is.
     def scale
       replicas = params[:replicas].to_i
       current_docker_client.service_scale(params[:id], replicas)
-      redirect_to swarm_services_path, notice: "Serviço escalado para #{replicas} réplica(s)"
+      render_services_flash(notice: "Serviço escalado para #{replicas} réplica(s)")
     rescue => e
-      redirect_to swarm_services_path, alert: "Erro ao escalar: #{e.message}"
+      render_services_flash(alert: "Erro ao escalar: #{e.message}")
     end
 
     def drain
       current_docker_client.service_scale(params[:id], 0)
-      redirect_to swarm_services_path, notice: "Serviço desidratado (0 réplicas)"
+      render_services_flash(notice: "Serviço desidratado (0 réplicas)")
     rescue => e
-      redirect_to swarm_services_path, alert: "Erro ao desidratar: #{e.message}"
+      render_services_flash(alert: "Erro ao desidratar: #{e.message}")
     end
 
     def bulk_scale
@@ -122,9 +134,21 @@ module Swarm
       end
       sign = delta >= 0 ? "+#{delta}" : delta.to_s
       if errors.any?
-        redirect_to swarm_services_path, alert: "Erros: #{errors.first(3).join('; ')}"
+        render_services_flash(alert: "Erros: #{errors.first(3).join('; ')}")
       else
-        redirect_to swarm_services_path, notice: "#{ids.size} serviço(s) escalado(s) #{sign}."
+        render_services_flash(notice: "#{ids.size} serviço(s) escalado(s) #{sign}.")
+      end
+    end
+
+    private
+
+    def render_services_flash(notice: nil, alert: nil)
+      if turbo_frame_request?
+        flash.now[:notice] = notice if notice
+        flash.now[:alert]  = alert  if alert
+        rows
+      else
+        redirect_to swarm_services_path, notice: notice, alert: alert
       end
     end
   end

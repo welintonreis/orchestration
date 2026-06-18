@@ -25,25 +25,29 @@
         count:     @containers.size,
         label:     "Containers",
         sub:       "#{running_count} running · #{stopped_count} stopped",
-        link_path: containers_path %>
+        link_path: containers_path,
+        icon:      :containers %>
 
   <%# Images %>
   <%= render "dashboard/stat_card",
         count:     @images.size,
         label:     "Images",
-        link_path: images_path %>
+        link_path: images_path,
+        icon:      :images %>
 
   <%# Volumes %>
   <%= render "dashboard/stat_card",
         count:     @volumes.size,
         label:     "Volumes",
-        link_path: volumes_path %>
+        link_path: volumes_path,
+        icon:      :volumes %>
 
   <%# Networks %>
   <%= render "dashboard/stat_card",
         count:     @networks.size,
         label:     "Networks",
-        link_path: networks_path %>
+        link_path: networks_path,
+        icon:      :networks %>
 
   <%# Services — only meaningful when Swarm is active %>
   <% if @swarm_active %>
@@ -51,13 +55,15 @@
           count:     @services.size,
           label:     "Services",
           sub:       "Swarm active",
-          link_path: swarm_path %>
+          link_path: swarm_path,
+          icon:      :services %>
   <% else %>
     <%= render "dashboard/stat_card",
           count:     0,
           label:     "Services",
           sub:       "Swarm inactive",
-          inactive:  true %>
+          inactive:  true,
+          icon:      :services %>
   <% end %>
 
   <%# Nodes — only meaningful when Swarm is active %>
@@ -65,13 +71,15 @@
     <%= render "dashboard/stat_card",
           count:     @nodes.size,
           label:     "Nodes",
-          link_path: swarm_path %>
+          link_path: swarm_path,
+          icon:      :nodes %>
   <% else %>
     <%= render "dashboard/stat_card",
           count:     0,
           label:     "Nodes",
           sub:       "Swarm inactive",
-          inactive:  true %>
+          inactive:  true,
+          icon:      :nodes %>
   <% end %>
 
 </div>
@@ -82,27 +90,27 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
 
   <%# Docker Info card %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-    <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Docker Info</h2>
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">Docker Info</h2>
     <dl class="space-y-3">
 
       <div class="flex items-center justify-between">
-        <dt class="text-sm text-gray-500">Version</dt>
-        <dd class="text-sm font-mono text-gray-200"><%= @docker_info["ServerVersion"] || "—" %></dd>
+        <dt class="text-sm text-text-muted">Version</dt>
+        <dd class="text-sm font-mono text-text-primary"><%= @docker_info["ServerVersion"] || "—" %></dd>
       </div>
 
       <div class="flex items-center justify-between">
-        <dt class="text-sm text-gray-500">OS</dt>
-        <dd class="text-sm text-gray-200 truncate max-w-[60%] text-right"><%= @docker_info["OperatingSystem"] || "—" %></dd>
+        <dt class="text-sm text-text-muted">OS</dt>
+        <dd class="text-sm text-text-primary truncate max-w-[60%] text-right"><%= @docker_info["OperatingSystem"] || "—" %></dd>
       </div>
 
       <div class="flex items-center justify-between">
-        <dt class="text-sm text-gray-500">Architecture</dt>
-        <dd class="text-sm font-mono text-gray-200"><%= @docker_info["Architecture"] || "—" %></dd>
+        <dt class="text-sm text-text-muted">Architecture</dt>
+        <dd class="text-sm font-mono text-text-primary"><%= @docker_info["Architecture"] || "—" %></dd>
       </div>
 
       <div class="flex items-center justify-between">
-        <dt class="text-sm text-gray-500">Swarm</dt>
+        <dt class="text-sm text-text-muted">Swarm</dt>
         <dd>
           <% if @swarm_active %>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-cyan-900/60 text-cyan-300 border border-cyan-800/60">
@@ -110,7 +118,7 @@
               Active
             </span>
           <% else %>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-gray-700">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-surface-inset text-text-secondary border border-border-subtle">
               <span class="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block"></span>
               Inactive
             </span>
@@ -118,100 +126,87 @@
         </dd>
       </div>
 
-      <div class="border-t border-gray-800 pt-3 grid grid-cols-2 gap-3">
+      <div class="border-t border-border pt-3 grid grid-cols-2 gap-3">
         <div>
-          <div class="text-xs text-gray-500 mb-1">CPUs</div>
-          <div class="text-lg font-bold text-white"><%= @docker_info["NCPU"] || "—" %></div>
+          <div class="text-xs text-text-muted mb-1">CPUs</div>
+          <div class="text-lg font-bold text-text-primary"><%= @docker_info["NCPU"] || "—" %></div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 mb-1">Memory</div>
-          <div class="text-lg font-bold text-white"><%= human_bytes(@docker_info["MemTotal"].to_i) %></div>
+          <div class="text-xs text-text-muted mb-1">Memory</div>
+          <div class="text-lg font-bold text-text-primary"><%= human_bytes(@docker_info["MemTotal"].to_i) %></div>
         </div>
       </div>
 
-      <div class="border-t border-gray-800 pt-3">
-        <div class="text-xs text-gray-500 mb-2">Containers</div>
+      <div class="border-t border-border pt-3">
+        <div class="text-xs text-text-muted mb-2">Containers</div>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
-            <span class="text-sm text-gray-300"><%= @docker_info["ContainersRunning"] || running_count %> running</span>
+            <span class="text-sm text-text-secondary"><%= @docker_info["ContainersRunning"] || running_count %> running</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
-            <span class="text-sm text-gray-300"><%= @docker_info["ContainersPaused"] || paused_count %> paused</span>
+            <span class="text-sm text-text-secondary"><%= @docker_info["ContainersPaused"] || paused_count %> paused</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-gray-500 inline-block"></span>
-            <span class="text-sm text-gray-300"><%= @docker_info["ContainersStopped"] || stopped_count %> stopped</span>
+            <span class="text-sm text-text-secondary"><%= @docker_info["ContainersStopped"] || stopped_count %> stopped</span>
           </div>
         </div>
       </div>
 
-      <%# ── Resource bars — live via HostStatsChannel ── %>
-      <% cpu_f  = @latest_metric ? [(@latest_metric.cpu_percent  * 40 / 100.0).round, 40].min : 0 %>
-      <% ram_f  = @latest_metric ? [(@latest_metric.ram_percent  * 40 / 100.0).round, 40].min : 0 %>
-      <% disk_f = @latest_metric ? [(@latest_metric.disk_percent * 40 / 100.0).round, 40].min : 0 %>
-      <% cpu_v  = @latest_metric ? ("%.1f" % @latest_metric.cpu_percent)  : "—" %>
-      <% ram_v  = @latest_metric ? ("%.1f" % @latest_metric.ram_percent)  : "—" %>
-      <% disk_v = @latest_metric ? ("%.1f" % @latest_metric.disk_percent) : "—" %>
+      <%# ── Resource donut gauges — live via HostStatsChannel ── %>
+      <% donut_r = 16 %>
+      <% donut_c = (2 * Math::PI * donut_r).round(3) %>
+      <%
+        gauges = [
+          { key: "cpu",  label: "CPU",  color: "#39FF14", value: @latest_metric&.cpu_percent  },
+          { key: "ram",  label: "RAM",  color: "#22d3ee", value: @latest_metric&.ram_percent  },
+          { key: "disk", label: "Disk", color: "#e8f4f8", value: @latest_metric&.disk_percent },
+          { key: "swap", label: "Swap", color: "#f97316", value: @latest_metric&.swap_percent },
+        ]
+      %>
 
-      <div class="border-t border-gray-800 pt-3 space-y-3"
-           data-controller="host-stats">
+      <div class="border-t border-border pt-3"
+           data-controller="host-stats"
+           data-host-stats-circumference-value="<%= donut_c %>">
 
-        <%# CPU %>
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="text-xs text-gray-500">CPU</span>
-            <span class="text-xs font-mono font-semibold" style="color:#39FF14"
-                  data-host-stats-target="cpuPct"><%= cpu_v %>%</span>
-          </div>
-          <div class="flex gap-[2px]" data-host-stats-target="cpuBar">
-            <% 40.times do |i| %>
-              <div class="h-2 flex-1 rounded-[1px]" style="background:<%= i < cpu_f ? '#39FF14' : '#1f2937' %>"></div>
-            <% end %>
-          </div>
-        </div>
-
-        <%# RAM %>
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="text-xs text-gray-500">RAM</span>
-            <span class="text-xs font-mono font-semibold text-cyan-400"
-                  data-host-stats-target="ramPct"><%= ram_v %>%</span>
-          </div>
-          <div class="flex gap-[2px]" data-host-stats-target="ramBar">
-            <% 40.times do |i| %>
-              <div class="h-2 flex-1 rounded-[1px]" style="background:<%= i < ram_f ? '#22d3ee' : '#1f2937' %>"></div>
-            <% end %>
-          </div>
-        </div>
-
-        <%# Disk %>
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="text-xs text-gray-500">Disk</span>
-            <span class="text-xs font-mono font-semibold" style="color:#e8f4f8"
-                  data-host-stats-target="diskPct"><%= disk_v %>%</span>
-          </div>
-          <div class="flex gap-[2px]" data-host-stats-target="diskBar">
-            <% 40.times do |i| %>
-              <div class="h-2 flex-1 rounded-[1px]" style="background:<%= i < disk_f ? '#e8f4f8' : '#1f2937' %>"></div>
-            <% end %>
-          </div>
+        <div class="grid grid-cols-4 gap-2">
+          <% gauges.each do |g| %>
+            <% pct = g[:value] ? [[g[:value], 0].max, 100].min : 0 %>
+            <% offset = (donut_c * (1 - pct / 100.0)).round(3) %>
+            <div class="flex flex-col items-center">
+              <div class="relative w-16 h-16">
+                <svg viewBox="0 0 40 40" class="w-16 h-16 -rotate-90">
+                  <circle cx="20" cy="20" r="<%= donut_r %>" fill="none" stroke="#1f2937" stroke-width="4"></circle>
+                  <circle cx="20" cy="20" r="<%= donut_r %>" fill="none" stroke="<%= g[:color] %>" stroke-width="4"
+                          stroke-linecap="round"
+                          stroke-dasharray="<%= donut_c %>"
+                          stroke-dashoffset="<%= g[:value] ? offset : donut_c %>"
+                          data-host-stats-target="<%= g[:key] %>Circle"></circle>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-[11px] font-mono font-semibold" style="color:<%= g[:color] %>"
+                        data-host-stats-target="<%= g[:key] %>Pct"><%= g[:value] ? ("%.0f" % g[:value]) : "—" %>%</span>
+                </div>
+              </div>
+              <span class="text-xs text-text-muted mt-1"><%= g[:label] %></span>
+            </div>
+          <% end %>
         </div>
 
       </div>
 
       <%# ── Uptime / Last reboot ── %>
-      <div class="border-t border-gray-800 pt-3 space-y-2">
+      <div class="border-t border-border pt-3 space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">Último Boot</span>
-          <span class="text-xs font-mono text-gray-300"><%= @last_boot_at.strftime("%d/%m/%Y %H:%M") %></span>
+          <span class="text-xs text-text-muted">Último Boot</span>
+          <span class="text-xs font-mono text-text-secondary"><%= @last_boot_at.strftime("%d/%m/%Y %H:%M") %></span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">Uptime</span>
+          <span class="text-xs text-text-muted">Uptime</span>
           <% ud = @uptime_secs / 86400; uh = (@uptime_secs % 86400) / 3600; um = (@uptime_secs % 3600) / 60 %>
-          <span class="text-xs font-mono font-bold text-white tracking-wider">
+          <span class="text-xs font-mono font-bold text-text-primary tracking-wider">
             <%= "%02dD %02dH %02dMIN" % [ud, uh, um] %>
           </span>
         </div>
@@ -221,12 +216,12 @@
   </div>
 
   <%# Top Processes card — auto-refreshes via Turbo Frame every 10s %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-    <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Top Processes</h2>
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
+    <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Top Processes</h2>
     <%= turbo_frame_tag "top-processes",
           src: metrics_processes_path,
           data: { controller: "metrics-refresh", "metrics-refresh-interval-value": 10000 } do %>
-      <div class="flex items-center justify-center h-40 text-sm text-gray-600">Carregando...</div>
+      <div class="flex items-center justify-center h-40 text-sm text-text-muted">Carregando...</div>
     <% end %>
   </div>
 
@@ -236,9 +231,9 @@
 <%# Row 3 — Recent Alerts (only if there are unread alerts)   %>
 <%# ══════════════════════════════════════════════════════════ %>
 <% if @unread_alerts.any? %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+      <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">
         Recent Alerts
         <span class="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-900/60 text-red-300 text-xs font-bold border border-red-800/60">
           <%= @unread_count > 99 ? "99+" : @unread_count %>
@@ -247,7 +242,7 @@
       <%= link_to "View all", alerts_path, class: "text-xs text-cyan-400 hover:text-cyan-300 transition-colors" %>
     </div>
 
-    <div class="divide-y divide-gray-800">
+    <div class="divide-y divide-border">
       <% @unread_alerts.each do |alert| %>
         <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
 
@@ -264,13 +259,13 @@
           <%# Resource + message %>
           <div class="flex-1 min-w-0">
             <div class="flex items-baseline gap-2">
-              <span class="text-xs font-mono text-gray-500 flex-shrink-0"><%= alert.resource %></span>
+              <span class="text-xs font-mono text-text-muted flex-shrink-0"><%= alert.resource %></span>
             </div>
-            <p class="text-sm text-gray-300 truncate"><%= alert.message %></p>
+            <p class="text-sm text-text-secondary truncate"><%= alert.message %></p>
           </div>
 
           <%# Time ago %>
-          <span class="text-xs text-gray-600 flex-shrink-0 whitespace-nowrap"><%= human_age(alert.created_at) %></span>
+          <span class="text-xs text-text-muted flex-shrink-0 whitespace-nowrap"><%= human_age(alert.created_at) %></span>
 
         </div>
       <% end %>

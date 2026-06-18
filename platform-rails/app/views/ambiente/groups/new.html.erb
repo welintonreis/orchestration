@@ -1,20 +1,20 @@
 <% content_for :title, "Novo Grupo" %>
 <div class="max-w-lg mx-auto">
-  <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
-    <%= link_to "Grupos", ambiente_groups_path, class: "hover:text-gray-300" %> <span>/</span> <span class="text-gray-300">Novo</span>
+  <div class="flex items-center gap-2 text-sm text-text-muted mb-4">
+    <%= link_to "Grupos", ambiente_groups_path, class: "hover:text-text-secondary" %> <span>/</span> <span class="text-text-secondary">Novo</span>
   </div>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h2 class="text-lg font-semibold text-white mb-5">Criar Grupo</h2>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-text-primary mb-5">Criar Grupo</h2>
     <%# Model is EnvironmentGroup but route is ambiente_groups — same
         mismatch as ambiente/registries, explicit url: needed. %>
     <%= form_with model: @group, url: ambiente_groups_path, local: true do |f| %>
       <div class="mb-4">
-        <%= f.label :name, "Nome", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.text_field :name, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        <%= f.label :name, "Nome", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_field :name, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
       </div>
       <div class="mb-5">
-        <%= f.label :description, "Descrição", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.text_area :description, rows: 3, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        <%= f.label :description, "Descrição", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_area :description, rows: 3, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
       </div>
       <div class="flex gap-3">
         <%= f.submit "Criar", class: "btn-primary" %>

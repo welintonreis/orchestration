@@ -28,8 +28,8 @@
               class: "peer sr-only",
               onchange: "this.form.submit()" %>
         <span class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all select-none
-                     peer-checked:bg-gray-700 peer-checked:text-white peer-checked:border-gray-500
-                     bg-gray-900 text-gray-500 border-gray-700 hover:border-gray-600 hover:text-gray-300">
+                     peer-checked:bg-surface-active peer-checked:text-text-primary peer-checked:border-border-subtle
+                     bg-surface-raised text-text-muted border-border-subtle hover:border-border-subtle hover:text-text-secondary">
           <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 <%= dot_color %>"></span>
           <%= status.capitalize %>
         </span>
@@ -44,60 +44,60 @@
 <% end %>
 
 <turbo-frame id="containers-content" src="<%= rows_containers_path(statuses: params[:statuses], per_page: params[:per_page], infra: params[:infra], sort: params[:sort], dir: params[:dir], q: params[:q], page: params[:page]) %>">
-  <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden animate-pulse">
-    <div class="px-4 pt-3 pb-2 border-b border-gray-800 flex items-center justify-between gap-3">
+  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden animate-pulse">
+    <div class="px-4 pt-3 pb-2 border-b border-border flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <div class="h-8 w-52 bg-gray-800 rounded-lg"></div>
-        <div class="h-8 w-40 bg-gray-800 rounded-lg"></div>
+        <div class="h-8 w-52 bg-surface-inset rounded-lg"></div>
+        <div class="h-8 w-40 bg-surface-inset rounded-lg"></div>
       </div>
-      <div class="h-8 w-32 bg-gray-800 rounded-lg"></div>
+      <div class="h-8 w-32 bg-surface-inset rounded-lg"></div>
     </div>
     <table class="w-full text-sm">
       <thead>
-        <tr class="border-b border-gray-800">
-          <th class="px-4 py-3 w-8"><div class="w-3.5 h-3.5 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-28 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-14 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-14 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-10 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-12 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-10 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-12 bg-gray-700 rounded"></div></th>
-          <th class="px-4 py-3"><div class="h-3 w-16 bg-gray-700 rounded"></div></th>
+        <tr class="border-b border-border">
+          <th class="px-4 py-3 w-8"><div class="w-3.5 h-3.5 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-28 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-14 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-14 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-10 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-12 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-10 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-12 bg-surface-active rounded"></div></th>
+          <th class="px-4 py-3"><div class="h-3 w-16 bg-surface-active rounded"></div></th>
           <th class="px-4 py-3"></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800/60">
+      <tbody class="divide-y divide-border/60">
         <% 10.times do %>
           <tr>
-            <td class="px-4 py-3"><div class="w-3.5 h-3.5 bg-gray-800 rounded"></div></td>
+            <td class="px-4 py-3"><div class="w-3.5 h-3.5 bg-surface-inset rounded"></div></td>
             <td class="px-4 py-3">
               <div class="flex items-start gap-2">
-                <div class="w-10 h-10 bg-gray-800 rounded flex-shrink-0"></div>
+                <div class="w-10 h-10 bg-surface-inset rounded flex-shrink-0"></div>
                 <div class="flex flex-col gap-1.5 mt-0.5">
-                  <div class="h-3.5 w-36 bg-gray-800 rounded"></div>
-                  <div class="h-2.5 w-24 bg-gray-800 rounded"></div>
-                  <div class="h-2.5 w-48 bg-gray-800 rounded"></div>
+                  <div class="h-3.5 w-36 bg-surface-inset rounded"></div>
+                  <div class="h-2.5 w-24 bg-surface-inset rounded"></div>
+                  <div class="h-2.5 w-48 bg-surface-inset rounded"></div>
                 </div>
               </div>
             </td>
-            <td class="px-4 py-3"><div class="h-5 w-16 bg-gray-800 rounded-full"></div></td>
-            <td class="px-4 py-3"><div class="h-5 w-16 bg-gray-800 rounded"></div></td>
-            <td class="px-4 py-3 text-center"><div class="h-4 w-4 bg-gray-800 rounded inline-block"></div></td>
+            <td class="px-4 py-3"><div class="h-5 w-16 bg-surface-inset rounded-full"></div></td>
+            <td class="px-4 py-3"><div class="h-5 w-16 bg-surface-inset rounded"></div></td>
+            <td class="px-4 py-3 text-center"><div class="h-4 w-4 bg-surface-inset rounded inline-block"></div></td>
             <td class="px-4 py-3">
               <div class="flex flex-col gap-2">
-                <div class="h-4 w-32 bg-gray-800 rounded"></div>
-                <div class="h-4 w-32 bg-gray-800 rounded"></div>
+                <div class="h-4 w-32 bg-surface-inset rounded"></div>
+                <div class="h-4 w-32 bg-surface-inset rounded"></div>
               </div>
             </td>
-            <td class="px-4 py-3"><div class="h-3 w-24 bg-gray-800 rounded"></div></td>
-            <td class="px-4 py-3"><div class="h-3 w-20 bg-gray-800 rounded"></div></td>
-            <td class="px-4 py-3"><div class="h-3 w-16 bg-gray-800 rounded"></div></td>
+            <td class="px-4 py-3"><div class="h-3 w-24 bg-surface-inset rounded"></div></td>
+            <td class="px-4 py-3"><div class="h-3 w-20 bg-surface-inset rounded"></div></td>
+            <td class="px-4 py-3"><div class="h-3 w-16 bg-surface-inset rounded"></div></td>
             <td class="px-4 py-3">
               <div class="flex items-center justify-end gap-2">
-                <div class="h-7 w-7 bg-gray-800 rounded"></div>
-                <div class="h-7 w-7 bg-gray-800 rounded"></div>
-                <div class="h-7 w-7 bg-gray-800 rounded"></div>
+                <div class="h-7 w-7 bg-surface-inset rounded"></div>
+                <div class="h-7 w-7 bg-surface-inset rounded"></div>
+                <div class="h-7 w-7 bg-surface-inset rounded"></div>
               </div>
             </td>
           </tr>

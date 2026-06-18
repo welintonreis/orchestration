@@ -2,7 +2,7 @@ module Ui
   # Single reusable checkbox for row-select / bulk-action checkboxes and
   # plain form checkboxes across the platform.
   class CheckboxComponent < ApplicationComponent
-    BASE = "rounded border-gray-600 bg-gray-800 cursor-pointer focus:ring-0".freeze
+    BASE = "rounded border-border-subtle bg-surface-inset cursor-pointer focus:ring-0".freeze
     # text-* / accent-* kept out of BASE and driven by `color:` instead of
     # being layered via css_class — same-specificity Tailwind utilities
     # (e.g. text-cyan-500 baked into BASE vs text-red-500 from a caller)

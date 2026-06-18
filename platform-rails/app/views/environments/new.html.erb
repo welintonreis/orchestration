@@ -1,8 +1,8 @@
 <% page_title "New Environment" %>
 
 <div class="max-w-xl">
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h2 class="text-base font-semibold text-white mb-6">Add Docker Environment</h2>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h2 class="text-base font-semibold text-text-primary mb-6">Add Docker Environment</h2>
 
     <%= form_with model: @environment, class: "space-y-5",
           data: { controller: "endpoint" } do |f| %>
@@ -21,41 +21,41 @@
 
       <%# Name %>
       <div>
-        <%= f.label :name, "Name", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :name, "Name", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.text_field :name,
               placeholder: "e.g. Production, Staging, Local",
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
       </div>
 
       <%# Endpoint Type %>
       <div>
-        <%= f.label :endpoint_type, "Endpoint Type", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :endpoint_type, "Endpoint Type", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.select :endpoint_type,
               [["Unix socket", "unix"], ["TCP", "tcp"]],
               {},
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors",
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors",
               data: { endpoint_target: "type", action: "change->endpoint#updatePlaceholder" } %>
       </div>
 
       <%# Endpoint %>
       <div>
-        <%= f.label :endpoint, "Endpoint", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.label :endpoint, "Endpoint", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.text_field :endpoint,
               placeholder: "unix:///var/run/docker.sock",
-              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors",
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors",
               data: { endpoint_target: "endpoint" } %>
-        <p class="mt-1.5 text-xs text-gray-500">
-          For Unix sockets: <code class="font-mono text-gray-400">unix:///var/run/docker.sock</code>.
-          For TCP: <code class="font-mono text-gray-400">tcp://host:2375</code>.
+        <p class="mt-1.5 text-xs text-text-muted">
+          For Unix sockets: <code class="font-mono text-text-secondary">unix:///var/run/docker.sock</code>.
+          For TCP: <code class="font-mono text-text-secondary">tcp://host:2375</code>.
         </p>
       </div>
 
       <%# Actions %>
       <div class="flex items-center gap-3 pt-2">
         <%= f.submit "Add Environment",
-              class: "inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
+              class: "inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
         <%= link_to "Cancel", environments_path,
-              class: "inline-flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors" %>
+              class: "inline-flex items-center px-4 py-2 bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary text-sm font-medium rounded-lg transition-colors" %>
       </div>
     <% end %>
   </div>

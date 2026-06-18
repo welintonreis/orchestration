@@ -2,21 +2,21 @@
 
 <% content_for :title_actions do %>
   <%= link_to "← Containers", containers_path,
-        class: "px-3 py-1.5 text-sm text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors" %>
+        class: "px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle rounded-lg transition-colors" %>
   <%= link_to "Logs", container_logs_path(@container["Id"]),
-        class: "px-3 py-1.5 text-sm text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors" %>
+        class: "px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle rounded-lg transition-colors" %>
 <% end %>
 
 <div class="space-y-4">
 
   <%# Identity card %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
     <div class="flex items-start justify-between gap-4 mb-4">
       <div>
-        <h2 class="text-lg font-semibold text-white font-mono">
+        <h2 class="text-lg font-semibold text-text-primary font-mono">
           <%= @container["Name"]&.sub(/^\//, "") %>
         </h2>
-        <div class="text-xs text-gray-500 font-mono mt-0.5"><%= @container["Id"] %></div>
+        <div class="text-xs text-text-muted font-mono mt-0.5"><%= @container["Id"] %></div>
       </div>
       <span class="<%= status_badge(@container["State"]["Status"]) %> flex-shrink-0">
         <%= @container["State"]["Status"] %>
@@ -24,45 +24,45 @@
     </div>
 
     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">Image</dt>
-        <dd class="text-sm font-mono text-gray-200 text-right ml-4 break-all"><%= @container["Config"]["Image"] %></dd>
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">Image</dt>
+        <dd class="text-sm font-mono text-text-primary text-right ml-4 break-all"><%= @container["Config"]["Image"] %></dd>
       </div>
 
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">Platform</dt>
-        <dd class="text-sm font-mono text-gray-200"><%= @container["Platform"] || "—" %></dd>
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">Platform</dt>
+        <dd class="text-sm font-mono text-text-primary"><%= @container["Platform"] || "—" %></dd>
       </div>
 
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">Restart Policy</dt>
-        <dd class="text-sm text-gray-200"><%= @container.dig("HostConfig", "RestartPolicy", "Name") || "—" %></dd>
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">Restart Policy</dt>
+        <dd class="text-sm text-text-primary"><%= @container.dig("HostConfig", "RestartPolicy", "Name") || "—" %></dd>
       </div>
 
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">PID</dt>
-        <dd class="text-sm font-mono text-gray-200"><%= @container.dig("State", "Pid") || "—" %></dd>
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">PID</dt>
+        <dd class="text-sm font-mono text-text-primary"><%= @container.dig("State", "Pid") || "—" %></dd>
       </div>
 
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">Created</dt>
-        <dd class="text-sm text-gray-200">
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">Created</dt>
+        <dd class="text-sm text-text-primary">
           <% created = @container["Created"] %>
           <%= created.present? ? human_age(Time.parse(created)) : "—" %>
         </dd>
       </div>
 
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">Started</dt>
-        <dd class="text-sm text-gray-200">
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">Started</dt>
+        <dd class="text-sm text-text-primary">
           <% started = @container.dig("State", "StartedAt") %>
           <%= started.present? && started != "0001-01-01T00:00:00Z" ? human_age(Time.parse(started)) : "—" %>
         </dd>
       </div>
 
-      <div class="flex items-baseline justify-between border-b border-gray-800/60 pb-2">
-        <dt class="text-sm text-gray-500">Finished</dt>
-        <dd class="text-sm text-gray-200">
+      <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
+        <dt class="text-sm text-text-muted">Finished</dt>
+        <dd class="text-sm text-text-primary">
           <% finished = @container.dig("State", "FinishedAt") %>
           <%= finished.present? && finished != "0001-01-01T00:00:00Z" ? human_age(Time.parse(finished)) : "—" %>
         </dd>
@@ -73,11 +73,11 @@
   <%# Environment variables %>
   <% env_vars = @container.dig("Config", "Env") || [] %>
   <% if env_vars.any? %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Environment Variables</h3>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Environment Variables</h3>
       <div class="space-y-1">
         <% env_vars.each do |env| %>
-          <div class="font-mono text-xs text-gray-400 bg-gray-950 rounded px-3 py-1.5 break-all"><%= env %></div>
+          <div class="font-mono text-xs text-text-secondary bg-surface-sunken rounded px-3 py-1.5 break-all"><%= env %></div>
         <% end %>
       </div>
     </div>
@@ -86,24 +86,24 @@
   <%# Mounts %>
   <% mounts = @container["Mounts"] || [] %>
   <% if mounts.any? %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Mounts</h3>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Mounts</h3>
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left">
-            <th class="pb-2 text-xs text-gray-500 uppercase tracking-wider font-semibold pr-4">Type</th>
-            <th class="pb-2 text-xs text-gray-500 uppercase tracking-wider font-semibold pr-4">Source</th>
-            <th class="pb-2 text-xs text-gray-500 uppercase tracking-wider font-semibold pr-4">Destination</th>
-            <th class="pb-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">Mode</th>
+            <th class="pb-2 text-xs text-text-muted uppercase tracking-wider font-semibold pr-4">Type</th>
+            <th class="pb-2 text-xs text-text-muted uppercase tracking-wider font-semibold pr-4">Source</th>
+            <th class="pb-2 text-xs text-text-muted uppercase tracking-wider font-semibold pr-4">Destination</th>
+            <th class="pb-2 text-xs text-text-muted uppercase tracking-wider font-semibold">Mode</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-800/60">
+        <tbody class="divide-y divide-border/60">
           <% mounts.each do |m| %>
             <tr>
-              <td class="py-2 pr-4 text-xs text-gray-400 font-mono"><%= m["Type"] %></td>
-              <td class="py-2 pr-4 text-xs text-gray-300 font-mono break-all"><%= m["Source"] %></td>
-              <td class="py-2 pr-4 text-xs text-gray-300 font-mono break-all"><%= m["Destination"] %></td>
-              <td class="py-2 text-xs text-gray-500"><%= m["Mode"].presence || "rw" %></td>
+              <td class="py-2 pr-4 text-xs text-text-secondary font-mono"><%= m["Type"] %></td>
+              <td class="py-2 pr-4 text-xs text-text-secondary font-mono break-all"><%= m["Source"] %></td>
+              <td class="py-2 pr-4 text-xs text-text-secondary font-mono break-all"><%= m["Destination"] %></td>
+              <td class="py-2 text-xs text-text-muted"><%= m["Mode"].presence || "rw" %></td>
             </tr>
           <% end %>
         </tbody>
@@ -113,8 +113,8 @@
 
   <%# Actions %>
   <% state = @container.dig("State", "Status").to_s.downcase %>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-    <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Actions</h3>
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
+    <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">Actions</h3>
     <div class="flex flex-wrap gap-2">
       <% if state == "running" %>
         <%= render Ui::ButtonComponent.new(url: stop_container_path(@container["Id"]), method: :post,

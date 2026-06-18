@@ -1,0 +1,10 @@
+<% content_for :title, "Editar Credencial Git" %>
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-2 text-sm text-text-muted mb-4">
+    <%= link_to "Credenciais Git", git_credentials_path, class: "hover:text-text-secondary" %> <span>/</span> <span class="text-text-secondary">Editar</span>
+  </div>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-text-primary mb-5">Editar Credencial Git</h2>
+    <%= render "form", git_credential: @git_credential %>
+  </div>
+</div>

@@ -10,6 +10,7 @@ module Ambiente
 
     def new
       @registry = EnvironmentRegistry.new
+      @environments = Environment.order(:name)
     end
 
     def create

@@ -1,5 +1,58 @@
 @import "tailwindcss";
 
+/* Class-driven dark mode — toggled by adding/removing `dark` on <html>,
+   not OS prefers-color-scheme. Required for a manual light/dark switch. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Theme tokens ──
+   Raw values live on :root (light, default values) and .dark (dark
+   overrides). `@theme inline` re-exposes them as `--color-*` so Tailwind
+   generates the matching bg-/text-/border-* utilities, while the actual
+   values keep resolving at runtime via var() — that's what lets a single
+   build serve both themes and flip instantly on a `.dark` class toggle,
+   instead of baking one palette in at JIT-compile time. */
+:root {
+  --surface: #ffffff;          /* page background */
+  --surface-raised: #f9fafb;   /* card/panel background (gray-50) */
+  --surface-inset: #f3f4f6;    /* gray-100 — buttons/badges/inputs/skeletons (was bg-gray-800) */
+  --surface-sunken: #e5e7eb;   /* gray-200 — deepest well: code/pre blocks, some inputs (was bg-gray-950 as input/well bg) */
+  --surface-active: #d1d5db;   /* gray-300 — selected/active pill bg, skeleton shimmer (was bg-gray-700) */
+  --surface-active-hover: #9ca3af; /* gray-400 — hover state for bg-surface-active (was hover:bg-gray-600) */
+  --border: #e5e7eb;           /* default border (gray-200) */
+  --border-subtle: #d1d5db;    /* input/button border (gray-300) */
+  --text-primary: #111827;     /* gray-900 */
+  --text-secondary: #4b5563;   /* gray-600 */
+  --text-muted: #6b7280;       /* gray-500 */
+}
+
+.dark {
+  --surface: #030712;          /* gray-950 — page background */
+  --surface-raised: #111827;   /* gray-900 — card/panel background */
+  --surface-inset: #1f2937;    /* gray-800 — buttons/badges/inputs/skeletons */
+  --surface-sunken: #030712;   /* gray-950 — code/pre blocks, some form inputs/wells */
+  --surface-active: #374151;   /* gray-700 — selected/active pill bg, skeleton shimmer */
+  --surface-active-hover: #4b5563; /* gray-600 — hover state for bg-surface-active */
+  --border: #1f2937;           /* gray-800 */
+  --border-subtle: #374151;    /* gray-700 */
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;   /* gray-400 */
+  --text-muted: #6b7280;       /* gray-500 */
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-active: var(--surface-active);
+  --color-surface-active-hover: var(--surface-active-hover);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+}
+
 /* Hide x-show elements until Alpine boots — without this, collapsible
    sidebar sections flash open (their raw HTML has no display:none) and
    then snap shut once Alpine evaluates x-show, especially on hard reload

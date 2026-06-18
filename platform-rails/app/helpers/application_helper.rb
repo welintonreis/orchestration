@@ -65,15 +65,15 @@ module ApplicationHelper
     icon_html = sidebar_icon(icon).html_safe
 
     if soon
-      tag.div(class: "flex items-center gap-2.5 px-3 py-1.5 text-sm text-gray-700 cursor-not-allowed select-none") do
+      tag.div(class: "flex items-center gap-2.5 px-3 py-1.5 text-sm text-text-muted cursor-not-allowed select-none") do
         tag.span(icon_html.html_safe, class: "flex-shrink-0 w-5 h-5 flex items-center justify-center opacity-40") +
         tag.span(name, class: "flex-1 truncate transition-all", "x-bind:class" => "#{open} ? 'opacity-100' : 'opacity-0 pointer-events-none'") +
-        tag.span("em breve", class: "text-[9px] bg-gray-800 text-gray-600 px-1.5 py-0.5 rounded transition-all", "x-bind:class" => "#{open} ? 'opacity-100' : 'opacity-0'")
+        tag.span("em breve", class: "text-[9px] bg-surface-inset text-text-muted px-1.5 py-0.5 rounded transition-all", "x-bind:class" => "#{open} ? 'opacity-100' : 'opacity-0'")
       end
     else
       base   = "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
       active_cls = "bg-red-950/50 text-red-400 border border-red-900/60"
-      idle_cls   = "text-gray-400 hover:text-gray-100 hover:bg-gray-800/70"
+      idle_cls   = "text-text-secondary hover:text-text-primary hover:bg-surface-inset/70"
 
       link_to path, class: "#{base} #{active ? active_cls : idle_cls}", title: name do
         tag.span(icon_html.html_safe, class: "flex-shrink-0 w-5 h-5 flex items-center justify-center") +
@@ -106,7 +106,7 @@ module ApplicationHelper
     when "swarm/registries" then home + [["Swarm", swarm_path], ["Registries", swarm_registries_path]]
     when "environments"     then home + [["Ambientes", environments_path]]
     when "git_stacks"       then home + [["Git", nil], ["Deploy", git_stacks_path]]
-    when "git_connections"  then home + [["Git", nil], ["Conexões", git_connections_path]]
+    when "git_credentials"  then home + [["Git", nil], ["Credenciais", git_credentials_path]]
     when "ambiente/tags"        then home + [["Ambiente", nil], ["Tags", ambiente_tags_path]]
     when "ambiente/licenses"    then home + [["Ambiente", nil], ["Licenças", ambiente_licenses_path]]
     when "ambiente/policies"    then home + [["Ambiente", nil], ["Políticas", ambiente_policies_path]]
@@ -175,12 +175,12 @@ module ApplicationHelper
     content_for(:breadcrumbs) do
       safe = items.each_with_index.map do |(label, path), i|
         if path && i < items.length - 1
-          link_to(label, path, class: "text-gray-500 hover:text-gray-300 transition-colors")
+          link_to(label, path, class: "text-text-muted hover:text-text-secondary transition-colors")
         else
-          tag.span(label, class: "text-gray-300")
+          tag.span(label, class: "text-text-secondary")
         end
       end
-      safe_join(safe, tag.span(" / ", class: "text-gray-700 mx-1"))
+      safe_join(safe, tag.span(" / ", class: "text-text-muted mx-1"))
     end
     nil
   end
@@ -225,7 +225,7 @@ module ApplicationHelper
     active     = request.path == path || (path != root_path && request.path.start_with?(path))
     base_class = "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group"
     active_cls = "bg-cyan-900/40 text-cyan-400 border border-cyan-800/60"
-    idle_cls   = "text-gray-400 hover:text-white hover:bg-gray-800"
+    idle_cls   = "text-text-secondary hover:text-text-primary hover:bg-surface-inset"
     item_class = [base_class, active ? active_cls : idle_cls].join(" ")
 
     svg_html = icon ? nav_icon(icon) : ""
@@ -263,7 +263,7 @@ module ApplicationHelper
     policies:   %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 48 48"><path d="M0 0h48v48H0z" fill="none"/><g fill="currentColor"><path d="M18 11a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H19a1 1 0 0 1-1-1m-3 5a1 1 0 1 0 0 2h18a1 1 0 1 0 0-2zm-1 5a1 1 0 0 1 1-1h18a1 1 0 1 1 0 2H15a1 1 0 0 1-1-1m1 3a1 1 0 1 0 0 2h18a1 1 0 1 0 0-2z"/><path fill-rule="evenodd" d="M38 36a4 4 0 0 1-4 4h-3v4l-3-1.5l-3 1.5v-4H14a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4zM14 6a2 2 0 0 0-2 2v28a2 2 0 0 0 2 2h11v-2.354a4 4 0 1 1 6 0V38h3a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm15 30.874a4 4 0 0 1-2 0v3.89l1-.5l1 .5zM28 35a2 2 0 1 0 0-4a2 2 0 0 0 0 4" clip-rule="evenodd"/></g></svg>),
     tags:       %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="m21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42M13 20l-9-9V4h7l9 9M6.5 5A1.5 1.5 0 1 1 5 6.5A1.5 1.5 0 0 1 6.5 5"/></svg>),
     license:    %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 36 36"><path d="M0 0h36v36H0z" fill="none"/><path fill="currentColor" d="M27.46 17.23a6.36 6.36 0 0 0-4.4 11l-1.94 2.37l.9 3.61l3.66-4.46a6.26 6.26 0 0 0 3.55 0l3.66 4.46l.9-3.61l-1.94-2.37a6.36 6.36 0 0 0-4.4-11Zm0 10.68a4.31 4.31 0 1 1 4.37-4.31a4.35 4.35 0 0 1-4.37 4.31"/><path fill="currentColor" d="M30 13.5A7.5 7.5 0 0 1 22.5 6H4a2 2 0 0 0-2 2v20a2 2 0 0 0 2 2h15l.57-.7l.93-1.14A8.34 8.34 0 0 1 34 18.37v-6a7.46 7.46 0 0 1-4 1.13M17 24.6H7V23h10Zm1-7H7V16h11Zm6-4H7V12h17Z"/><circle cx="30" cy="6" r="5" fill="currentColor"/></svg>),
-    sub:        '<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="2"/></svg>',
+    sub:        '<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-text-muted" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="2"/></svg>',
     swarm_hex:  %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 512 512"><path d="M0 0h512v512H0z" fill="none"/><path fill="currentColor" d="m451.47 49.25l-70.22.125l-5.47-.03L373.064 54l-34.344 58.875l-58.876.125l-31.188-53.375l-2.625-4.72l-5.468-.06l-70.218.124l-5.5-.032l-2.688 4.656l-34 58.312l-65.562.125l-5.47-.03l-2.718 4.656l-35.093 60.188l-2.688 4.656l2.78 4.688l31.126 53.28l-33.75 57.938l-2.718 4.656l2.782 4.688l35.125 60.094l2.593 4.75l5.5.03l67.812-.124l31.03 53.03l2.595 4.75l5.5.033l67.594-.125l31.187 53.375l2.626 4.718l5.47.064l70.218-.125l5.312.092l2.72-4.656l34.155-58.375l65.564-.124l5.312.094l2.688-4.656l35.28-60.25l2.688-4.656l-2.78-4.688l-35.126-60.094l-2.594-4.72l-5.5-.06l-67.593.124l-27.19-46.5l32.94-56.344l61.53-.125l5.313.095l2.687-4.656l35.25-60.25l2.72-4.657l-2.783-4.688l-35.125-60.094l-2.593-4.718l-5.5-.062zm-5.345 18.656l29.5 51.094l-29.53 50.688l-59.47.093L357 118.876l29.656-50.906zM127.47 136.562l29.5 51.094l-29.532 50.688l-59.47.094l-29.624-50.907L68 136.626l59.47-.063zm106.905 58l28.53 49.5l-30.374 52.125l-57.78.094l-29.5-50.717l29.656-50.907l59.47-.094zm105.313 57.344l29.375 50.938l-29.532 50.72l-59.467.06l-28.72-49.343L281.907 252zm106.78 57.875l29.5 51.095l-29.53 50.688l-59.47.062l-29.624-50.875L387 309.844l59.47-.063zm-214.53 5.19l29.406 50.967l-29.53 50.688l-59.47.063l-29.625-50.907l29.56-50.717l59.657-.094z"/></svg>),
     registry:   %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 16 16"><path d="M0 0h16v16H0z" fill="none"/><path fill="currentColor" fill-rule="evenodd" d="m8 2.732l-2.945 1.7L8 6.135l2.945-1.701zm4.445.834L8 1L3.555 3.566l-1.43-.825a.75.75 0 1 0-.75 1.298l1.429.826V10l4.446 2.567v1.683a.75.75 0 0 0 1.5 0v-1.683L13.196 10V4.865l1.43-.826a.75.75 0 0 0-.751-1.298zm-.749 2.165L8.75 7.433v3.402l2.946-1.701zM4.304 9.134l2.946 1.7v-3.4L4.304 5.73z" clip-rule="evenodd"/></svg>),
     nodes:      %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 36 36"><path d="M0 0h36v36H0z" fill="none"/><path fill="currentColor" d="M10.5 34.29L2 29.39v-9.81l8.5-4.9l8.5 4.9v9.81ZM4 28.23L10.5 32l6.5-3.77v-7.49L10.5 17L4 20.74Z" class="clr-i-outline clr-i-outline-path-1"/><path fill="currentColor" d="m25.5 34.29l-8.5-4.9v-9.81l8.5-4.9l8.5 4.9v9.81ZM19 28.23L25.5 32l6.5-3.77v-7.49L25.5 17L19 20.74Z" class="clr-i-outline clr-i-outline-path-2"/><path fill="currentColor" d="m18 21.32l-8.5-4.9V6.61l8.5-4.9l8.5 4.9v9.81Zm-6.5-6.06L18 19l6.5-3.75V7.77L18 4l-6.5 3.77Z" class="clr-i-outline clr-i-outline-path-3"/><path fill="none" d="M0 0h36v36H0z"/></svg>),

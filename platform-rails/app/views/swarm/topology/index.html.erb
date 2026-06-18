@@ -1,0 +1,101 @@
+<% page_title "Topologia" %>
+<% page_subtitle "Mapa do cluster — nós, stacks, serviços e containers (incluindo finalizados)" %>
+
+<% content_for :page_icon do %>
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM7 8v4m10-4v4M7 12h10"/>
+  </svg>
+<% end %>
+
+<% if @topology.blank? %>
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+    </svg>
+    <p class="text-text-secondary text-sm">Nenhum nó encontrado neste cluster Swarm.</p>
+  </div>
+<% else %>
+  <div class="space-y-5" x-data="{ open: {} }">
+    <% @topology.each do |entry| %>
+      <% node = entry[:node] %>
+      <% node_id = node["ID"] %>
+      <% role = node.dig("Spec", "Role") %>
+      <% availability = node.dig("Spec", "Availability") %>
+      <% state = node.dig("Status", "State") %>
+      <% state_class = state == "ready" ? "bg-green-900/40 text-green-400 border-green-800/60" : "bg-red-900/40 text-red-400 border-red-800/60" %>
+
+      <%# ── Node card ── %>
+      <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-inset/40">
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 0a3 3 0 100 6m0-6H5.25"/>
+            </svg>
+            <div>
+              <p class="text-sm font-semibold text-text-primary"><%= node.dig("Description", "Hostname") %></p>
+              <p class="text-xs text-text-muted"><%= role %> · <%= availability %></p>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border <%= state_class %>"><%= state %></span>
+        </div>
+
+        <% if entry[:stacks].empty? %>
+          <p class="px-5 py-6 text-sm text-text-muted">Nenhuma stack agendada neste nó.</p>
+        <% else %>
+          <div class="divide-y divide-border">
+            <% entry[:stacks].each do |stack| %>
+              <% stack_key = "#{node_id}-#{stack[:name]}" %>
+              <div class="pl-6">
+                <%# ── Stack row ── %>
+                <button type="button" @click="open['<%= stack_key %>'] = !open['<%= stack_key %>']"
+                        class="w-full flex items-center justify-between px-3 py-3 text-left hover:bg-surface-inset/40 transition-colors">
+                  <span class="flex items-center gap-2 text-sm font-medium text-text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-text-muted transition-transform" :class="open['<%= stack_key %>'] ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                    <%= stack[:name] %>
+                  </span>
+                  <span class="text-xs text-text-muted"><%= stack[:services].size %> serviço(s)</span>
+                </button>
+
+                <div x-show="open['<%= stack_key %>']" x-cloak class="pl-6 pb-2">
+                  <% stack[:services].each do |svc_entry| %>
+                    <% svc = svc_entry[:service] %>
+                    <% svc_name = svc&.dig("Spec", "Name") || "(serviço removido)" %>
+                    <div class="pl-3 border-l border-border-subtle ml-2 mb-2">
+                      <div class="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                        <%= svc_name %>
+                      </div>
+                      <div class="pl-5 space-y-1 pb-2">
+                        <% svc_entry[:containers].each do |task| %>
+                          <% task_state = task.dig("Status", "State") %>
+                          <% dead = !%w[running starting].include?(task_state) %>
+                          <% dot_class = case task_state
+                               when "running"  then "bg-green-400"
+                               when "starting" then "bg-blue-400"
+                               when "failed"   then "bg-red-400"
+                               else                 "bg-gray-500"
+                               end %>
+                          <div class="flex items-center gap-2 px-3 py-1 text-xs <%= dead ? 'text-text-muted' : 'text-text-secondary' %>">
+                            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 <%= dot_class %>"></span>
+                            <span class="font-mono <%= dead ? 'line-through opacity-60' : '' %>">
+                              <%= task.dig("Status", "ContainerStatus", "ContainerID")&.first(12) || task["ID"].first(12) %>
+                            </span>
+                            <span class="text-text-muted">·</span>
+                            <span><%= task_state %></span>
+                            <% if task.dig("Status", "Err").present? %>
+                              <span class="text-red-400 truncate"><%= task.dig("Status", "Err") %></span>
+                            <% end %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

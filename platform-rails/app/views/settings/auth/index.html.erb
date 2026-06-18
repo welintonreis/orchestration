@@ -1,33 +1,33 @@
 <% content_for :title, "Autenticação" %>
 
 <div class="mb-6">
-  <h2 class="text-xl font-bold text-white">Configurações de Autenticação</h2>
-  <p class="text-sm text-gray-400 mt-0.5">Políticas de acesso e segurança de sessão</p>
+  <h2 class="text-xl font-bold text-text-primary">Configurações de Autenticação</h2>
+  <p class="text-sm text-text-secondary mt-0.5">Políticas de acesso e segurança de sessão</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <div class="lg:col-span-2">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div class="bg-surface-raised border border-border rounded-xl p-6">
       <%= form_with url: settings_auth_path, method: :post, local: true do |f| %>
-        <h3 class="text-sm font-semibold text-gray-200 mb-4">Políticas de Sessão</h3>
+        <h3 class="text-sm font-semibold text-text-primary mb-4">Políticas de Sessão</h3>
 
         <div class="mb-4">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Timeout de Sessão (minutos)</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">Timeout de Sessão (minutos)</label>
           <input type="number" name="session_timeout" value="<%= @settings[:session_timeout] %>" min="15" max="10080"
-            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
-          <p class="text-xs text-gray-600 mt-1">0 = sem expiração</p>
+            class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
+          <p class="text-xs text-text-muted mt-1">0 = sem expiração</p>
         </div>
 
         <div class="mb-4">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Tamanho Mínimo da Senha</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">Tamanho Mínimo da Senha</label>
           <input type="number" name="min_password_length" value="<%= @settings[:min_password_length] %>" min="8" max="64"
-            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
         </div>
 
         <div class="mb-4">
-          <label class="block text-xs font-medium text-gray-400 mb-1">Expiração de Senha (dias, 0 = nunca)</label>
+          <label class="block text-xs font-medium text-text-secondary mb-1">Expiração de Senha (dias, 0 = nunca)</label>
           <input type="number" name="password_expires_days" value="<%= @settings[:password_expires_days] %>" min="0"
-            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
         </div>
 
         <div class="space-y-3 mb-5">
@@ -35,14 +35,14 @@
             ["allow_registration", "Permitir auto-cadastro", "Usuários podem se cadastrar sem convite"],
             ["require_2fa", "Exigir 2FA", "Todos os usuários devem configurar autenticação em dois fatores"],
           ].each do |key, label, desc| %>
-            <div class="flex items-center justify-between py-2 border-b border-gray-800">
+            <div class="flex items-center justify-between py-2 border-b border-border">
               <div>
-                <p class="text-sm text-gray-200"><%= label %></p>
-                <p class="text-xs text-gray-500"><%= desc %></p>
+                <p class="text-sm text-text-primary"><%= label %></p>
+                <p class="text-xs text-text-muted"><%= desc %></p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer ml-4">
                 <input type="checkbox" name="<%= key %>" value="true" <%= @settings[key.to_sym] ? "checked" : "" %> class="sr-only peer">
-                <div class="w-10 h-6 bg-gray-700 peer-checked:bg-cyan-600 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+                <div class="w-10 h-6 bg-surface-active peer-checked:bg-cyan-600 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
               </label>
             </div>
           <% end %>
@@ -54,19 +54,19 @@
   </div>
 
   <div class="space-y-4">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <h3 class="text-sm font-semibold text-gray-200 mb-3">Estatísticas de Usuários</h3>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-primary mb-3">Estatísticas de Usuários</h3>
       <div class="space-y-2 text-xs">
-        <div class="flex justify-between py-1.5 border-b border-gray-800">
-          <span class="text-gray-500">Total de usuários</span>
-          <span class="text-gray-300 font-bold"><%= @total_users %></span>
+        <div class="flex justify-between py-1.5 border-b border-border">
+          <span class="text-text-muted">Total de usuários</span>
+          <span class="text-text-secondary font-bold"><%= @total_users %></span>
         </div>
-        <div class="flex justify-between py-1.5 border-b border-gray-800">
-          <span class="text-gray-500">Ativos</span>
+        <div class="flex justify-between py-1.5 border-b border-border">
+          <span class="text-text-muted">Ativos</span>
           <span class="text-green-400 font-bold"><%= @active_users %></span>
         </div>
         <div class="flex justify-between py-1.5">
-          <span class="text-gray-500">Admins</span>
+          <span class="text-text-muted">Admins</span>
           <span class="text-purple-400 font-bold"><%= @admin_count %></span>
         </div>
       </div>

@@ -1,27 +1,48 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Backs the "Arquivo Compose" field on git_stacks/new — once a Git
-// connection is picked, fetches the repo's yml/yaml file list and shows
-// matching suggestions + a found/not-found indicator as the user types.
+// Backs the "Arquivo Compose" field on git_stacks/new and edit — once a
+// repo URL (+ branch + credential) is filled in, fetches the repo's
+// yml/yaml file list and shows matching suggestions + a found/not-found
+// indicator as the user types.
 export default class extends Controller {
-  static targets = ["connectionSelect", "input", "suggestions", "indicator"]
-  static values = { urlTemplate: String }
+  static targets = ["repoUrl", "branch", "credentialSelect", "username", "token", "input", "suggestions", "indicator"]
+  static values = { url: String }
 
   connect() {
     this.files = null
     this.loading = false
   }
 
+  scheduleLoad() {
+    clearTimeout(this.timeout)
+    this.timeout = setTimeout(() => this.loadFiles(), 400)
+  }
+
   async loadFiles() {
-    const connId = this.connectionSelectTarget.value
+    const repoUrl = this.repoUrlTarget.value.trim()
     this.files = null
     this.renderIndicator()
-    if (!connId) return
+    if (!repoUrl) return
 
     this.loading = true
-    const url = this.urlTemplateValue.replace("__ID__", connId)
+    this.renderIndicator()
+    const body = {
+      repo_url: repoUrl,
+      branch: this.hasBranchTarget ? this.branchTarget.value.trim() || "main" : "main",
+      git_credential_id: this.hasCredentialSelectTarget ? this.credentialSelectTarget.value : "",
+      username: this.hasUsernameTarget ? this.usernameTarget.value : "",
+      token: this.hasTokenTarget ? this.tokenTarget.value : "",
+    }
     try {
-      const res = await fetch(url, { headers: { Accept: "application/json" } })
+      const res = await fetch(this.urlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+        },
+        body: JSON.stringify(body),
+      })
       this.files = res.ok ? await res.json() : []
     } catch {
       this.files = []

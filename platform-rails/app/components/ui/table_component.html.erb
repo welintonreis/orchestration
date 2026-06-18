@@ -1,12 +1,12 @@
 <table class="w-full text-sm <%= @css_class %>">
   <thead>
-    <tr class="border-b border-gray-800 text-left">
+    <tr class="border-b border-border text-left">
       <% @headers.each do |h| %>
         <th class="<%= header_class(h) %>"><%= header_label(h) %></th>
       <% end %>
     </tr>
   </thead>
-  <tbody class="divide-y divide-gray-800/60">
+  <tbody class="divide-y divide-border/60">
     <%= content %>
   </tbody>
 </table>

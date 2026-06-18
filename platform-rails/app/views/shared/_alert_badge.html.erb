@@ -1,15 +1,32 @@
 <%
-  unread_count = Alert.unread.count
+  unread_count = Alert.where(read_at: nil).count
+  popover_alerts = Alert.order(created_at: :desc).limit(NotificationsController::POPOVER_LIMIT)
 %>
-<%= link_to alerts_path,
-      class: "relative inline-flex items-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors",
-      title: unread_count > 0 ? "#{unread_count} unread alert#{"s" if unread_count != 1}" : "No unread alerts" do %>
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-  </svg>
-  <% if unread_count > 0 %>
-    <span class="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-      <%= unread_count > 99 ? "99+" : unread_count %>
-    </span>
-  <% end %>
-<% end %>
+<div id="alert-badge" class="relative" x-data="{ notif: false }">
+  <button type="button"
+          @click="notif = !notif"
+          class="relative inline-flex items-center p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-inset transition-colors"
+          title="<%= unread_count > 0 ? "#{unread_count} unread alert#{"s" if unread_count != 1}" : "No unread alerts" %>">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+    </svg>
+    <% if unread_count > 0 %>
+      <span class="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-text-primary text-[10px] font-bold leading-none">
+        <%= unread_count > 99 ? "99+" : unread_count %>
+      </span>
+    <% end %>
+  </button>
+
+  <div x-show="notif"
+       x-cloak
+       x-transition:enter="transition ease-out duration-100"
+       x-transition:enter-start="opacity-0 -translate-y-1"
+       x-transition:enter-end="opacity-100 translate-y-0"
+       x-transition:leave="transition ease-in duration-75"
+       x-transition:leave-start="opacity-100 translate-y-0"
+       x-transition:leave-end="opacity-0 -translate-y-1"
+       @click.outside="notif = false"
+       class="absolute top-full right-0 mt-1 w-80 max-w-[90vw] bg-surface-inset border border-border-subtle rounded-xl shadow-xl overflow-hidden z-30">
+    <%= render "notifications/popover_body", alerts: popover_alerts, unread_count: unread_count %>
+  </div>
+</div>

@@ -1,31 +1,37 @@
 <turbo-frame id="services-content">
+  <%# rows is rendered with layout: false (both for the lazy frame's
+      initial load and for scale/drain/bulk_scale redirecting back here
+      from inside the frame), so shared/_flash from the full layout never
+      renders — render it here too so flash.now set by those actions
+      actually shows up. %>
+  <%= render "shared/flash" %>
   <% managers_count = @nodes.count { |n| n.dig("Spec", "Role") == "manager" } %>
 
   <%# Summary cards %>
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <div class="text-3xl font-bold text-white"><%= @services.size %></div>
-      <div class="text-sm text-gray-400 mt-1">Total Services</div>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <div class="text-3xl font-bold text-text-primary"><%= @services.size %></div>
+      <div class="text-sm text-text-secondary mt-1">Total Services</div>
     </div>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <div class="text-3xl font-bold text-white"><%= @nodes.size %></div>
-      <div class="text-sm text-gray-400 mt-1">Total Nodes</div>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <div class="text-3xl font-bold text-text-primary"><%= @nodes.size %></div>
+      <div class="text-sm text-text-secondary mt-1">Total Nodes</div>
     </div>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <div class="text-3xl font-bold text-white"><%= managers_count %></div>
-      <div class="text-sm text-gray-400 mt-1">Managers</div>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <div class="text-3xl font-bold text-text-primary"><%= managers_count %></div>
+      <div class="text-sm text-text-secondary mt-1">Managers</div>
     </div>
   </div>
 
   <% if @services.empty? %>
     <div class="flex flex-col items-center justify-center py-24 text-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
       </svg>
-      <p class="text-gray-400 text-sm">No services deployed.</p>
+      <p class="text-text-secondary text-sm">No services deployed.</p>
     </div>
   <% else %>
-    <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+    <div class="bg-surface-raised border border-border rounded-xl overflow-hidden"
          x-data="{
            selected: [],
            search: '',
@@ -38,12 +44,12 @@
          }">
 
       <%# Toolbar %>
-      <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-3 flex-wrap">
+      <div class="px-4 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap">
         <div class="flex items-center gap-3">
           <%= render Ui::InputComponent.new(name: "services_search", placeholder: "Buscar serviços…",
-                css_class: "w-52 px-3 py-1.5 rounded-lg placeholder-gray-600",
+                css_class: "w-52 px-3 py-1.5 rounded-lg placeholder-text-muted",
                 html_attrs: { "x-model" => "search" }) %>
-          <span class="text-xs text-gray-500"
+          <span class="text-xs text-text-muted"
                 x-text="selected.length > 0 ? selected.length + ' selecionado(s)' : total + ' serviço' + (total === 1 ? '' : 's')"></span>
         </div>
         <div class="flex items-center gap-2" x-show="selected.length > 0" x-cloak>
@@ -77,7 +83,7 @@
       </div>
 
       <table class="w-full text-sm">
-        <thead class="bg-gray-800/50">
+        <thead class="bg-surface-inset/50">
           <tr>
             <th class="px-4 py-3 w-8">
               <%= render Ui::CheckboxComponent.new(html_attrs: {
@@ -86,14 +92,14 @@
                     ":checked" => "selected.length === total && total > 0",
                   }) %>
             </th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Name</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Image</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Replicas</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Updated</th>
-            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Name</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Image</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Replicas</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Updated</th>
+            <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-800">
+        <tbody class="divide-y divide-border">
           <% @services.each_with_index do |s, idx| %>
             <%
               service_name  = s.dig("Spec", "Name") || "—"
@@ -106,7 +112,7 @@
 
               if global_mode
                 replicas_label = "global"
-                replicas_color = "text-gray-300"
+                replicas_color = "text-text-secondary"
               else
                 replicas_label = "#{running}/#{desired}"
                 replicas_color = (running.to_i >= desired.to_i && desired.to_i > 0) ? "text-green-400" : "text-red-400"
@@ -115,7 +121,7 @@
               updated_at = (Time.parse(s["UpdatedAt"]) rescue nil)
               current_replicas = s.dig("Spec", "Mode", "Replicated", "Replicas").to_i
             %>
-            <tr class="hover:bg-gray-800/30 transition-colors"
+            <tr class="hover:bg-surface-inset/30 transition-colors"
                 x-show="matchSearch('<%= j service_name %>') && (perPage === 0 || ((<%= idx %>) >= (page - 1) * perPage && (<%= idx %>) < page * perPage))">
               <td class="px-4 py-3 w-8">
                 <% unless global_mode %>
@@ -127,28 +133,28 @@
               </td>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 flex-shrink-0 rounded bg-gray-800 border border-gray-700/60 flex items-center justify-center">
+                  <div class="w-8 h-8 flex-shrink-0 rounded bg-surface-inset border border-border-subtle/60 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-cyan-400" viewBox="0 0 32 32">
                       <path d="M0 0h32v32H0z" fill="none"/>
                       <path fill="currentColor" d="m22.505 11.637l-5.989-3.5a1 1 0 0 0-1.008-.001l-6.011 3.5A1 1 0 0 0 9 12.5v7a1 1 0 0 0 .497.864l6.011 3.5A.96.96 0 0 0 16 24c.174 0 .36-.045.516-.137l5.989-3.5A1 1 0 0 0 23 19.5v-7a1 1 0 0 0-.495-.863m-6.494-1.48l4.007 2.343l-4.007 2.342l-4.023-2.342zM11 14.24l4 2.33v4.685l-4-2.33zm6 7.025v-4.683l4-2.338v4.683z"/>
                       <path fill="currentColor" d="M16 1a1 1 0 0 0-.504.136l-12 7A1 1 0 0 0 3 9v14a1 1 0 0 0 .496.864l12 7a1 1 0 0 0 1.008 0l11-6.417l-1.008-1.727L16 28.842L5 22.426V9.575l11-6.417l11 6.416V17h2V9a1 1 0 0 0-.496-.864l-12-7A1 1 0 0 0 16 1"/>
                     </svg>
                   </div>
-                  <%= link_to swarm_service_path(s["ID"]), class: "font-mono text-gray-100 hover:text-cyan-400 transition-colors font-medium", data: { turbo_frame: "_top" } do %>
+                  <%= link_to swarm_service_path(s["ID"]), class: "font-mono text-text-primary hover:text-cyan-400 transition-colors font-medium", data: { turbo_frame: "_top" } do %>
                     <%= service_name %>
                   <% end %>
                 </div>
               </td>
-              <td class="px-4 py-3 font-mono text-gray-400 text-xs truncate max-w-xs"><%= image %></td>
+              <td class="px-4 py-3 font-mono text-text-secondary text-xs truncate max-w-xs"><%= image %></td>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-gray-800 text-gray-500 border-gray-700/60", size: :xs, css_class: "uppercase tracking-wide")) { global_mode ? "global" : "rep" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-muted border-border-subtle/60", size: :xs, css_class: "uppercase tracking-wide")) { global_mode ? "global" : "rep" } %>
                   <% unless global_mode %>
                     <span class="font-mono font-semibold text-sm <%= replicas_color %>"><%= replicas_label %></span>
                   <% end %>
                 </div>
               </td>
-              <td class="px-4 py-3 text-gray-400 text-xs"><%= updated_at ? human_age(updated_at) : "—" %></td>
+              <td class="px-4 py-3 text-text-secondary text-xs"><%= updated_at ? human_age(updated_at) : "—" %></td>
               <td class="px-4 py-3" x-data="{ scaleInput: <%= current_replicas %> }">
                 <div class="flex items-center justify-end gap-2">
                   <% unless global_mode %>

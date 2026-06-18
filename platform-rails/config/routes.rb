@@ -62,6 +62,7 @@ Rails.application.routes.draw do
 
   get  "swarm",                    to: "swarm/dashboard#index", as: :swarm
   get  "swarm/nodes",              to: "swarm/nodes#index",     as: :swarm_nodes
+  get  "swarm/topology",           to: "swarm/topology#index",  as: :swarm_topology
   get  "swarm/services",           to: "swarm/services#index",  as: :swarm_services
   get  "swarm/services/rows",      to: "swarm/services#rows",   as: :rows_swarm_services
   get  "swarm/services/:id",       to: "swarm/services#show",   as: :swarm_service
@@ -73,14 +74,10 @@ Rails.application.routes.draw do
   post "swarm/services/:id/update_image",     to: "swarm/services#update_image",       as: :update_image_swarm_service
   post "swarm/services/:id/rollback",         to: "swarm/services#rollback",           as: :rollback_swarm_service
   post "swarm/services/bulk_scale",           to: "swarm/services#bulk_scale",         as: :bulk_scale_swarm_services
-  resources :git_connections do
-    member do
-      get :status
-      get :files
-    end
-  end
+  resources :git_credentials
   resources :git_stacks do
     member { post :deploy }
+    collection { post :files }
   end
   namespace :webhooks do
     post ":token/deploy", to: "deploys#create", as: :deploy
@@ -146,8 +143,9 @@ Rails.application.routes.draw do
   end
 
   # ── Notifications ──
-  get  "notifications",          to: "notifications#index",    as: :notifications
+  get  "notifications",               to: "notifications#index",         as: :notifications
   post "notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_read_notifications
+  post "notifications/:id/read",      to: "notifications#mark_read",     as: :mark_read_notification
 
   # ── Settings ──
   namespace :settings do

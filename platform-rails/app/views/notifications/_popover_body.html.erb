@@ -1,0 +1,57 @@
+<div id="notifications-popover-body">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+    <div>
+      <div class="text-sm font-semibold text-text-primary">Notificações</div>
+      <div class="text-xs text-text-muted mt-0.5"><%= unread_count %> não lida<%= unread_count == 1 ? "" : "s" %></div>
+    </div>
+    <% if unread_count > 0 %>
+      <%= button_to "Marcar tudo como lido", mark_all_read_notifications_path,
+            method: :post,
+            form: { data: { turbo_stream: true } },
+            class: "px-2.5 py-1 text-xs rounded-lg bg-surface-active/60 hover:bg-surface-active text-text-secondary hover:text-text-primary border border-border-subtle transition-colors font-medium" %>
+    <% end %>
+  </div>
+
+  <div class="max-h-96 overflow-y-auto divide-y divide-border-subtle/60">
+    <% if alerts.empty? %>
+      <div class="px-4 py-10 text-center text-text-muted text-sm">
+        Sem notificações
+      </div>
+    <% else %>
+      <% alerts.each do |alert| %>
+        <%
+          level_dot = case alert.level
+                      when "critical" then "bg-red-500"
+                      when "warning"  then "bg-yellow-500"
+                      else                 "bg-blue-500"
+                      end
+          level_text = case alert.level
+                       when "critical" then "text-red-400"
+                       when "warning"  then "text-yellow-400"
+                       else                 "text-blue-400"
+                       end
+        %>
+        <%= button_to mark_read_notification_path(alert),
+              method: :post,
+              form: { data: { turbo_stream: true }, class: "w-full" },
+              class: "w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-surface-active/40 transition-colors #{alert.read? ? '' : 'bg-surface-raised/30'}" do %>
+          <span class="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 <%= alert.read? ? 'bg-transparent' : level_dot %>"></span>
+          <span class="flex-1 min-w-0">
+            <span class="flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-wider <%= level_text %>"><%= alert.level %></span>
+              <% if alert.resource.present? %>
+                <span class="text-[10px] text-text-muted font-mono truncate"><%= alert.resource %></span>
+              <% end %>
+            </span>
+            <span class="block text-sm text-text-primary truncate"><%= alert.message %></span>
+            <span class="block text-xs text-text-muted mt-0.5"><%= human_age(alert.created_at) %></span>
+          </span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="px-4 py-2 border-t border-border-subtle bg-surface-inset/60">
+    <%= link_to "Ver todas", notifications_path, class: "block text-center text-xs text-text-secondary hover:text-text-primary transition-colors" %>
+  </div>
+</div>

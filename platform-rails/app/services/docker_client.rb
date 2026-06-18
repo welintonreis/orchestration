@@ -242,6 +242,15 @@ class DockerClient
     get("/tasks", query: { filters: { service: { service_id => true } }.to_json })
   end
 
+  # Every task across the swarm in one call — Docker keeps a bounded
+  # history of terminated tasks per service (TaskHistoryRetentionLimit,
+  # default 5), so this naturally includes recently-dead containers
+  # alongside running ones without needing a separate "all containers
+  # ever" query.
+  def tasks
+    get("/tasks")
+  end
+
   def nodes
     get("/nodes")
   end

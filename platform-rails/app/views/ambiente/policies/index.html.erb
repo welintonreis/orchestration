@@ -11,17 +11,17 @@
 <% end %>
 
 <div class="mb-6">
-  <h2 class="text-xl font-bold text-white">Políticas de Ambiente</h2>
-  <p class="text-sm text-gray-400 mt-0.5">Controle o que é permitido em cada ambiente</p>
+  <h2 class="text-xl font-bold text-text-primary">Políticas de Ambiente</h2>
+  <p class="text-sm text-text-secondary mt-0.5">Controle o que é permitido em cada ambiente</p>
 </div>
 
 <% policy_keys = %w[allow_bind_mounts allow_privileged allow_host_networking allow_container_capabilities] %>
 <% policy_labels = { "allow_bind_mounts" => "Bind Mounts", "allow_privileged" => "Containers Privilegiados", "allow_host_networking" => "Host Networking", "allow_container_capabilities" => "Capabilities do Container" } %>
 
-<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+<div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
   <table class="w-full text-sm">
     <thead>
-      <tr class="text-xs text-gray-500 uppercase border-b border-gray-800">
+      <tr class="text-xs text-text-muted uppercase border-b border-border">
         <th class="px-4 py-3 text-left">Ambiente</th>
         <% policy_labels.values.each do |label| %>
           <th class="px-4 py-3 text-center text-xs"><%= label %></th>
@@ -31,11 +31,11 @@
     </thead>
     <tbody>
       <% @environments.each do |env| %>
-        <tr class="border-b border-gray-800/50 hover:bg-gray-800/20">
+        <tr class="border-b border-border/50 hover:bg-surface-inset/20">
           <td class="px-4 py-3">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full <%= env.active? ? 'bg-green-400' : 'bg-gray-600' %>"></span>
-              <span class="font-medium text-gray-200"><%= env.name %></span>
+              <span class="font-medium text-text-primary"><%= env.name %></span>
             </div>
           </td>
           <% policy_keys.each do |key| %>

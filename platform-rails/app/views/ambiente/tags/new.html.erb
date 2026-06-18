@@ -1,22 +1,22 @@
 <% content_for :title, "Nova Tag" %>
 <div class="max-w-lg mx-auto">
-  <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
-    <%= link_to "Tags", ambiente_tags_path, class: "hover:text-gray-300" %> <span>/</span> <span class="text-gray-300">Nova</span>
+  <div class="flex items-center gap-2 text-sm text-text-muted mb-4">
+    <%= link_to "Tags", ambiente_tags_path, class: "hover:text-text-secondary" %> <span>/</span> <span class="text-text-secondary">Nova</span>
   </div>
-  <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-    <h2 class="text-lg font-semibold text-white mb-5">Criar Tag</h2>
+  <div class="bg-surface-raised border border-border rounded-xl p-6">
+    <h2 class="text-lg font-semibold text-text-primary mb-5">Criar Tag</h2>
     <%# Model is EnvironmentTag but route is ambiente_tags — same mismatch
         as ambiente/registries, explicit url: needed. %>
     <%= form_with model: @tag, url: ambiente_tags_path, local: true do |f| %>
       <div class="mb-4">
-        <%= f.label :name, "Nome", class: "block text-xs font-medium text-gray-400 mb-1" %>
-        <%= f.text_field :name, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: produção, staging, crítico" %>
+        <%= f.label :name, "Nome", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_field :name, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: produção, staging, crítico" %>
       </div>
       <div class="mb-5">
-        <%= f.label :color, "Cor", class: "block text-xs font-medium text-gray-400 mb-1" %>
+        <%= f.label :color, "Cor", class: "block text-xs font-medium text-text-secondary mb-1" %>
         <div class="flex items-center gap-3">
-          <%= f.color_field :color, value: @tag.color.presence || "#6366f1", class: "w-12 h-10 rounded-lg bg-gray-800 border border-gray-700 cursor-pointer p-0.5" %>
-          <%= f.text_field :color, id: "tag_color_hex", class: "flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "#6366f1" %>
+          <%= f.color_field :color, value: @tag.color.presence || "#6366f1", class: "w-12 h-10 rounded-lg bg-surface-inset border border-border-subtle cursor-pointer p-0.5" %>
+          <%= f.text_field :color, id: "tag_color_hex", class: "flex-1 bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm font-mono text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "#6366f1" %>
         </div>
       </div>
       <div class="flex gap-3">

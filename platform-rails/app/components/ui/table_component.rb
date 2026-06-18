@@ -16,7 +16,7 @@ module Ui
       align = h.is_a?(Hash) ? h[:align] : nil
       width = h.is_a?(Hash) ? h[:width] : nil
       [
-        "px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider",
+        "px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider",
         align == :right ? "text-right" : nil,
         align == :center ? "text-center" : nil,
         width,

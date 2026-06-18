@@ -4,7 +4,7 @@ class GitDeployJob < ApplicationJob
   def perform(git_stack_id)
     stack = GitStack.find(git_stack_id)
     stack.update!(status: "deploying")
-    repo_path = GitUnpacker.call(stack.git_connection)
+    repo_path = GitUnpacker.call(stack)
     GitDeployer.call(stack, repo_path: repo_path)
   rescue => e
     GitStack.find_by(id: git_stack_id)&.update!(

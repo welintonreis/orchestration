@@ -1,20 +1,20 @@
 require "open3"
 
 class GitPollService
-  def self.call(git_connection)
-    new(git_connection).latest_sha
+  def self.call(git_stack)
+    new(git_stack).latest_sha
   end
 
-  def initialize(connection)
-    @connection = connection
+  def initialize(stack)
+    @stack = stack
   end
 
   def latest_sha
     env = { "GIT_TERMINAL_PROMPT" => "0" }
-    url = @connection.authenticated_url
+    url = @stack.authenticated_url
     out, _err, status = Open3.capture3(
       env,
-      "git", "ls-remote", url, "refs/heads/#{@connection.branch}"
+      "git", "ls-remote", url, "refs/heads/#{@stack.branch}"
     )
     return nil unless status.success?
     out.split.first

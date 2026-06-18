@@ -1,12 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
 
-const COLORS = { cpu: "#39FF14", ram: "#22d3ee", disk: "#e8f4f8" }
-const EMPTY  = "#1f2937"
-const SEGS   = 40
+const SEGS = 100 // not used for donuts, kept for reference of historical bar count
 
 export default class extends Controller {
-  static targets = ["cpuBar", "cpuPct", "ramBar", "ramPct", "diskBar", "diskPct"]
+  static targets = [
+    "cpuCircle", "cpuPct",
+    "ramCircle", "ramPct",
+    "diskCircle", "diskPct",
+    "swapCircle", "swapPct",
+  ]
+
+  static values = { circumference: Number }
 
   connect() {
     this.subscription = consumer.subscriptions.create(
@@ -19,21 +24,23 @@ export default class extends Controller {
     this.subscription?.unsubscribe()
   }
 
-  update({ cpu, ram, disk }) {
-    if (cpu  != null) this.setBar("cpu",  cpu)
-    if (ram  != null) this.setBar("ram",  ram)
-    if (disk != null) this.setBar("disk", disk)
+  update({ cpu, ram, disk, swap }) {
+    if (cpu  != null) this.setGauge("cpu",  cpu)
+    if (ram  != null) this.setGauge("ram",  ram)
+    if (disk != null) this.setGauge("disk", disk)
+    if (swap != null) this.setGauge("swap", swap)
   }
 
-  setBar(name, pct) {
-    const filled = Math.min(Math.round(pct * SEGS / 100), SEGS)
-    const bar    = this[`${name}BarTarget`]
-    const label  = this[`${name}PctTarget`]
-    if (bar) {
-      bar.querySelectorAll("div").forEach((seg, i) => {
-        seg.style.background = i < filled ? COLORS[name] : EMPTY
-      })
+  setGauge(name, pct) {
+    const clamped = Math.min(Math.max(pct, 0), 100)
+    const circle  = this[`${name}CircleTarget`]
+    const label   = this[`${name}PctTarget`]
+    const circumference = this.circumferenceValue
+
+    if (circle && circumference) {
+      const offset = circumference * (1 - clamped / 100)
+      circle.style.strokeDashoffset = offset
     }
-    if (label) label.textContent = `${pct.toFixed(1)}%`
+    if (label) label.textContent = `${pct.toFixed(0)}%`
   }
 }

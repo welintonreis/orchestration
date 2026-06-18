@@ -36,9 +36,9 @@ class GitStackTeardown
   end
 
   def teardown_compose
-    return if @stack.git_connection.nil?
+    return if @stack.repo_url.blank?
 
-    compose_path = File.join(GitUnpacker.repo_dir(@stack.git_connection).to_s, @stack.compose_file)
+    compose_path = File.join(GitUnpacker.repo_dir(@stack).to_s, @stack.compose_file)
     return unless File.exist?(compose_path)
 
     Open3.capture3("docker", "compose", "-f", compose_path, "down", chdir: File.dirname(compose_path))

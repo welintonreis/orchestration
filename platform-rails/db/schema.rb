@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_18_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_18_000004) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -107,41 +107,44 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_18_000001) do
     t.index ["name"], name: "index_environments_on_name", unique: true
   end
 
-  create_table "git_connections", force: :cascade do |t|
-    t.string "auth_type", default: "none"
-    t.string "branch", default: "main"
+  create_table "git_credentials", force: :cascade do |t|
+    t.string "auth_type", default: "token", null: false
     t.datetime "created_at", null: false
-    t.string "last_commit_sha"
-    t.datetime "last_pulled_at"
     t.string "name", null: false
-    t.string "repo_url", null: false
+    t.string "site", null: false
     t.text "ssh_key_ciphertext"
     t.string "token_ciphertext"
     t.datetime "updated_at", null: false
     t.string "username"
-    t.index ["name"], name: "index_git_connections_on_name", unique: true
+    t.index ["name"], name: "index_git_credentials_on_name", unique: true
   end
 
   create_table "git_stacks", force: :cascade do |t|
     t.boolean "auto_update", default: false
+    t.string "branch", default: "main"
     t.string "compose_file", default: "docker-compose.yml"
     t.datetime "created_at", null: false
     t.string "deploy_mode", default: "swarm_stack"
     t.text "env_content"
     t.integer "environment_id", null: false
-    t.integer "git_connection_id"
+    t.integer "git_credential_id"
+    t.string "last_commit_sha"
     t.text "last_deploy_output"
     t.datetime "last_deployed_at"
+    t.datetime "last_pulled_at"
     t.string "name", null: false
     t.integer "poll_interval", default: 300
+    t.string "repo_url"
     t.string "source_type", default: "git", null: false
     t.string "status", default: "idle"
+    t.string "token_ciphertext"
     t.datetime "updated_at", null: false
+    t.string "username"
     t.string "uuid", null: false
     t.string "webhook_token"
     t.text "yaml_content"
     t.index ["environment_id"], name: "index_git_stacks_on_environment_id"
-    t.index ["git_connection_id"], name: "index_git_stacks_on_git_connection_id"
+    t.index ["git_credential_id"], name: "index_git_stacks_on_git_credential_id"
     t.index ["uuid"], name: "index_git_stacks_on_uuid", unique: true
   end
 
@@ -153,6 +156,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_18_000001) do
     t.float "load_1m", null: false
     t.float "load_5m", null: false
     t.float "ram_percent", null: false
+    t.float "swap_percent", default: 0.0, null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_host_metrics_on_created_at"
   end
@@ -219,7 +223,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_18_000001) do
   add_foreign_key "environment_tag_assignments", "environment_tags"
   add_foreign_key "environment_tag_assignments", "environments"
   add_foreign_key "git_stacks", "environments"
-  add_foreign_key "git_stacks", "git_connections"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"

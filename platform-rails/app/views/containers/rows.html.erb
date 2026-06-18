@@ -5,23 +5,23 @@
     next_dir  = active && @sort_dir == "asc" ? "desc" : "asc"
     arrow     = active ? (@sort_dir == "asc" ? "▲" : "▼") : nil
     link_to containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: @infra_filter, sort: column, dir: next_dir),
-            class: "inline-flex items-center gap-1 hover:text-gray-300 transition-colors #{'text-cyan-400' if active}" do
+            class: "inline-flex items-center gap-1 hover:text-text-secondary transition-colors #{'text-cyan-400' if active}" do
       safe_join([label, (arrow ? tag.span(arrow, class: "text-[8px]") : nil)].compact)
     end
   }
 %>
-<div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+<div class="bg-surface-raised border border-border rounded-xl overflow-hidden"
      data-controller="filter bulk-select"
      data-bulk-select-url-value="<%= bulk_action_containers_path %>"
      data-filter-url-value="<%= containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: @infra_filter, sort: @sort, dir: @sort_dir) %>"
      data-filter-frame-value="containers-content">
   <% if @containers.empty? %>
     <div class="flex flex-col items-center justify-center py-16 text-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
       </svg>
-      <p class="text-gray-400 font-medium">No containers found</p>
-      <p class="text-sm text-gray-600 mt-1">
+      <p class="text-text-secondary font-medium">No containers found</p>
+      <p class="text-sm text-text-muted mt-1">
         <% if @selected_statuses.any? || @query.present? || (@infra_filter.present? && @infra_filter != "all") %>
           No containers match selected filters.<br>
           <%= link_to "Show all containers", containers_path, class: "text-cyan-400 hover:text-cyan-300" %>
@@ -31,28 +31,28 @@
       </p>
     </div>
   <% else %>
-    <div class="px-4 pt-3 pb-2 border-b border-gray-800 flex items-center justify-between gap-3 flex-wrap">
+    <div class="px-4 pt-3 pb-2 border-b border-border flex items-center justify-between gap-3 flex-wrap">
       <div class="flex items-center gap-2 flex-wrap">
         <%= render Ui::InputComponent.new(name: "filter_query", value: @query, placeholder: "Buscar por nome, imagem ou ID…",
-              css_class: "w-64 px-3 py-1.5 rounded-lg placeholder-gray-600",
+              css_class: "w-64 px-3 py-1.5 rounded-lg placeholder-text-muted",
               data: { filter_target: "input", action: "input->filter#search" }) %>
-        <div class="flex items-center bg-gray-800 border border-gray-700 rounded-lg p-0.5 gap-0.5">
+        <div class="flex items-center bg-surface-inset border border-border-subtle rounded-lg p-0.5 gap-0.5">
           <%= link_to "Todos", containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: nil, sort: @sort, dir: @sort_dir, page: 1),
-                class: "px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter.blank? ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" %>
+                class: "px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter.blank? ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary'}" %>
           <%= link_to containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: "limited", sort: @sort, dir: @sort_dir, page: 1),
-                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'limited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" do %>
+                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'limited' ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary'}" do %>
             <%= infra_icon(parametrized: true, css_class: "w-4 h-4") %>
             Parametrizado
           <% end %>
           <%= link_to containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: "unlimited", sort: @sort, dir: @sort_dir, page: 1),
-                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'unlimited' ? 'bg-gray-700 text-gray-200' : 'text-gray-500 hover:text-gray-300'}" do %>
+                class: "inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors whitespace-nowrap #{@infra_filter == 'unlimited' ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary'}" do %>
             <%= infra_icon(parametrized: false, css_class: "w-4 h-4") %>
             Ilimitado
           <% end %>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <span data-bulk-select-target="count" class="hidden text-xs text-gray-400 whitespace-nowrap"></span>
+        <span data-bulk-select-target="count" class="hidden text-xs text-text-secondary whitespace-nowrap"></span>
         <% if Current.user&.admin? || Current.user&.operator? %>
           <%= button_to prune_containers_path, method: :delete,
                 class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-900/40 hover:bg-orange-800/50 text-orange-300 border border-orange-700/40 rounded-lg transition-colors",
@@ -66,11 +66,11 @@
             <%
               bulk_btns = [
                 { action: "start",   label: "Start",   cls: "bg-green-600 hover:bg-green-500 rounded-l-lg" },
-                { action: "pause",   label: "Pause",   cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
-                { action: "unpause", label: "Resume",  cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
-                { action: "stop",    label: "Stop",    cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
-                { action: "restart", label: "Restart", cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
-                { action: "kill",    label: "Kill",    cls: "bg-gray-700  hover:bg-gray-600  border-l border-black/30" },
+                { action: "pause",   label: "Pause",   cls: "bg-surface-active  hover:bg-surface-active-hover  border-l border-black/30" },
+                { action: "unpause", label: "Resume",  cls: "bg-surface-active  hover:bg-surface-active-hover  border-l border-black/30" },
+                { action: "stop",    label: "Stop",    cls: "bg-surface-active  hover:bg-surface-active-hover  border-l border-black/30" },
+                { action: "restart", label: "Restart", cls: "bg-surface-active  hover:bg-surface-active-hover  border-l border-black/30" },
+                { action: "kill",    label: "Kill",    cls: "bg-surface-active  hover:bg-surface-active-hover  border-l border-black/30" },
                 { action: "remove",  label: "Remove",  cls: "bg-red-600   hover:bg-red-500   border-l border-black/30 rounded-r-lg" },
               ]
             %>
@@ -81,7 +81,7 @@
                 data-bulk-select-target="btn"
                 data-bulk-action="<%= b[:action] %>"
                 data-action="click->bulk-select#perform"
-                class="w-16 px-1 py-1.5 text-xs font-medium text-white transition-all text-center
+                class="w-16 px-1 py-1.5 text-xs font-medium text-text-primary transition-all text-center
                        disabled:opacity-30 disabled:cursor-not-allowed
                        <%= b[:cls] %>"
               ><%= b[:label] %></button>
@@ -92,21 +92,21 @@
     </div>
     <table class="w-full text-sm">
       <thead>
-        <tr class="border-b border-gray-800 text-left">
+        <tr class="border-b border-border text-left">
           <th class="px-4 py-3 w-8">
             <%= render Ui::CheckboxComponent.new(data: { bulk_select_target: "selectAll", action: "change->bulk-select#toggleAll" }) %>
           </th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"><%= sort_link.call("name", "Name / ID / Image") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"><%= sort_link.call("status", "Status") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider"><%= sort_link.call("health", "Health") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center" title="Limites de memória e CPU configurados"><%= sort_link.call("infra", "Infra") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stats</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rede / IP</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ports</th>
-          <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("name", "Name / ID / Image") %></th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("status", "Status") %></th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("health", "Health") %></th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider text-center" title="Limites de memória e CPU configurados"><%= sort_link.call("infra", "Infra") %></th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Stats</th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Rede / IP</th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Ports</th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800/60">
+      <tbody class="divide-y divide-border/60">
         <% @containers.each do |c| %>
           <% container_name = c["Names"]&.first&.sub(/^\//, "") || c["Id"][0..11] %>
           <% state = c["State"].to_s.downcase %>
@@ -132,7 +132,7 @@
               infra_title = parts.join(" | ")
             end
           %>
-          <tr class="hover:bg-gray-800/40 transition-colors group"
+          <tr class="hover:bg-surface-inset/40 transition-colors group"
               data-filter-target="row"
               data-name="<%= container_name %>"
               data-infra="<%= infra_status %>">
@@ -141,18 +141,18 @@
             </td>
             <td class="px-4 py-3">
               <div class="flex items-start gap-2">
-                <div class="w-10 h-10 flex-shrink-0 rounded bg-gray-800 border border-gray-700/60 flex items-center justify-center mt-0.5">
+                <div class="w-10 h-10 flex-shrink-0 rounded bg-surface-inset border border-border-subtle/60 flex items-center justify-center mt-0.5">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-cyan-400" viewBox="0 0 256 256">
                     <path d="M0 0h256v256H0z" fill="none"/>
                     <path fill="currentColor" d="M236.4 70.65L130.2 40.31a8 8 0 0 0-3.33-.23L21.74 55.1A16.08 16.08 0 0 0 8 70.94v114.12a16.08 16.08 0 0 0 13.74 15.84l105.13 15a8.5 8.5 0 0 0 1.13.1a8 8 0 0 0 2.2-.31l106.2-30.34A16.07 16.07 0 0 0 248 170V86a16.07 16.07 0 0 0-11.6-15.35M96 120H80V62.94l40-5.72v141.56l-40-5.72V136h16a8 8 0 0 0 0-16M24 70.94l40-5.72V120H48a8 8 0 0 0 0 16h16v54.78l-40-5.72Zm112 126.45V58.61L232 86v84Z"/>
                   </svg>
                 </div>
                 <div class="min-w-0">
-                  <%= link_to container_path(c["Id"]), class: "font-mono text-gray-200 hover:text-cyan-400 transition-colors font-medium", data: { turbo_frame: "_top" } do %>
+                  <%= link_to container_path(c["Id"]), class: "font-mono text-text-primary hover:text-cyan-400 transition-colors font-medium", data: { turbo_frame: "_top" } do %>
                     <%= container_name %>
                   <% end %>
-                  <div class="text-xs text-gray-600 font-mono mt-0.5"><%= c["Id"][0..11] %></div>
-                  <div class="text-xs text-gray-500 font-mono mt-0.5 truncate max-w-[240px]" title="<%= image_short %>"><%= image_short %></div>
+                  <div class="text-xs text-text-muted font-mono mt-0.5"><%= c["Id"][0..11] %></div>
+                  <div class="text-xs text-text-muted font-mono mt-0.5 truncate max-w-[240px]" title="<%= image_short %>"><%= image_short %></div>
                 </div>
               </div>
             </td>
@@ -183,12 +183,12 @@
                   <span title="Container sem healthcheck configurado">Sem HC</span>
                 <% end %>
               <% else %>
-                <span class="text-gray-700 text-xs">—</span>
+                <span class="text-text-muted text-xs">—</span>
               <% end %>
             </td>
             <td class="px-4 py-3 text-center">
               <% if infra_parametrized.nil? %>
-                <span class="text-gray-700 text-xs">—</span>
+                <span class="text-text-muted text-xs">—</span>
               <% else %>
                 <%= infra_icon(parametrized: infra_parametrized, css_class: "w-4 h-4 inline-block", title: infra_title) %>
               <% end %>
@@ -202,26 +202,26 @@
                   class="flex flex-col gap-2 min-w-[130px]"
                 >
                   <div class="flex items-center gap-1.5">
-                    <span class="text-gray-500 flex items-center flex-shrink-0"><%= cpu_icon(css_class: "w-6 h-6") %></span>
+                    <span class="text-text-muted flex items-center flex-shrink-0"><%= cpu_icon(css_class: "w-6 h-6") %></span>
                     <div class="flex items-end gap-px" data-stats-target="cpuBar">
                       <% 20.times do |i| %>
-                        <div class="w-1 h-4 rounded-sm bg-gray-700 transition-colors duration-300" data-index="<%= i %>"></div>
+                        <div class="w-1 h-4 rounded-sm bg-surface-active transition-colors duration-300" data-index="<%= i %>"></div>
                       <% end %>
                     </div>
-                    <span data-stats-target="cpuText" class="text-sm font-mono text-gray-400 w-12 text-right tabular-nums">—</span>
+                    <span data-stats-target="cpuText" class="text-sm font-mono text-text-secondary w-12 text-right tabular-nums">—</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-gray-500 flex items-center flex-shrink-0"><%= ram_icon(css_class: "w-6 h-6") %></span>
+                    <span class="text-text-muted flex items-center flex-shrink-0"><%= ram_icon(css_class: "w-6 h-6") %></span>
                     <div class="flex items-end gap-px" data-stats-target="memBar">
                       <% 20.times do |i| %>
-                        <div class="w-1 h-4 rounded-sm bg-gray-700 transition-colors duration-300" data-index="<%= i %>"></div>
+                        <div class="w-1 h-4 rounded-sm bg-surface-active transition-colors duration-300" data-index="<%= i %>"></div>
                       <% end %>
                     </div>
-                    <span data-stats-target="memText" class="text-sm font-mono text-gray-400 w-12 text-right tabular-nums">—</span>
+                    <span data-stats-target="memText" class="text-sm font-mono text-text-secondary w-12 text-right tabular-nums">—</span>
                   </div>
                 </div>
               <% else %>
-                <span class="text-gray-700 text-xs">—</span>
+                <span class="text-text-muted text-xs">—</span>
               <% end %>
             </td>
             <td class="px-4 py-3">
@@ -230,13 +230,13 @@
                 <div class="flex flex-col gap-1">
                   <% nets.each do |net_name, n| %>
                     <div class="flex items-center gap-1.5">
-                      <span class="text-[10px] text-gray-600 truncate max-w-[90px]" title="<%= net_name %>"><%= net_name %></span>
-                      <span class="text-xs font-mono text-gray-400"><%= n["IPAddress"] %></span>
+                      <span class="text-[10px] text-text-muted truncate max-w-[90px]" title="<%= net_name %>"><%= net_name %></span>
+                      <span class="text-xs font-mono text-text-secondary"><%= n["IPAddress"] %></span>
                     </div>
                   <% end %>
                 </div>
               <% else %>
-                <span class="text-gray-700">—</span>
+                <span class="text-text-muted">—</span>
               <% end %>
             </td>
             <td class="px-4 py-3">
@@ -244,14 +244,14 @@
               <% if ports.any? %>
                 <div class="flex flex-col gap-0.5">
                   <% ports.first(3).each do |port| %>
-                    <span class="text-xs font-mono text-gray-400"><%= port %></span>
+                    <span class="text-xs font-mono text-text-secondary"><%= port %></span>
                   <% end %>
                   <% if ports.size > 3 %>
-                    <span class="text-xs text-gray-600">+<%= ports.size - 3 %> more</span>
+                    <span class="text-xs text-text-muted">+<%= ports.size - 3 %> more</span>
                   <% end %>
                 </div>
               <% else %>
-                <span class="text-gray-700">—</span>
+                <span class="text-text-muted">—</span>
               <% end %>
             </td>
             <td class="px-4 py-3">
@@ -292,25 +292,25 @@
         <% end %>
       </tbody>
     </table>
-    <div class="px-4 py-3 border-t border-gray-800 flex items-center justify-between flex-wrap gap-3">
+    <div class="px-4 py-3 border-t border-border flex items-center justify-between flex-wrap gap-3">
       <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-500">Por página:</span>
+        <span class="text-xs text-text-muted">Por página:</span>
         <% [10, 20, 30, 50, 100].each do |n| %>
           <%= link_to n, containers_path(statuses: @selected_statuses, q: @query, per_page: n, infra: @infra_filter, sort: @sort, dir: @sort_dir, page: 1),
-                class: "px-2 py-0.5 text-xs rounded transition-colors #{(@per_page || 10) == n ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}" %>
+                class: "px-2 py-0.5 text-xs rounded transition-colors #{(@per_page || 10) == n ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-inset'}" %>
         <% end %>
         <%= link_to "Todos", containers_path(statuses: @selected_statuses, q: @query, per_page: 0, infra: @infra_filter, sort: @sort, dir: @sort_dir, page: 1),
-              class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}" %>
+              class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-inset'}" %>
       </div>
-      <div class="flex items-center gap-1 text-xs text-gray-500">
+      <div class="flex items-center gap-1 text-xs text-text-muted">
         <span><%= @total %> container<%= @total == 1 ? "" : "s" %><%= @selected_statuses.any? ? " (#{@selected_statuses.join(", ")})" : " total" %></span>
         <% if @per_page && @total_pages > 1 %>
-          <span class="mx-1 text-gray-700">·</span>
+          <span class="mx-1 text-text-muted">·</span>
           <%= link_to "‹", containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: @infra_filter, sort: @sort, dir: @sort_dir, page: @page - 1),
-                class: "px-2 py-0.5 rounded #{@page <= 1 ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}" %>
-          <span class="text-gray-400"><%= @page %> / <%= @total_pages %></span>
+                class: "px-2 py-0.5 rounded #{@page <= 1 ? 'text-text-muted cursor-not-allowed pointer-events-none' : 'text-text-secondary hover:text-text-primary hover:bg-surface-inset'}" %>
+          <span class="text-text-secondary"><%= @page %> / <%= @total_pages %></span>
           <%= link_to "›", containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: @infra_filter, sort: @sort, dir: @sort_dir, page: @page + 1),
-                class: "px-2 py-0.5 rounded #{@page >= @total_pages ? 'text-gray-700 cursor-not-allowed pointer-events-none' : 'text-gray-400 hover:text-white hover:bg-gray-800'}" %>
+                class: "px-2 py-0.5 rounded #{@page >= @total_pages ? 'text-text-muted cursor-not-allowed pointer-events-none' : 'text-text-secondary hover:text-text-primary hover:bg-surface-inset'}" %>
         <% end %>
       </div>
     </div>

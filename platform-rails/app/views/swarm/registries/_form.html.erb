@@ -6,20 +6,20 @@
   <% end %>
 
   <div class="mb-4">
-    <%= f.label :name, "Nome", class: "block text-xs font-medium text-gray-400 mb-1" %>
-    <%= f.text_field :name, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: DockerHub, ECR, Harbor" %>
+    <%= f.label :name, "Nome", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_field :name, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: DockerHub, ECR, Harbor" %>
   </div>
   <div class="mb-4">
-    <%= f.label :url, "URL", class: "block text-xs font-medium text-gray-400 mb-1" %>
-    <%= f.text_field :url, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "registry.example.com" %>
+    <%= f.label :url, "URL", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_field :url, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "registry.example.com" %>
   </div>
   <div class="mb-4">
-    <%= f.label :username, "Usuário", class: "block text-xs font-medium text-gray-400 mb-1" %>
-    <%= f.text_field :username, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+    <%= f.label :username, "Usuário", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_field :username, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
   </div>
   <div class="mb-5">
-    <%= f.label :encrypted_password, registry.new_record? ? "Senha / Token" : "Senha / Token (deixe vazio para manter)", class: "block text-xs font-medium text-gray-400 mb-1" %>
-    <%= f.password_field :encrypted_password, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+    <%= f.label :encrypted_password, registry.new_record? ? "Senha / Token" : "Senha / Token (deixe vazio para manter)", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.password_field :encrypted_password, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
   </div>
   <div class="flex items-center gap-3">
     <%= f.submit registry.new_record? ? "Adicionar" : "Salvar", class: "btn-primary" %>

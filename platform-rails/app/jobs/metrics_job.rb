@@ -5,23 +5,26 @@ class MetricsJob < ApplicationJob
   CPU_THRESHOLD  = ENV.fetch("CPU_THRESHOLD",  "85").to_f
   RAM_THRESHOLD  = ENV.fetch("RAM_THRESHOLD",  "90").to_f
   DISK_THRESHOLD = ENV.fetch("DISK_THRESHOLD", "80").to_f
+  SWAP_THRESHOLD = ENV.fetch("SWAP_THRESHOLD", "50").to_f
 
   def perform
     cpu       = read_cpu_percent
     ram       = read_ram_percent
     disk      = read_disk_percent
+    swap      = read_swap_percent
     load_avgs = read_load_avg
 
     HostMetric.create!(
       cpu_percent:  cpu,
       ram_percent:  ram,
       disk_percent: disk,
+      swap_percent: swap,
       load_1m:      load_avgs[0],
       load_5m:      load_avgs[1],
       load_15m:     load_avgs[2]
     )
 
-    check_thresholds(cpu, ram, disk)
+    check_thresholds(cpu, ram, disk, swap)
     cleanup_old_metrics
   end
 
@@ -61,15 +64,25 @@ class MetricsJob < ApplicationJob
     0.0
   end
 
+  def read_swap_percent
+    data  = File.read("#{PROC_PATH}/meminfo")
+    total = data[/SwapTotal:\s+(\d+)/, 1].to_i
+    free  = data[/SwapFree:\s+(\d+)/, 1].to_i
+    return 0.0 if total == 0
+
+    (((total - free).to_f / total) * 100).round(1)
+  end
+
   def read_load_avg
     content = File.read("#{PROC_PATH}/loadavg")
     content.split.first(3).map(&:to_f)
   end
 
-  def check_thresholds(cpu, ram, disk)
+  def check_thresholds(cpu, ram, disk, swap)
     create_alert_if("cpu",  cpu,  CPU_THRESHOLD)
     create_alert_if("ram",  ram,  RAM_THRESHOLD)
     create_alert_if("disk", disk, DISK_THRESHOLD)
+    create_alert_if("swap", swap, SWAP_THRESHOLD)
   end
 
   def create_alert_if(resource, value, threshold)

@@ -1,0 +1,41 @@
+<%= form_with model: git_credential, local: true do |f| %>
+  <% if git_credential.errors.any? %>
+    <div class="mb-4 p-3 bg-red-950/50 border border-red-800/60 rounded-lg text-sm text-red-400">
+      <% git_credential.errors.full_messages.each do |msg| %><p><%= msg %></p><% end %>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= f.label :name, "Nome", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_field :name, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: GitLab Redhusky" %>
+  </div>
+  <div class="mb-4">
+    <%= f.label :site, "Site", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_field :site, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "gitlab.example.com" %>
+  </div>
+  <div class="mb-4" x-data="{ authType: '<%= git_credential.auth_type.presence || "token" %>' }">
+    <%= f.label :auth_type, "Tipo", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.select :auth_type, options_for_select([["Token / PAT", "token"], ["SSH Key", "ssh_key"]], git_credential.auth_type),
+          {}, { "x-model": "authType", class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" } %>
+
+    <div x-show="authType === 'token'" class="mt-4 space-y-4">
+      <div>
+        <%= f.label :username, "Usuário", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_field :username, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div>
+        <%= f.label :token_ciphertext, git_credential.new_record? ? "Token" : "Token (deixe vazio para manter)", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.password_field :token_ciphertext, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+    </div>
+
+    <div x-show="authType === 'ssh_key'" class="mt-4">
+      <%= f.label :ssh_key_ciphertext, git_credential.new_record? ? "SSH Private Key" : "SSH Private Key (deixe vazio para manter)", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_area :ssh_key_ciphertext, rows: 6, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 pt-2">
+    <%= f.submit git_credential.new_record? ? "Criar" : "Salvar", class: "btn-primary" %>
+    <%= link_to "Cancelar", git_credentials_path, class: "btn-secondary" %>
+  </div>
+<% end %>
