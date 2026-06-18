@@ -12,6 +12,9 @@ export default class extends Controller {
   connect() {
     this.lines      = []
     this.autoScroll = true
+    this._onScroll  = this.#onScroll.bind(this)
+    this.outputTarget.addEventListener("scroll", this._onScroll)
+
     this.subscription = consumer.subscriptions.create(
       {
         channel:      "LogsChannel",
@@ -36,6 +39,7 @@ export default class extends Controller {
 
   disconnect() {
     this.subscription?.unsubscribe()
+    this.outputTarget?.removeEventListener("scroll", this._onScroll)
   }
 
   filter() {
@@ -48,9 +52,7 @@ export default class extends Controller {
 
   toggleScroll() {
     this.autoScroll = !this.autoScroll
-    this.scrollBtnTarget.classList.toggle("bg-cyan-900/30", this.autoScroll)
-    this.scrollBtnTarget.classList.toggle("text-cyan-400",  this.autoScroll)
-    this.scrollBtnTarget.classList.toggle("text-gray-500",  !this.autoScroll)
+    this.#updateScrollBtn()
     if (this.autoScroll) this.#scrollToBottom()
   }
 
@@ -58,6 +60,24 @@ export default class extends Controller {
     this.lines = []
     this.outputTarget.innerHTML = ""
     this.#updateCount()
+  }
+
+  #onScroll() {
+    if (this._programmaticScroll) return
+    const el = this.outputTarget
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+    if (atBottom !== this.autoScroll) {
+      this.autoScroll = atBottom
+      this.#updateScrollBtn()
+    }
+  }
+
+  #updateScrollBtn() {
+    if (!this.hasScrollBtnTarget) return
+    const on = this.autoScroll
+    this.scrollBtnTarget.classList.toggle("bg-cyan-900/30", on)
+    this.scrollBtnTarget.classList.toggle("text-cyan-400",  on)
+    this.scrollBtnTarget.classList.toggle("text-gray-500",  !on)
   }
 
   #addLine(text, forceClass = null) {
@@ -110,8 +130,11 @@ export default class extends Controller {
   }
 
   #scrollToBottom() {
+    this._programmaticScroll = true
     const el = this.outputTarget
     el.scrollTop = el.scrollHeight
+    clearTimeout(this._clearScrollFlag)
+    this._clearScrollFlag = setTimeout(() => { this._programmaticScroll = false }, 120)
   }
 
   #updateCount() {

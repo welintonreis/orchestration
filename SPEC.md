@@ -148,8 +148,24 @@ client.container_stats(id)           { |stat|  broadcast(stat)  }
 
 ### Swarm
 - Services: nome, imagem, mode, réplicas
+  - Ações por linha: Scale −1, Scale +1, Forçar Atualização (strip digest + ForceUpdate counter → re-pull)
+  - Bulk: Scale −1 / +1 via checkbox seleção
 - Nodes: hostname, role, status, addr, engine version
 - Leader badge
+- Topology: mapa visual nós → stacks → serviços → containers
+  - Filtro client-side: Ativo / Ambos / Inativo (cascata: oculta tasks/serviços/stacks sem itens no filtro)
+  - Filtro persiste via `sessionStorage` através de auto-reloads (Turbo visit)
+
+### Images
+- Paginação por repositório (não por imagem individual) — evita discrepância entre contagem e linhas visíveis
+- Agrupamento tag-dropdown por repo no client-side
+- Label: X repositórios · Y imagens
+
+### Containers — Logs
+- Streaming em tempo real via ActionCable (LogsChannel)
+- Auto-scroll: desliga automaticamente ao rolar para cima, religa ao voltar ao fundo
+- Botão toggle visual (cyan = ON, cinza = OFF)
+- Filtro de texto client-side sobre linhas recebidas
 
 ### Host Metrics (Solid Queue job)
 - `MetricsJob` a cada 30s via Solid Queue recurring

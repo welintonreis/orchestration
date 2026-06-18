@@ -41,17 +41,28 @@ class ImagesController < ApplicationController
       end
     end
 
-    @total    = all_images.size
-    @per_page = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 10)
-    @page     = [params[:page]&.to_i || 1, 1].max
+    # Group first (same logic as view) so pagination counts repos, not individual
+    # image layers — otherwise 10 images from 3 repos shows only 3 visible rows.
+    all_grouped = all_images.group_by do |img|
+      raw = (img["RepoTags"] || []).first || "<none>:<none>"
+      raw == "<none>:<none>" ? "<none>" : raw.split(":")[0..-2].join(":")
+    end.sort_by { |repo, _| repo }
+
+    @total_images = all_images.size
+    @total        = all_grouped.size   # pagination unit = repos
+    @per_page     = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 10)
+    @page         = [params[:page]&.to_i || 1, 1].max
+
     if @per_page
-      @total_pages = [(@total.to_f / @per_page).ceil, 1].max
-      @page        = [@page, @total_pages].min
-      @images      = all_images.drop((@page - 1) * @per_page).first(@per_page)
+      @total_pages    = [(@total.to_f / @per_page).ceil, 1].max
+      @page           = [@page, @total_pages].min
+      paginated_groups = all_grouped.drop((@page - 1) * @per_page).first(@per_page)
     else
-      @total_pages = 1
-      @images      = all_images
+      @total_pages    = 1
+      paginated_groups = all_grouped
     end
+
+    @images = paginated_groups.flat_map { |_, imgs| imgs }
 
     render "rows", layout: false
   rescue => e

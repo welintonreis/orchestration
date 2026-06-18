@@ -225,7 +225,7 @@
                 class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-inset'}" %>
         </div>
         <div class="flex items-center gap-1 text-xs text-text-muted">
-          <span><%= @total %> <%= @total == 1 ? "imagem" : "imagens" %> total</span>
+          <span><%= @total %> <%= @total == 1 ? "repositório" : "repositórios" %> · <%= @total_images %> <%= @total_images == 1 ? "imagem" : "imagens" %></span>
           <% if @per_page && @total_pages > 1 %>
             <span class="mx-1 text-text-muted">·</span>
             <%= link_to "‹", images_path(q: @query, per_page: params[:per_page], page: @page - 1),

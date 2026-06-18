@@ -62,7 +62,9 @@ Rails.application.routes.draw do
 
   get  "swarm",                    to: "swarm/dashboard#index", as: :swarm
   get  "swarm/nodes",              to: "swarm/nodes#index",     as: :swarm_nodes
-  get  "swarm/topology",           to: "swarm/topology#index",  as: :swarm_topology
+  get    "swarm/topology",                    to: "swarm/topology#index",          as: :swarm_topology
+  delete "swarm/topology/prune_services",    to: "swarm/topology#prune_services",  as: :prune_services_swarm_topology
+  delete "swarm/topology/system_prune",      to: "swarm/topology#system_prune",    as: :system_prune_swarm_topology
   get  "swarm/services",           to: "swarm/services#index",  as: :swarm_services
   get  "swarm/services/rows",      to: "swarm/services#rows",   as: :rows_swarm_services
   get  "swarm/services/:id",       to: "swarm/services#show",   as: :swarm_service
@@ -73,6 +75,7 @@ Rails.application.routes.draw do
   post "swarm/services/:id/update_logging",   to: "swarm/services#update_logging",     as: :update_logging_swarm_service
   post "swarm/services/:id/update_image",     to: "swarm/services#update_image",       as: :update_image_swarm_service
   post "swarm/services/:id/rollback",         to: "swarm/services#rollback",           as: :rollback_swarm_service
+  post "swarm/services/:id/force_update",    to: "swarm/services#force_update",       as: :force_update_swarm_service
   post "swarm/services/bulk_scale",           to: "swarm/services#bulk_scale",         as: :bulk_scale_swarm_services
   resources :git_credentials
   resources :git_stacks do

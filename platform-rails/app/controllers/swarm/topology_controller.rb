@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Swarm
   # Nodes → stacks → services → containers (tasks, including dead ones)
   # scheduled on each node — a single read-only view of the whole swarm's
@@ -5,6 +7,7 @@ module Swarm
   # /swarm/nodes, /swarm/services and each service's task list by hand.
   class TopologyController < ApplicationController
     include SwarmGuard
+    before_action :require_operator!, only: %i[prune_services system_prune]
 
     def index
       client   = current_docker_client
@@ -37,6 +40,31 @@ module Swarm
 
         { node: node, stacks: stacks }
       end
+    end
+
+    def prune_services
+      services = current_docker_client.services rescue []
+      ids      = services.map { |s| s["ID"] }
+      pruned   = 0
+
+      ids.each do |id|
+        # --task-history-limit 1 causes Swarm to immediately discard old tasks
+        out = `docker service update --task-history-limit 1 #{Shellwords.escape(id)} 2>&1`
+        pruned += 1 if $?.success?
+      end
+
+      AuditLog.record(user: Current.user, action: "swarm_prune_services",
+                      metadata: { services_updated: pruned })
+      redirect_to swarm_topology_path, notice: "Histórico de tasks limpo em #{pruned} serviço(s)."
+    rescue => e
+      redirect_to swarm_topology_path, alert: "Erro: #{e.message}"
+    end
+
+    def system_prune
+      DockerSystemPruneJob.perform_later(user_id: Current.user&.id)
+      redirect_to swarm_topology_path, notice: "docker system prune iniciado em background — resultado nos logs de auditoria."
+    rescue => e
+      redirect_to swarm_topology_path, alert: "Erro: #{e.message}"
     end
   end
 end

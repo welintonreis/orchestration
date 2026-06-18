@@ -234,15 +234,20 @@ Fase 13 independente após Fase 7 (precisa de environments + dashboard base).
 
 ---
 
-## Estado Atual — Fases 0-13 CONCLUÍDAS (Jun 2026)
+## Estado Atual — Fases 0-14 CONCLUÍDAS (Jun 2026)
 
 **Branch:** `develop` em `gitlab.redhusky.com.br/redhusky/orchestration`
 **Stack:** Rails 8.1.3, Ruby 3.3.11, Docker 29.5.3
-**Deploy:** Build local → `docker stack deploy orchestration-prod`
+**Versão:** v0.5.4
+**Deploy:** `bash deploy/deploy-prod.sh` (bump VERSION antes)
+
+### Implementado recentemente (v0.5.x)
+- Topology: filtro Ativo/Inativo/Ambos com cascata e persistência via sessionStorage
+- Services: botões Scale ±1 e Forçar Atualização (force pull) por linha — remove escalar/desidratar
+- Images: paginação por repositório (fix: 10 por página mostrava 3 linhas)
+- Logs: auto-scroll desliga ao rolar para cima, religa ao voltar ao fundo
 
 ### Bugs conhecidos / pendentes
-- `Dockerfile` faltava `libyaml-dev` → psych falha no bundle install — **CORRIGIDO**
-- Logs de container são estáticos (snapshot) — ActionCable streaming pendente (Fase 14)
 - RBAC roles não enforced nos controllers — pendente (Fase v1.1)
 
 ---

@@ -120,6 +120,18 @@ module Swarm
       render_services_flash(alert: "Erro ao desidratar: #{e.message}")
     end
 
+    def force_update
+      current_docker_client.service_update(params[:id]) do |spec|
+        # Strip digest so Swarm re-pulls the tag on next task start
+        image = spec.dig("TaskTemplate", "ContainerSpec", "Image").to_s
+        spec["TaskTemplate"]["ContainerSpec"]["Image"] = image.split("@").first
+        spec["TaskTemplate"]["ForceUpdate"] = spec.dig("TaskTemplate", "ForceUpdate").to_i + 1
+      end
+      render_services_flash(notice: "Atualização forçada iniciada")
+    rescue => e
+      render_services_flash(alert: "Erro ao atualizar: #{e.message}")
+    end
+
     def bulk_scale
       ids   = Array(params[:ids])
       delta = params[:delta].to_i

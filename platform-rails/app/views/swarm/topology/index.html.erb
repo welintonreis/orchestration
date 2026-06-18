@@ -2,20 +2,106 @@
 <% page_subtitle "Mapa do cluster — nós, stacks, serviços e containers (incluindo finalizados)" %>
 
 <% content_for :page_icon do %>
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 16 16">
-    <path d="M0 0h16v16H0z" fill="none" />
-    <path fill="currentColor" d="M6.256 1.922A3.27 3.27 0 0 1 9.124 6.76l1.6 1.222a2.414 2.414 0 1 1-.533.746L8.575 7.495a3.26 3.26 0 0 1-3.179.85l-.662 1.706c.556.405.919 1.06.919 1.8a2.227 2.227 0 1 1-1.756-2.176l.657-1.692a3.27 3.27 0 0 1 1.702-6.06m-2.83 8.618a1.311 1.311 0 1 0 .001 2.622a1.311 1.311 0 0 0-.001-2.622m8.96-2.307a1.497 1.497 0 1 0 .002 2.995a1.497 1.497 0 0 0-.002-2.995M6.256 2.84a2.353 2.353 0 1 0 0 4.706a2.353 2.353 0 0 0 0-4.706" clip-rule="evenodd" />
-  </svg>
+  <%= sidebar_icon(:topology, css_class: "w-7 h-7") %>
 <% end %>
+
+<% content_for :title_actions do %>
+  <%# ── Prune buttons ── %>
+  <div class="flex items-center gap-2 flex-wrap">
+    <%= button_to prune_containers_path, method: :delete,
+          class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-inset border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border transition-colors",
+          title: "Remove containers parados",
+          form: { data: { turbo_confirm: "Remover todos os containers parados?" } } do %>
+      <%= sidebar_icon(:containers, css_class: "w-3.5 h-3.5") %>
+      Limpar containers
+    <% end %>
+
+    <%= button_to prune_orphans_images_path, method: :delete,
+          class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-inset border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border transition-colors",
+          title: "Remove imagens não usadas e dangling",
+          form: { data: { turbo_confirm: "Remover imagens não usadas?" } } do %>
+      <%= sidebar_icon(:images, css_class: "w-3.5 h-3.5") %>
+      Limpar imagens
+    <% end %>
+
+    <%= button_to prune_services_swarm_topology_path, method: :delete,
+          class: "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-inset border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border transition-colors",
+          title: "Limpa histórico de tasks antigas de todos os serviços",
+          form: { data: { turbo_confirm: "Limpar histórico de tasks de todos os serviços?" } } do %>
+      <%= sidebar_icon(:services, css_class: "w-3.5 h-3.5") %>
+      Limpar serviços
+    <% end %>
+
+    <%# ── Siren button: system prune ── %>
+    <div x-data="{ armed: false }">
+      <template x-if="!armed">
+        <button @click="armed = true"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-text-muted opacity-40 hover:opacity-70 transition-opacity"
+                title="docker system prune -f">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 22v-6c0-2.8 0-4.2-.545-5.27a5 5 0 0 0-2.185-2.185C16.2 8 14.8 8 12 8s-4.2 0-5.27.545a5 5 0 0 0-2.185 2.185C4 11.8 4 13.2 4 16v6" opacity=".5"/>
+            <path stroke-linecap="round" d="M15 10.815c1.23 0 2.23.955 2.185 2.185M2 22h20M12 2v3m9 0l-1.5 1.5M3 5l1.5 1.5"/>
+            <path d="M13.5 17.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0Z"/>
+            <path stroke-linecap="round" d="M12 19v3" opacity=".5"/>
+          </svg>
+          System Prune
+        </button>
+      </template>
+      <template x-if="armed">
+        <%= button_to system_prune_swarm_topology_path, method: :delete,
+              class: "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500 text-red-500 bg-red-500/10 animate-siren-glow transition-all",
+              title: "CONFIRMAR docker system prune -f",
+              form: { data: { turbo_confirm: "ATENÇÃO: docker system prune -f remove TODOS containers parados, imagens não usadas, redes e volumes não referenciados. Continuar?" } } do %>
+          <span class="flex flex-col gap-0.5 items-center">
+            <span class="block h-px w-4 bg-red-500 animate-siren-dash1 rounded-full"></span>
+            <span class="block h-px w-4 bg-red-500 animate-siren-dash2 rounded-full"></span>
+            <span class="block h-px w-4 bg-red-500 animate-siren-dash3 rounded-full"></span>
+          </span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 22v-6c0-2.8 0-4.2-.545-5.27a5 5 0 0 0-2.185-2.185C16.2 8 14.8 8 12 8s-4.2 0-5.27.545a5 5 0 0 0-2.185 2.185C4 11.8 4 13.2 4 16v6" opacity=".5"/>
+            <path stroke-linecap="round" d="M15 10.815c1.23 0 2.23.955 2.185 2.185M2 22h20M12 2v3m9 0l-1.5 1.5M3 5l1.5 1.5"/>
+            <path d="M13.5 17.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0Z"/>
+            <path stroke-linecap="round" d="M12 19v3" opacity=".5"/>
+          </svg>
+          CONFIRMAR PRUNE
+        <% end %>
+      </template>
+    </div>
+  </div>
+<% end %>
+
+<div data-controller="metrics-refresh" data-metrics-refresh-interval-value="15000"
+     x-data="{ filter: sessionStorage.getItem('topoFilter') || 'both', setFilter(v) { this.filter = v; sessionStorage.setItem('topoFilter', v) } }">
 
 <% if @topology.blank? %>
   <div class="flex flex-col items-center justify-center py-24 text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
-    </svg>
+    <%= sidebar_icon(:nodes, css_class: "w-12 h-12 text-text-muted mb-4") %>
     <p class="text-text-secondary text-sm">Nenhum nó encontrado neste cluster Swarm.</p>
   </div>
 <% else %>
+
+  <%# ── Filter bar ── %>
+  <div class="flex items-center gap-3 mb-6">
+    <span class="text-xs text-text-muted font-medium">Exibir:</span>
+    <div class="flex items-center gap-1 bg-surface-inset border border-border-subtle rounded-lg p-1">
+      <button @click="setFilter('active')"
+              :class="filter === 'active' ? 'bg-surface-raised shadow-sm text-text-primary' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1 rounded text-xs font-medium transition-colors">
+        Ativo
+      </button>
+      <button @click="setFilter('both')"
+              :class="filter === 'both' ? 'bg-surface-raised shadow-sm text-text-primary' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1 rounded text-xs font-medium transition-colors">
+        Ambos
+      </button>
+      <button @click="setFilter('inactive')"
+              :class="filter === 'inactive' ? 'bg-surface-raised shadow-sm text-text-primary' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1 rounded text-xs font-medium transition-colors">
+        Inativo
+      </button>
+    </div>
+  </div>
+
   <div class="space-y-12">
     <% @topology.each do |entry| %>
       <% node = entry[:node] %>
@@ -24,12 +110,10 @@
       <% state = node.dig("Status", "State") %>
       <% state_class = state == "ready" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-green-300 dark:border-green-800/60" : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800/60" %>
 
-      <%# ── Node box (root) ── %>
+      <%# ── Node card ── %>
       <div class="flex flex-col items-center">
         <div class="inline-flex items-center gap-3 bg-surface-raised border-2 border-border-subtle rounded-xl px-6 py-4 shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 0a3 3 0 100 6m0-6H5.25"/>
-          </svg>
+          <%= sidebar_icon(:nodes, css_class: "w-6 h-6 text-text-secondary flex-shrink-0") %>
           <div class="text-left">
             <p class="text-sm font-semibold text-text-primary"><%= node.dig("Description", "Hostname") %></p>
             <p class="text-xs text-text-muted"><%= role %> · <%= availability %></p>
@@ -40,7 +124,6 @@
         <% if entry[:stacks].empty? %>
           <p class="text-sm text-text-muted mt-6">Nenhuma stack agendada neste nó.</p>
         <% else %>
-          <%# trunk line from node down to the stacks row %>
           <div class="w-px h-8 bg-border-subtle"></div>
           <% if entry[:stacks].size > 1 %>
             <div class="h-px bg-border-subtle" style="width: calc(100% - 4rem); max-width: 100%;"></div>
@@ -49,47 +132,134 @@
           <div class="overflow-x-auto w-full">
             <div class="inline-flex gap-6 px-4 pb-2" style="min-width: 100%; justify-content: <%= entry[:stacks].size > 3 ? 'flex-start' : 'center' %>;">
               <% entry[:stacks].each do |stack| %>
+                <% stack_all_states = stack[:services].flat_map { |se| se[:containers].map { |t| t.dig("Status", "State") } }
+                   stack_has_running  = stack_all_states.any? { |s| s == "running" }
+                   stack_has_inactive = stack_all_states.any? { |s| s != "running" } %>
+
                 <%# ── Stack column ── %>
-                <div class="flex flex-col items-center w-56 flex-shrink-0">
+                <div class="flex flex-col items-center w-64 flex-shrink-0"
+                     x-show="filter === 'both' || (filter === 'active' ? <%= stack_has_running %> : <%= stack_has_inactive %>)">
                   <div class="w-px h-6 bg-border-subtle"></div>
-                  <div class="w-full bg-surface-raised border border-border rounded-lg px-4 py-2.5 text-center shadow-sm">
-                    <p class="text-sm font-semibold text-text-primary truncate"><%= stack[:name] %></p>
-                    <p class="text-[11px] text-text-muted"><%= stack[:services].size %> serviço(s)</p>
+
+                  <%# Stack card %>
+                  <div class="w-full bg-surface-raised border border-border rounded-lg px-4 py-2.5 shadow-sm flex items-center gap-2">
+                    <%= sidebar_icon(:stacks, css_class: "w-4 h-4 text-text-muted flex-shrink-0") %>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-text-primary truncate"><%= stack[:name] %></p>
+                      <p class="text-[11px] text-text-muted"><%= stack[:services].size %> serviço(s)</p>
+                    </div>
                   </div>
 
                   <% if stack[:services].any? %>
-                    <div class="w-px h-6 bg-border-subtle"></div>
-                    <div class="w-full bg-surface/60 border border-border rounded-lg p-3 space-y-4">
+                    <div class="w-px h-4 bg-border-subtle"></div>
+                    <div class="w-full bg-surface/60 border border-border rounded-lg p-2.5 space-y-3">
                       <% stack[:services].each do |svc_entry| %>
                         <% svc = svc_entry[:service] %>
                         <% svc_name = svc&.dig("Spec", "Name") || "(serviço removido)" %>
-                        <div class="flex flex-col items-center">
-                          <div class="w-full bg-surface-inset border border-border-subtle rounded-md px-3 py-1.5 text-center">
-                            <p class="text-xs font-medium text-text-secondary truncate flex items-center justify-center gap-1.5">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
-                              <%= svc_name %>
-                            </p>
+                        <% svc_name_short = svc_name.sub(/\A#{Regexp.escape(stack[:name])}_/, "") %>
+                        <% svc_states      = svc_entry[:containers].map { |t| t.dig("Status", "State") }
+                           svc_has_running  = svc_states.any? { |s| s == "running" }
+                           svc_has_inactive = svc_states.any? { |s| s != "running" } %>
+
+                        <%# Service row %>
+                        <div class="flex flex-col gap-1.5"
+                             x-show="filter === 'both' || (filter === 'active' ? <%= svc_has_running %> : <%= svc_has_inactive %>)">
+                          <div class="flex items-center gap-1.5 px-2 py-1 bg-surface-inset border border-border-subtle rounded-md">
+                            <%= sidebar_icon(:services, css_class: "w-3.5 h-3.5 text-text-muted flex-shrink-0") %>
+                            <p class="text-xs font-medium text-text-secondary truncate flex-1"><%= svc_name_short %></p>
                           </div>
-                          <div class="w-px h-3 bg-border-subtle"></div>
-                          <div class="flex flex-wrap gap-1 justify-center">
-                            <% svc_entry[:containers].each do |task| %>
-                              <% task_state = task.dig("Status", "State") %>
-                              <% dead = !%w[running starting].include?(task_state) %>
-                              <% dot_class = case task_state
-                                   when "running"  then "bg-green-400"
-                                   when "starting" then "bg-blue-400"
-                                   when "failed"   then "bg-red-400"
-                                   else                 "bg-gray-500"
-                                   end %>
-                              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border-subtle text-[10px] font-mono <%= dead ? 'text-text-muted opacity-70' : 'text-text-secondary' %>"
-                                    title="<%= task_state %><%= task.dig('Status', 'Err').present? ? " — #{task.dig('Status', 'Err')}" : '' %>">
-                                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 <%= dot_class %>"></span>
-                                <span class="<%= dead ? 'line-through' : '' %>">
-                                  <%= task.dig("Status", "ContainerStatus", "ContainerID")&.first(8) || task["ID"].first(8) %>
+
+                          <%# Container cards %>
+                          <% svc_entry[:containers].each do |task| %>
+                            <% task_state = task.dig("Status", "State") %>
+                            <% container_id = task.dig("Status", "ContainerStatus", "ContainerID") %>
+                            <% short_id = (container_id || task["ID"]).first(8) %>
+                            <% running = task_state == "running" %>
+                            <% started_at = task.dig("Status", "Timestamp") %>
+                            <% uptime = started_at.present? ? time_ago_in_words(Time.parse(started_at)) : nil %>
+                            <% health = task.dig("Status", "ContainerStatus", "Health") %>
+
+                            <%# state colors %>
+                            <% state_dot = case task_state
+                                 when "running"  then "bg-green-400"
+                                 when "starting" then "bg-blue-400"
+                                 when "failed"   then "bg-red-400"
+                                 else                 "bg-gray-400 dark:bg-gray-500"
+                                 end %>
+                            <% card_class = running ? "border-border-subtle bg-surface-raised" : "border-border bg-surface-inset opacity-75" %>
+
+                            <div class="rounded-lg border <%= card_class %> px-2.5 py-2 flex flex-col gap-1.5"
+                                 x-show="filter === 'both' || (filter === 'active' ? <%= running %> : <%= !running %>)">
+                              <%# Top row: container icon + id + heartbeat %>
+                              <div class="flex items-center gap-1.5">
+                                <%= sidebar_icon(:containers, css_class: "w-3.5 h-3.5 text-text-muted flex-shrink-0") %>
+                                <span class="font-mono text-[11px] text-text-secondary flex-1 truncate <%= running ? '' : 'line-through opacity-70' %>">
+                                  <%= short_id %>
                                 </span>
-                              </span>
-                            <% end %>
-                          </div>
+                                <% if running && health != "paused" %>
+                                  <% hb_color = health == "unhealthy" ? "text-red-500 dark:text-red-400" : "text-green-500 dark:text-green-400" %>
+                                  <% hb_anim  = health == "unhealthy" ? "animate-heartbeat-fast" : "animate-heartbeat-slow" %>
+                                  <span class="flex-shrink-0 <%= hb_color %> <%= hb_anim %>" title="<%= health.presence || 'running' %>">
+                                    <%= action_icon(:heartbeat, css_class: "w-4 h-4") %>
+                                  </span>
+                                <% elsif !running && task_state != "paused" %>
+                                  <span class="flex-shrink-0 text-red-500 dark:text-red-400" title="<%= task_state %>">
+                                    <%= action_icon(:flatline, css_class: "w-4 h-4") %>
+                                  </span>
+                                <% end %>
+                              </div>
+
+                              <%# Middle row: state label + uptime %>
+                              <% row_color = running ? "text-green-600 dark:text-green-400" : "text-text-muted" %>
+                              <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] <%= row_color %> capitalize"><%= task_state %></span>
+                                <% if uptime %>
+                                  <span class="text-[10px] <%= row_color %>">·</span>
+                                  <span class="text-[10px] <%= row_color %>"><%= uptime %></span>
+                                <% end %>
+                              </div>
+
+                              <%# Action row: logs · terminal · play/pause · stop (only when container_id known) %>
+                              <% if container_id.present? %>
+                                <div class="flex items-center gap-1 pt-0.5 border-t border-border">
+                                  <%= link_to container_logs_path(container_id),
+                                        class: "p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors",
+                                        title: "Logs" do %>
+                                    <%= action_icon(:logs, css_class: "w-3.5 h-3.5") %>
+                                  <% end %>
+                                  <% if running %>
+                                    <%= link_to container_terminal_path(container_id),
+                                          class: "p-0.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors",
+                                          title: "Terminal" do %>
+                                      <%= action_icon(:terminal, css_class: "w-3.5 h-3.5") %>
+                                    <% end %>
+                                    <%= button_to pause_container_path(container_id),
+                                          method: :post,
+                                          class: "p-0.5 rounded text-text-muted hover:text-yellow-600 hover:bg-surface-active transition-colors",
+                                          title: "Pausar",
+                                          form: { data: { turbo: false } } do %>
+                                      <%= action_icon(:pause, css_class: "w-3.5 h-3.5") %>
+                                    <% end %>
+                                    <%= button_to stop_container_path(container_id),
+                                          method: :post,
+                                          class: "p-0.5 rounded text-text-muted hover:text-red-600 hover:bg-surface-active transition-colors",
+                                          title: "Parar",
+                                          form: { data: { turbo: false } } do %>
+                                      <%= action_icon(:stop, css_class: "w-3.5 h-3.5") %>
+                                    <% end %>
+                                  <% else %>
+                                    <%= button_to start_container_path(container_id),
+                                          method: :post,
+                                          class: "p-0.5 rounded text-text-muted hover:text-green-600 hover:bg-surface-active transition-colors",
+                                          title: "Iniciar",
+                                          form: { data: { turbo: false } } do %>
+                                      <%= action_icon(:play, css_class: "w-3.5 h-3.5") %>
+                                    <% end %>
+                                  <% end %>
+                                </div>
+                              <% end %>
+                            </div>
+                          <% end %>
                         </div>
                       <% end %>
                     </div>
@@ -103,11 +273,6 @@
     <% end %>
   </div>
 
-  <%# ── Legend ── %>
-  <div class="flex items-center gap-5 mt-8 px-1 text-xs text-text-muted">
-    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-400"></span> running</span>
-    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-400"></span> starting</span>
-    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span> failed</span>
-    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-500"></span> <span class="line-through">finalizado</span></span>
-  </div>
+
 <% end %>
+</div>
