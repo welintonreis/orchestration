@@ -17,6 +17,7 @@ class GitDeployer
       return
     end
 
+    write_env_file
     output, success = run_deploy
 
     if success
@@ -37,10 +38,19 @@ class GitDeployer
 
   private
 
+  # docker stack deploy / docker compose resolve .env for variable
+  # interpolation from the current working directory, not the compose
+  # file's directory — chdir there so GitStack#env_content takes effect.
   def run_deploy
-    out, err, status = Open3.capture3(*build_command)
+    out, err, status = Open3.capture3(*build_command, chdir: File.dirname(@compose))
     combined = [out, err].reject(&:empty?).join("\n")
     [combined, status.success?]
+  end
+
+  def write_env_file
+    return if @stack.env_content.blank?
+
+    File.write(File.join(File.dirname(@compose), ".env"), @stack.env_content)
   end
 
   # Array form, not a single interpolated string — Open3.capture3 with one

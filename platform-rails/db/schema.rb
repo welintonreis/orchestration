@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_16_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_18_000001) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -127,6 +127,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_16_120000) do
     t.string "compose_file", default: "docker-compose.yml"
     t.datetime "created_at", null: false
     t.string "deploy_mode", default: "swarm_stack"
+    t.text "env_content"
     t.integer "environment_id", null: false
     t.integer "git_connection_id"
     t.text "last_deploy_output"
@@ -136,10 +137,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_16_120000) do
     t.string "source_type", default: "git", null: false
     t.string "status", default: "idle"
     t.datetime "updated_at", null: false
+    t.string "uuid", null: false
     t.string "webhook_token"
     t.text "yaml_content"
     t.index ["environment_id"], name: "index_git_stacks_on_environment_id"
     t.index ["git_connection_id"], name: "index_git_stacks_on_git_connection_id"
+    t.index ["uuid"], name: "index_git_stacks_on_uuid", unique: true
   end
 
   create_table "host_metrics", force: :cascade do |t|

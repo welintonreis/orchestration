@@ -18,7 +18,7 @@ docker build \
 # Swarm bind mounts require the host source path to exist before the
 # container starts — the container's own entrypoint can't create it,
 # that's too late (the scheduler already rejected the task by then).
-mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}"
+mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}"
 
 echo "==> Deploying stack ${STACK}"
 IMAGE="${IMAGE}" \

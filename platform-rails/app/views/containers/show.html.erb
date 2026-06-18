@@ -1,6 +1,6 @@
 <% page_title "Container" %>
 
-<% content_for :actions do %>
+<% content_for :title_actions do %>
   <%= link_to "← Containers", containers_path,
         class: "px-3 py-1.5 text-sm text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors" %>
   <%= link_to "Logs", container_logs_path(@container["Id"]),

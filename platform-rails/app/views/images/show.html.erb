@@ -10,7 +10,7 @@
   </svg>
 <% end %>
 
-<% content_for :actions do %>
+<% content_for :title_actions do %>
   <%= button_to remove_image_path(@image["Id"]),
         method: :delete,
         data: { turbo_confirm: "Remover esta imagem? Esta ação não pode ser desfeita." },

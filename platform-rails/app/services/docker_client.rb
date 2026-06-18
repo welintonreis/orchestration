@@ -141,6 +141,10 @@ class DockerClient
     get("/images/json")
   end
 
+  def image_pull(name, tag: "latest")
+    post("/images/create", query: { fromImage: name, tag: tag })
+  end
+
   def image(id)
     get("/images/#{id}/json")
   end
@@ -214,6 +218,10 @@ class DockerClient
     spec["Mode"]["Replicated"] ||= {}
     spec["Mode"]["Replicated"]["Replicas"] = replicas
     post("/services/#{id}/update", query: { version: version }, body: spec)
+  end
+
+  def service_remove(id)
+    delete("/services/#{id}")
   end
 
   def service_update(id)

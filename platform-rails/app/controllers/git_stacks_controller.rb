@@ -42,6 +42,11 @@ class GitStacksController < ApplicationController
 
   def destroy
     name = @git_stack.name
+    begin
+      GitStackTeardown.call(@git_stack)
+    rescue => e
+      redirect_to @git_stack, alert: "Falha ao remover serviços/containers: #{e.message}. Stack não foi deletada." and return
+    end
     @git_stack.destroy
     redirect_to git_stacks_path, notice: "Git stack \"#{name}\" deleted."
   end
@@ -61,7 +66,7 @@ class GitStacksController < ApplicationController
   def git_stack_params
     params.require(:git_stack).permit(
       :name, :source_type, :compose_file, :deploy_mode,
-      :auto_update, :poll_interval, :yaml_content,
+      :auto_update, :poll_interval, :yaml_content, :env_content,
       :environment_id, :git_connection_id
     )
   end

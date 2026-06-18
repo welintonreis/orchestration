@@ -1,5 +1,4 @@
 class ImagesController < ApplicationController
-  include DockerCache
   before_action :require_operator!, only: %i[remove batch_remove prune_orphans]
 
   # remove/batch_remove/prune_orphans redirect back here from inside the
@@ -12,18 +11,19 @@ class ImagesController < ApplicationController
   end
 
   def rows
-    images_result = nil
-    df_result     = nil
+    images_result    = nil
+    containers_result = nil
 
     endpoint = docker_endpoint
-    t1 = Thread.new { images_result = DockerClient.new(endpoint: endpoint).images }
-    t2 = Thread.new { df_result     = cached_system_df("image") rescue {} }
+    client = DockerClient.new(endpoint: endpoint)
+    t1 = Thread.new { images_result    = client.images }
+    t2 = Thread.new { containers_result = client.containers(all: true) rescue [] }
     t1.join
     t2.join
 
-    df_map = ((df_result || {})["Images"] || []).each_with_object({}) { |img, h| h[img["Id"]] = img["Containers"].to_i }
+    usage_map = (containers_result || []).each_with_object(Hash.new(0)) { |c, h| h[c["ImageID"]] += 1 if c["ImageID"] }
     @images = (images_result || []).map do |img|
-      containers_count = df_map[img["Id"]].to_i
+      containers_count = usage_map[img["Id"]].to_i
       dangling = img["RepoTags"].nil? || img["RepoTags"] == ["<none>:<none>"]
       img.merge("_containers" => containers_count, "_dangling" => dangling, "_unused" => containers_count == 0)
     end

@@ -175,12 +175,13 @@ class VolumesController < ApplicationController
     # No running container — create ephemeral one
     mountpoint = "/mnt/vol"
     tmp_name   = "redhusk-vol-#{vol_name.gsub(/[^a-zA-Z0-9_-]/, "-").first(40)}-#{SecureRandom.hex(4)}"
-    resp = current_docker_client.container_create(
-      name:   tmp_name,
-      image:  HELPER_IMAGE,
-      binds:  ["#{vol_name}:#{mountpoint}"],
-      cmd:    ["sh", "-c", "tail -f /dev/null"]
-    )
+    resp = begin
+      create_helper_container(tmp_name, vol_name, mountpoint)
+    rescue DockerClient::NotFoundError
+      # Helper image not pulled on this host yet — pull once and retry.
+      current_docker_client.image_pull(HELPER_IMAGE.split(":").first, tag: HELPER_IMAGE.split(":").last)
+      create_helper_container(tmp_name, vol_name, mountpoint)
+    end
     tmp_id = resp["Id"] || resp.is_a?(Hash) && resp["Id"]
     raise "Falha ao criar container temporário" unless tmp_id
 
@@ -192,6 +193,15 @@ class VolumesController < ApplicationController
     end
   rescue DockerClient::Error => e
     raise "Não foi possível acessar o volume: #{e.message}"
+  end
+
+  def create_helper_container(tmp_name, vol_name, mountpoint)
+    current_docker_client.container_create(
+      name:   tmp_name,
+      image:  HELPER_IMAGE,
+      binds:  ["#{vol_name}:#{mountpoint}"],
+      cmd:    ["sh", "-c", "tail -f /dev/null"]
+    )
   end
 
   def sanitize_path(path)

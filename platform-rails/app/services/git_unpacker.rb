@@ -14,6 +14,10 @@ class GitUnpacker
     new(git_connection).unpack
   end
 
+  def self.repo_dir(git_connection)
+    TMP_DIR.join(git_connection.id.to_s)
+  end
+
   def initialize(connection)
     @connection = connection
     @repo_dir   = TMP_DIR.join(@connection.id.to_s)

@@ -118,7 +118,7 @@
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
               </svg>
             </button>
-            <div x-show="swarm" x-collapse class="pl-4">
+            <div x-show="swarm" x-cloak x-collapse class="pl-4">
               <%= sidebar_link "Detalhes",    swarm_path,            icon: :details,  open: "sb", exact: true %>
               <%= sidebar_link "Nós",         swarm_nodes_path,      icon: :nodes,    open: "sb" %>
               <%= sidebar_link "Registries",  swarm_registries_path, icon: :registry, open: "sb" %>
@@ -149,7 +149,7 @@
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
               </button>
-              <div x-show="usuarios" x-collapse class="pl-4">
+              <div x-show="usuarios" x-cloak x-collapse class="pl-4">
                 <%= sidebar_link "Usuários", users_path,  icon: :user, open: "sb" %>
                 <%= sidebar_link "Times",    teams_path,  icon: :user_group, open: "sb" %>
                 <%= sidebar_link "Funções",  roles_path,  icon: :roles, open: "sb" %>
@@ -169,7 +169,7 @@
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
               </svg>
             </button>
-            <div x-show="ambiente" x-collapse class="pl-4">
+            <div x-show="ambiente" x-cloak x-collapse class="pl-4">
               <%= sidebar_link "Grupos",     ambiente_groups_path,   icon: :org_group, open: "sb" %>
               <%= sidebar_link "Políticas",  ambiente_policies_path, icon: :policies, open: "sb" %>
               <%= sidebar_link "Tags",       ambiente_tags_path,     icon: :tags, open: "sb" %>
@@ -188,7 +188,7 @@
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
               </svg>
             </button>
-            <div x-show="logs" x-collapse class="pl-4">
+            <div x-show="logs" x-cloak x-collapse class="pl-4">
               <%= sidebar_link "Atividade",     audit_logs_path,    icon: :log_lines, open: "sb" %>
               <%= sidebar_link "Alertas",       alerts_path,        icon: :alert_tri,  open: "sb" %>
               <%= sidebar_link "Notificações",  notifications_path, icon: :notif_bell, open: "sb" %>
@@ -208,7 +208,7 @@
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
               </svg>
             </button>
-            <div x-show="config" x-collapse class="pl-4">
+            <div x-show="config" x-cloak x-collapse class="pl-4">
               <%= sidebar_link "Geral",                      settings_general_path,      icon: :policies, open: "sb" %>
               <%= sidebar_link "Autenticação",            settings_auth_path,         icon: :auth_shield, open: "sb" %>
               <%= sidebar_link "Credenciais Compartilhadas", settings_credentials_path, icon: :credentials, open: "sb" %>
@@ -237,6 +237,7 @@
               </button>
 
               <div x-show="profile"
+                   x-cloak
                    x-transition:enter="transition ease-out duration-100"
                    x-transition:enter-start="opacity-0 -translate-y-1"
                    x-transition:enter-end="opacity-100 translate-y-0"

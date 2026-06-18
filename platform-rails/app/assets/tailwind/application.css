@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Hide x-show elements until Alpine boots — without this, collapsible
+   sidebar sections flash open (their raw HTML has no display:none) and
+   then snap shut once Alpine evaluates x-show, especially on hard reload
+   when deferred scripts take longer to parse. */
+[x-cloak] {
+  display: none !important;
+}
+
 /* ── Status badges ── */
 .badge-running {
   @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-900/60 text-green-400 border border-green-800;

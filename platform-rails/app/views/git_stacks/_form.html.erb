@@ -58,6 +58,16 @@
         <p class="mt-1.5 text-xs text-gray-500">Relative path from the repository root.</p>
       </div>
 
+      <%# Environment variables (.env) %>
+      <div>
+        <%= f.label :env_content, "Environment Variables (.env)", class: "block text-sm font-medium text-gray-300 mb-1.5" %>
+        <%= f.text_area :env_content,
+              rows: 6,
+              placeholder: "DATABASE_URL=postgres://user:pass@host:5432/db\nNEXTAUTH_SECRET=...",
+              class: "w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+        <p class="mt-1.5 text-xs text-gray-500">Uma variável por linha (formato KEY=VALUE). Escrito como .env ao lado do compose file antes do deploy.</p>
+      </div>
+
       <%# Deploy Mode %>
       <div>
         <%= f.label :deploy_mode, "Deploy Mode", class: "block text-sm font-medium text-gray-300 mb-1.5" %>

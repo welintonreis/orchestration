@@ -15,7 +15,7 @@ docker build \
   -t "${IMAGE}" \
   "$ROOT/platform-rails/"
 
-mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks-dev}"
+mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks-dev}"
 
 echo "==> Deploying stack ${STACK}"
 IMAGE="${IMAGE}" \

@@ -1,6 +1,6 @@
 <% page_title "Alerts" %>
 
-<% content_for :actions do %>
+<% content_for :title_actions do %>
   <div class="flex items-center gap-3">
     <span class="text-sm text-gray-500">
       <%= @unread_count > 0 ? "#{@unread_count} unread alert#{"s" if @unread_count != 1}" : "No unread alerts" %>

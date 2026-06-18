@@ -16,6 +16,15 @@
   else                  "bg-gray-800 text-gray-400"
   end %>
 
+<%# Auto-refreshes (via Turbo Frame) while a deploy is in progress, so the
+    status badge and Deploy Output panel below pick up the background
+    job's result without the user having to hit F5. Once the response
+    comes back with a non-"deploying" status, this data-controller
+    attribute is gone from the replacement frame and polling stops. %>
+<%= turbo_frame_tag "git-stack-status",
+      src: git_stack_path(@git_stack),
+      data: (@git_stack.status == "deploying" ? { controller: "metrics-refresh", "metrics-refresh-interval-value": 3000 } : {}) do %>
+
 <div class="flex items-center gap-3 mb-6">
   <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_class %>">
     <%= @git_stack.status %>
@@ -137,7 +146,8 @@ YAML
   <%# Right column: deploy output %>
   <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
     <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Deploy Output</h2>
-    <pre class="text-xs font-mono text-gray-300 bg-gray-950 border border-gray-800 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-words min-h-[200px] max-h-[500px] overflow-y-auto"><%= @git_stack.last_deploy_output.presence || "No deploys yet." %></pre>
+    <pre data-controller="autoscroll" class="text-xs font-mono text-gray-300 bg-gray-950 border border-gray-800 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-words min-h-[200px] max-h-[500px] overflow-y-auto"><%= @git_stack.last_deploy_output.presence || "No deploys yet." %></pre>
   </div>
 
 </div>
+<% end %>

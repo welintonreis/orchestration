@@ -23,12 +23,12 @@ services:
       # comment) so compose files with relative bind mounts (./app:/app)
       # resolve to a real location once the host's own daemon picks up
       # the "docker stack deploy" this container issues over the socket.
-      GIT_WORKSPACE_HOST_PATH: ${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}
+      GIT_WORKSPACE_HOST_PATH: ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
       - orchestration-storage:/rails/storage
-      - ${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}:${GIT_WORKSPACE_HOST_PATH:-/root/docker/git-stacks}
+      - ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}:${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}
     networks:
       - traefik
     deploy:
