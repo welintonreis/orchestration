@@ -113,7 +113,7 @@
         <dt class="text-sm text-text-muted">Swarm</dt>
         <dd>
           <% if @swarm_active %>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-cyan-900/60 text-cyan-300 border border-cyan-800/60">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 dark:bg-cyan-900/60 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800/60">
               <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>
               Active
             </span>
@@ -162,7 +162,7 @@
         gauges = [
           { key: "cpu",  label: "CPU",  color: "#39FF14", value: @latest_metric&.cpu_percent  },
           { key: "ram",  label: "RAM",  color: "#22d3ee", value: @latest_metric&.ram_percent  },
-          { key: "disk", label: "Disk", color: "#e8f4f8", value: @latest_metric&.disk_percent },
+          { key: "disk", label: "Disk", color: "var(--gauge-disk)", value: @latest_metric&.disk_percent },
           { key: "swap", label: "Swap", color: "#f97316", value: @latest_metric&.swap_percent },
         ]
       %>
@@ -235,7 +235,7 @@
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">
         Recent Alerts
-        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-900/60 text-red-300 text-xs font-bold border border-red-800/60">
+        <span class="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 text-xs font-bold border border-red-300 dark:border-red-800/60">
           <%= @unread_count > 99 ? "99+" : @unread_count %>
         </span>
       </h2>
@@ -248,9 +248,9 @@
 
           <%# Level badge %>
           <% badge_classes = case alert.level
-             when "critical" then "bg-red-900/60 text-red-700 dark:text-red-300 border-red-800/60"
-             when "warning"  then "bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 border-yellow-800/60"
-             else                 "bg-blue-900/60 text-blue-700 dark:text-blue-300 border-blue-800/60"
+             when "critical" then "bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800/60"
+             when "warning"  then "bg-yellow-100 dark:bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-800/60"
+             else                 "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800/60"
              end %>
           <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border flex-shrink-0 mt-0.5 <%= badge_classes %>">
             <%= alert.level %>

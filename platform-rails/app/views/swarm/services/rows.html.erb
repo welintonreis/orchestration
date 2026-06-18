@@ -74,7 +74,7 @@
             </template>
             <button type="button"
                     @click="$refs.scaleDownForm.submit()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-900/40 hover:bg-orange-800/50 text-orange-300 border border-orange-700/40 rounded-lg transition-colors">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-800/50 text-orange-700 dark:text-orange-300 border border-orange-700/40 rounded-lg transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
               Scale -1
             </button>
@@ -169,7 +169,7 @@
                     <% end %>
                   <% end %>
                   <%= render Ui::ButtonComponent.new(url: drain_swarm_service_path(id: s["ID"]), method: :post,
-                        variant: "bg-orange-900/30 hover:bg-orange-800/40 text-orange-600 dark:text-orange-400 border-orange-800/40",
+                        variant: "bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-800/40 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-800/40",
                         size: "px-2 py-1 text-xs font-medium rounded", label: "Desidratar",
                         css_class: "whitespace-nowrap",
                         confirm: "Desidratar #{service_name}? Zera réplicas.") %>

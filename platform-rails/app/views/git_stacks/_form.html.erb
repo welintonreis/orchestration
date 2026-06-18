@@ -7,7 +7,7 @@
     <%= form_with model: git_stack, class: "space-y-5" do |f| %>
       <%# Validation errors %>
       <% if git_stack.errors.any? %>
-        <div class="rounded-lg bg-red-900/40 border border-red-800 px-4 py-3 text-sm text-red-300">
+        <div class="rounded-lg bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
           <p class="font-medium mb-1">Please fix the following errors:</p>
           <ul class="list-disc list-inside space-y-0.5">
             <% git_stack.errors.full_messages.each do |msg| %>
@@ -84,7 +84,7 @@
 
       <%# Webhook info for new records %>
       <% if git_stack.new_record? %>
-        <div class="rounded-lg bg-cyan-950/40 border border-cyan-800/40 px-4 py-3">
+        <div class="rounded-lg bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/40 px-4 py-3">
           <p class="text-xs text-cyan-600 dark:text-cyan-400 font-medium mb-1">Webhook CI/CD</p>
           <p class="text-xs text-text-secondary">
             Após criar a stack, um <strong class="text-text-primary">Webhook URL</strong> único será gerado.

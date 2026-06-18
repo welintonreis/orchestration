@@ -32,7 +32,7 @@
         </div>
 
         <% if @user.errors.any? %>
-          <div class="p-3 bg-red-900/40 border border-red-800/60 rounded-lg">
+          <div class="p-3 bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-800/60 rounded-lg">
             <% @user.errors.full_messages.each do |msg| %>
               <p class="text-sm text-red-700 dark:text-red-300"><%= msg %></p>
             <% end %>

@@ -26,8 +26,8 @@
           </td>
           <td class="px-4 py-3">
             <% role_cls = case user.role
-               when "admin"    then "bg-purple-900/60 text-purple-700 dark:text-purple-300 border-purple-800/60"
-               when "operator" then "bg-cyan-900/60 text-cyan-700 dark:text-cyan-300 border-cyan-800/60"
+               when "admin"    then "bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800/60"
+               when "operator" then "bg-cyan-100 dark:bg-cyan-900/60 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/60"
                else                 "bg-surface-inset text-text-secondary border-border-subtle"
                end %>
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border <%= role_cls %>">
@@ -52,9 +52,9 @@
               <% unless user == Current.user %>
                 <%= button_to user.active ? "Deactivate" : "Activate",
                       toggle_active_user_path(user), method: :post,
-                      class: "px-2 py-1 text-xs rounded bg-surface-inset #{user.active ? 'hover:bg-yellow-900/40 hover:text-yellow-700 dark:hover:text-yellow-300 hover:border-yellow-800' : 'hover:bg-green-900/40 hover:text-green-700 dark:hover:text-green-300 hover:border-green-800'} text-text-secondary border border-border-subtle transition-colors" %>
+                      class: "px-2 py-1 text-xs rounded bg-surface-inset #{user.active ? 'hover:bg-yellow-100 dark:bg-yellow-900/40 hover:text-yellow-700 dark:hover:text-yellow-300 hover:border-yellow-300 dark:border-yellow-800' : 'hover:bg-green-100 dark:bg-green-900/40 hover:text-green-700 dark:hover:text-green-300 hover:border-green-300 dark:border-green-800'} text-text-secondary border border-border-subtle transition-colors" %>
                 <%= button_to "Delete", user_path(user), method: :delete,
-                      class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-red-900/40 text-text-secondary hover:text-red-600 dark:hover:text-red-400 border border-border-subtle hover:border-red-800 transition-colors",
+                      class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-red-100 dark:bg-red-900/40 text-text-secondary hover:text-red-600 dark:hover:text-red-400 border border-border-subtle hover:border-red-300 dark:border-red-800 transition-colors",
                       data: { turbo_confirm: "Delete user #{user.email_address}? This cannot be undone." } %>
               <% end %>
             </div>

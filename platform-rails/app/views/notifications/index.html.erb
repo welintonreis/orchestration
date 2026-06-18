@@ -21,10 +21,10 @@
   <% else %>
     <% @alerts.each do |alert| %>
       <% severity_class = case alert.level
-         when "critical" then "border-l-red-500 bg-red-950/20"
-         when "warning" then "border-l-yellow-500 bg-yellow-950/20"
-         when "success" then "border-l-green-500 bg-green-950/20"
-         else "border-l-cyan-500 bg-cyan-950/10"
+         when "critical" then "border-l-red-500 bg-red-100 dark:bg-red-950/20"
+         when "warning" then "border-l-yellow-500 bg-yellow-100 dark:bg-yellow-950/20"
+         when "success" then "border-l-green-500 bg-green-100 dark:bg-green-950/20"
+         else "border-l-cyan-500 bg-cyan-100 dark:bg-cyan-950/10"
          end %>
       <div class="flex items-start gap-4 p-4 bg-surface-raised border border-border border-l-4 <%= severity_class %> rounded-r-xl <%= alert.read_at ? 'opacity-60' : '' %>">
         <div class="flex-1 min-w-0">

@@ -100,7 +100,7 @@
               </div>
             </td>
             <td class="px-4 py-3">
-              <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-800/40")) do %>
+              <%= render(Ui::BadgeComponent.new(color: "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/40")) do %>
                 <%= stack["Services"] %> serviço<%= stack["Services"] == 1 ? "" : "s" %>
               <% end %>
             </td>
@@ -152,7 +152,7 @@
                         </td>
                         <td class="px-4 py-2.5">
                           <% if global_mode %>
-                            <%= render(Ui::BadgeComponent.new(color: "bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-800/40", size: :xs)) { "global" } %>
+                            <%= render(Ui::BadgeComponent.new(color: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800/40", size: :xs)) { "global" } %>
                           <% elsif replicated %>
                             <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs)) do %>
                               <span class="text-text-muted">replicated</span>
@@ -181,7 +181,7 @@
 
                             <%= render Ui::ButtonComponent.new(url: drain_stack_service_stacks_path(service_id: svc["ID"]),
                                   method: :post,
-                                  variant: "bg-orange-900/30 hover:bg-orange-800/40 text-orange-600 dark:text-orange-400 border-orange-800/40",
+                                  variant: "bg-orange-100 dark:bg-orange-900/30 hover:bg-orange-800/40 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-800/40",
                                   size: "px-2 py-1 text-[10px] font-medium rounded", label: "Desidratar",
                                   css_class: "whitespace-nowrap",
                                   confirm: "Desidratar #{svc_name}? Isso vai zerar as réplicas.") %>

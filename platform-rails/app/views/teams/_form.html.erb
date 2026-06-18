@@ -1,6 +1,6 @@
 <%= form_with model: team, local: true do |f| %>
   <% if team.errors.any? %>
-    <div class="mb-4 p-3 bg-red-950/50 border border-red-800/60 rounded-lg text-sm text-red-400">
+    <div class="mb-4 p-3 bg-red-100 dark:bg-red-950/50 border border-red-300 dark:border-red-800/60 rounded-lg text-sm text-red-600 dark:text-red-400">
       <% team.errors.full_messages.each do |msg| %>
         <p><%= msg %></p>
       <% end %>

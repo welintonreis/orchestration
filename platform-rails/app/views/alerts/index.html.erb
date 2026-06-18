@@ -7,7 +7,7 @@
     </span>
     <% if @unread_count > 0 %>
       <%= button_to "Mark all read", mark_all_read_alerts_path, method: :post,
-            class: "px-3 py-1.5 text-sm rounded-lg bg-red-900/40 hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-800/60 hover:border-red-700 transition-colors font-medium" %>
+            class: "px-3 py-1.5 text-sm rounded-lg bg-red-100 dark:bg-red-900/40 hover:bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60 hover:border-red-700 transition-colors font-medium" %>
     <% end %>
   </div>
 <% end %>
@@ -37,9 +37,9 @@
           <tr class="<%= alert.read? ? 'bg-surface-sunken opacity-70' : 'bg-surface-raised' %> hover:bg-surface-inset/40 transition-colors">
             <td class="px-4 py-3">
               <% level_class = case alert.level
-                               when "critical" then "bg-red-900/60 text-red-700 dark:text-red-300 border border-red-800/60"
-                               when "warning"  then "bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 border border-yellow-800/60"
-                               else                 "bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-800/60"
+                               when "critical" then "bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60"
+                               when "warning"  then "bg-yellow-100 dark:bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-800/60"
+                               else                 "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/60"
                                end %>
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold <%= level_class %>">
                 <%= alert.level.capitalize %>

@@ -20,7 +20,8 @@
   --surface-active-hover: #9ca3af; /* gray-400 — hover state for bg-surface-active (was hover:bg-gray-600) */
   --border: #e5e7eb;           /* default border (gray-200) */
   --border-subtle: #d1d5db;    /* input/button border (gray-300) */
-  --gauge-track: #9ca3af;      /* gray-400 — unfilled gauge ticks; needs more contrast against a light surface than --border has */
+  --gauge-track: #d1d5db;      /* gray-300 — unfilled gauge ticks: a visible-but-subtle track, not as heavy as gray-400 */
+  --gauge-disk: #64748b;       /* slate-500 — Disk gauge's accent (was a near-white #e8f4f8 made for a black bg; illegible on a light card) */
   --text-primary: #111827;     /* gray-900 */
   --text-secondary: #4b5563;   /* gray-600 */
   --text-muted: #6b7280;       /* gray-500 */
@@ -36,6 +37,7 @@
   --border: #1f2937;           /* gray-800 */
   --border-subtle: #374151;    /* gray-700 */
   --gauge-track: #374151;      /* gray-700 — unfilled gauge ticks */
+  --gauge-disk: #e8f4f8;       /* original pale tone, reads fine against a dark card */
   --text-primary: #ffffff;
   --text-secondary: #9ca3af;   /* gray-400 */
   --text-muted: #6b7280;       /* gray-500 */

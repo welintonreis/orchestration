@@ -130,7 +130,7 @@
             </button>
             <div x-show="swarm" x-cloak x-collapse class="pl-4">
               <%= sidebar_link "Detalhes",    swarm_path,            icon: :details,  open: "sb", exact: true %>
-              <%= sidebar_link "Topologia",   swarm_topology_path,   icon: :nodes,    open: "sb" %>
+              <%= sidebar_link "Topologia",   swarm_topology_path,   icon: :topology, open: "sb" %>
               <%= sidebar_link "Nós",         swarm_nodes_path,      icon: :nodes,    open: "sb" %>
               <%= sidebar_link "Registries",  swarm_registries_path, icon: :registry, open: "sb" %>
               <%= sidebar_link "Políticas",   swarm_policies_path,   icon: :policies, open: "sb" %>
@@ -301,7 +301,7 @@
                   <% end %>
                   <div class="border-t border-border-subtle my-1"></div>
                   <%= button_to session_path, method: :delete,
-                        class: "flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-red-950/40 transition-colors text-left" do %>
+                        class: "flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:bg-red-950/40 transition-colors text-left" do %>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
@@ -399,7 +399,7 @@
       <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" id="confirm-backdrop"></div>
       <div class="relative bg-surface-raised border border-border-subtle rounded-2xl shadow-2xl w-full max-w-sm">
         <div class="px-6 pt-6 pb-2 flex items-start gap-4">
-          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-900/40 border border-red-800/60 flex items-center justify-center">
+          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-800/60 flex items-center justify-center">
             <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>

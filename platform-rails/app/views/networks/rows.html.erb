@@ -121,7 +121,7 @@
                   </svg>
                   <span class="font-medium text-text-primary whitespace-nowrap"><%= n["Name"] %></span>
                   <% if n["_protected"] %>
-                    <%= render(Ui::BadgeComponent.new(color: "bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-800/50", size: :xs, css_class: "whitespace-nowrap")) { "System" } %>
+                    <%= render(Ui::BadgeComponent.new(color: "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800/50", size: :xs, css_class: "whitespace-nowrap")) { "System" } %>
                   <% end %>
                 </div>
               </td>
@@ -135,9 +135,9 @@
               <td class="px-3 py-3 whitespace-nowrap">
                 <%
                   driver_color = case n["Driver"]
-                                 when "overlay" then "bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-800/40"
-                                 when "bridge"  then "bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-800/40"
-                                 when "host"    then "bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-800/40"
+                                 when "overlay" then "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800/40"
+                                 when "bridge"  then "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/40"
+                                 when "host"    then "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800/40"
                                  else                "bg-surface-inset text-text-secondary border-border-subtle"
                                  end
                 %>
@@ -167,7 +167,7 @@
                   <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-surface-inset/60 text-text-muted border border-border cursor-not-allowed">Protected</span>
                 <% else %>
                   <%= render Ui::ButtonComponent.new(url: remove_network_path(net_id), method: :delete,
-                        variant: "bg-red-900/30 text-red-600 dark:text-red-400 border-red-800/50 hover:bg-red-900/60 hover:text-red-700 dark:hover:text-red-300",
+                        variant: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-800/50 hover:bg-red-100 dark:bg-red-900/60 hover:text-red-700 dark:hover:text-red-300",
                         size: :sm, icon: :remove, label: "Remover",
                         confirm: "Remover rede \"#{n["Name"]}\"?") %>
                 <% end %>
