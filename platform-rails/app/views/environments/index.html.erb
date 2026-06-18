@@ -62,10 +62,10 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <h2 class="font-semibold text-text-primary text-sm leading-tight"><%= env.name %></h2>
                 <% if is_active %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/50 text-cyan-300 border-cyan-800/50", size: :xs)) { "ativo" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border-cyan-800/50", size: :xs)) { "ativo" } %>
                 <% end %>
                 <% if s[:up] && s[:swarm] %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-300 border-cyan-800/40", size: :xs)) { "Swarm #{s[:docker_ver]}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-800/40", size: :xs)) { "Swarm #{s[:docker_ver]}" } %>
                 <% elsif s[:up] %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs)) { "Standalone #{s[:docker_ver]}" } %>
                 <% end %>
@@ -76,7 +76,7 @@
                 <span class="font-mono truncate max-w-[180px]"><%= env.endpoint %></span>
               </div>
               <% unless s[:up] %>
-                <div class="mt-1 flex items-center gap-1 text-[11px] text-red-400">
+                <div class="mt-1 flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                   </svg>
@@ -107,7 +107,7 @@
                    x-transition:enter-end="opacity-100 scale-100"
                    class="absolute right-0 top-full mt-1 w-40 bg-surface-inset border border-border-subtle rounded-xl shadow-xl z-20 overflow-hidden">
                 <%= render Ui::ButtonComponent.new(url: environment_path(env), method: :delete,
-                      variant: "text-red-400 hover:bg-red-950/40 border-transparent",
+                      variant: "text-red-600 dark:text-red-400 hover:bg-red-950/40 border-transparent",
                       size: "px-3 py-2.5 text-sm rounded-none", icon: :remove, label: "Remover",
                       css_class: "w-full justify-start text-left",
                       confirm: "Remover ambiente #{env.name}?") %>
@@ -132,7 +132,7 @@
                 <div class="text-xl font-bold text-text-primary"><%= stacks_total %></div>
                 <div class="text-[10px] text-text-muted mt-0.5">Stacks</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:stacks_running]} rodando" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-700 dark:text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:stacks_running]} rodando" } %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:stacks_stopped]} parada#{s[:stacks_stopped] == 1 ? "" : "s"}" } %>
                 </div>
               </div>
@@ -140,15 +140,15 @@
                 <div class="text-xl font-bold text-text-primary"><%= s[:services] || 0 %></div>
                 <div class="text-[10px] text-text-muted mt-0.5">Serviços</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:services_complete]} completos" } %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-orange-900/40 text-orange-300 border-orange-800/40", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:services_degraded]} degradado#{s[:services_degraded] == 1 ? "" : "s"}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-700 dark:text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:services_complete]} completos" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-800/40", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:services_degraded]} degradado#{s[:services_degraded] == 1 ? "" : "s"}" } %>
                 </div>
               </div>
               <div class="text-center">
                 <div class="text-xl font-bold text-text-primary"><%= s[:containers] || 0 %></div>
                 <div class="text-[10px] text-text-muted mt-0.5">Containers</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:running]} rodando" } %>
+                  <%= render(Ui::BadgeComponent.new(color: "bg-green-900/40 text-green-700 dark:text-green-300 border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:running]} rodando" } %>
                   <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "whitespace-nowrap")) { "#{stopped} parado#{stopped == 1 ? "" : "s"}" } %>
                 </div>
               </div>
@@ -226,6 +226,6 @@
     </svg>
     <p class="text-sm text-text-muted mb-3">Adicionar outro ambiente</p>
     <%= link_to "Conectar Docker host", new_environment_path,
-          class: "text-sm text-red-500 hover:text-red-400 font-medium transition-colors" %>
+          class: "text-sm text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors" %>
   </div>
 <% end %>

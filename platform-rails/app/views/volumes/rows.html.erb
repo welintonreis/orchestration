@@ -31,7 +31,7 @@
          x-transition:enter-start="opacity-0 -translate-y-2"
          x-transition:enter-end="opacity-100 translate-y-0"
          class="mb-4 flex items-center justify-between bg-red-950/40 border border-red-800/50 rounded-xl px-4 py-3">
-      <span class="text-sm text-red-300">
+      <span class="text-sm text-red-700 dark:text-red-300">
         <span x-text="selected.length"></span> volume(s) selecionado(s)
       </span>
       <form method="post" action="<%= batch_remove_volumes_path %>"
@@ -95,7 +95,7 @@
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="truncate" title="<%= v["Name"] %>"><%= v["Name"] %></span>
                   <% if v["_refs"] == 0 %>
-                    <%= render(Ui::BadgeComponent.new(color: "bg-yellow-900/40 text-yellow-400 border-yellow-700/50", size: :xs, css_class: "flex-shrink-0 whitespace-nowrap")) { "Não utilizado" } %>
+                    <%= render(Ui::BadgeComponent.new(color: "bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 border-yellow-700/50", size: :xs, css_class: "flex-shrink-0 whitespace-nowrap")) { "Não utilizado" } %>
                   <% end %>
                 </div>
               </td>
@@ -114,7 +114,7 @@
               <td class="px-4 py-3">
                 <div class="flex items-center gap-1.5">
                   <%= render Ui::ButtonComponent.new(url: browse_volume_path(v["Name"]),
-                        variant: "bg-surface-inset hover:bg-cyan-900/30 text-text-secondary hover:text-cyan-400 border-border-subtle hover:border-cyan-800",
+                        variant: "bg-surface-inset hover:bg-cyan-900/30 text-text-secondary hover:text-cyan-600 dark:hover:text-cyan-400 border-border-subtle hover:border-cyan-800",
                         size: "p-1.5 rounded", title: "Explorar arquivos", frame: "_top",
                         icon: nil) do %>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

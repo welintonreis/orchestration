@@ -49,15 +49,15 @@
       <div class="text-sm text-text-secondary mt-1">Nós totais</div>
     </div>
     <div class="bg-surface-raised border border-border rounded-xl p-5">
-      <div class="text-3xl font-bold text-purple-400"><%= managers_count %></div>
+      <div class="text-3xl font-bold text-purple-600 dark:text-purple-400"><%= managers_count %></div>
       <div class="text-sm text-text-secondary mt-1">Managers</div>
     </div>
     <div class="bg-surface-raised border border-border rounded-xl p-5">
-      <div class="text-3xl font-bold text-cyan-400"><%= workers_count %></div>
+      <div class="text-3xl font-bold text-cyan-600 dark:text-cyan-400"><%= workers_count %></div>
       <div class="text-sm text-text-secondary mt-1">Workers</div>
     </div>
     <div class="bg-surface-raised border border-border rounded-xl p-5">
-      <div class="text-3xl font-bold text-green-400"><%= @nodes&.count { |n| n.dig("Status", "State") == "ready" } || 0 %></div>
+      <div class="text-3xl font-bold text-green-600 dark:text-green-400"><%= @nodes&.count { |n| n.dig("Status", "State") == "ready" } || 0 %></div>
       <div class="text-sm text-text-secondary mt-1">Ready</div>
     </div>
   </div>
@@ -124,7 +124,7 @@
         <div class="flex justify-between">
           <dt class="text-sm text-text-secondary">Containers</dt>
           <dd class="text-sm text-text-secondary">
-            <span class="text-green-400"><%= host["ContainersRunning"] || 0 %></span>
+            <span class="text-green-600 dark:text-green-400"><%= host["ContainersRunning"] || 0 %></span>
             <span class="text-text-muted"> / </span>
             <span class="text-text-secondary"><%= host["Containers"] || 0 %> total</span>
           </dd>
@@ -172,7 +172,7 @@
                 </span>
               </td>
               <td class="px-4 py-3">
-                <span class="inline-flex items-center gap-1 text-xs <%= is_ready ? 'text-green-400' : 'text-red-400' %>">
+                <span class="inline-flex items-center gap-1 text-xs <%= is_ready ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
                   <span class="w-1.5 h-1.5 rounded-full <%= is_ready ? 'bg-green-400' : 'bg-red-400' %> inline-block"></span>
                   <%= status %>
                 </span>

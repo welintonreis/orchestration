@@ -20,6 +20,7 @@
   --surface-active-hover: #9ca3af; /* gray-400 — hover state for bg-surface-active (was hover:bg-gray-600) */
   --border: #e5e7eb;           /* default border (gray-200) */
   --border-subtle: #d1d5db;    /* input/button border (gray-300) */
+  --gauge-track: #9ca3af;      /* gray-400 — unfilled gauge ticks; needs more contrast against a light surface than --border has */
   --text-primary: #111827;     /* gray-900 */
   --text-secondary: #4b5563;   /* gray-600 */
   --text-muted: #6b7280;       /* gray-500 */
@@ -34,6 +35,7 @@
   --surface-active-hover: #4b5563; /* gray-600 — hover state for bg-surface-active */
   --border: #1f2937;           /* gray-800 */
   --border-subtle: #374151;    /* gray-700 */
+  --gauge-track: #374151;      /* gray-700 — unfilled gauge ticks */
   --text-primary: #ffffff;
   --text-secondary: #9ca3af;   /* gray-400 */
   --text-muted: #6b7280;       /* gray-500 */
@@ -48,6 +50,7 @@
   --color-surface-active-hover: var(--surface-active-hover);
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
+  --color-gauge-track: var(--gauge-track);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);

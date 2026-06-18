@@ -6,16 +6,16 @@ module Ui
   class ButtonComponent < ApplicationComponent
     VARIANTS = {
       gray:        "bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary border border-border-subtle",
-      cyan:        "bg-surface-inset hover:bg-cyan-900/40 text-text-secondary hover:text-cyan-300 border border-border-subtle hover:border-cyan-800",
-      green:       "bg-surface-inset hover:bg-green-900/40 text-text-secondary hover:text-green-300 border border-border-subtle hover:border-green-800",
-      yellow:      "bg-surface-inset hover:bg-yellow-900/40 text-text-secondary hover:text-yellow-300 border border-border-subtle hover:border-yellow-800",
-      red:         "bg-surface-inset hover:bg-red-900/40 text-text-secondary hover:text-red-400 border border-border-subtle hover:border-red-800",
-      blue:        "bg-surface-inset hover:bg-blue-900/40 text-text-secondary hover:text-blue-300 border border-border-subtle hover:border-blue-800",
-      purple:      "bg-surface-inset hover:bg-purple-900/40 text-text-secondary hover:text-purple-300 border border-border-subtle hover:border-purple-800",
-      solid_cyan:  "bg-cyan-900/60 hover:bg-cyan-800/80 text-cyan-300 border border-cyan-700/50",
+      cyan:        "bg-surface-inset hover:bg-cyan-900/40 text-text-secondary hover:text-cyan-700 dark:hover:text-cyan-300 border border-border-subtle hover:border-cyan-800",
+      green:       "bg-surface-inset hover:bg-green-900/40 text-text-secondary hover:text-green-700 dark:hover:text-green-300 border border-border-subtle hover:border-green-800",
+      yellow:      "bg-surface-inset hover:bg-yellow-900/40 text-text-secondary hover:text-yellow-700 dark:hover:text-yellow-300 border border-border-subtle hover:border-yellow-800",
+      red:         "bg-surface-inset hover:bg-red-900/40 text-text-secondary hover:text-red-600 dark:hover:text-red-400 border border-border-subtle hover:border-red-800",
+      blue:        "bg-surface-inset hover:bg-blue-900/40 text-text-secondary hover:text-blue-700 dark:hover:text-blue-300 border border-border-subtle hover:border-blue-800",
+      purple:      "bg-surface-inset hover:bg-purple-900/40 text-text-secondary hover:text-purple-700 dark:hover:text-purple-300 border border-border-subtle hover:border-purple-800",
+      solid_cyan:  "bg-cyan-900/60 hover:bg-cyan-800/80 text-cyan-700 dark:text-cyan-300 border border-cyan-700/50",
       solid_red:   "bg-red-700/50 hover:bg-red-600/60 text-red-200 border border-red-600/60",
-      solid_orange:"bg-orange-900/40 hover:bg-orange-800/50 text-orange-300 border border-orange-700/40",
-      solid_purple:"bg-purple-950/40 hover:bg-purple-900/60 text-purple-400 border border-purple-900/50",
+      solid_orange:"bg-orange-900/40 hover:bg-orange-800/50 text-orange-700 dark:text-orange-300 border border-orange-700/40",
+      solid_purple:"bg-purple-950/40 hover:bg-purple-900/60 text-purple-600 dark:text-purple-400 border border-purple-900/50",
       ghost:       "bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary border border-border-subtle",
     }.freeze
 

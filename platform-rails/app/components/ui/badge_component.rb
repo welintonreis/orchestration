@@ -4,13 +4,13 @@ module Ui
   class BadgeComponent < ApplicationComponent
     COLORS = {
       gray:   { bg: "bg-surface-inset text-text-secondary border-border-subtle",          dot: "bg-gray-400" },
-      green:  { bg: "bg-green-900/50 text-green-300 border-green-800/50", dot: "bg-green-400" },
-      red:    { bg: "bg-red-900/50 text-red-300 border-red-800/50",       dot: "bg-red-400" },
-      orange: { bg: "bg-orange-900/40 text-orange-400 border-orange-700/50", dot: "bg-orange-400" },
-      yellow: { bg: "bg-yellow-900/50 text-yellow-300 border-yellow-800/50", dot: "bg-yellow-400" },
-      blue:   { bg: "bg-blue-900/50 text-blue-300 border-blue-800/50",    dot: "bg-blue-400" },
-      cyan:   { bg: "bg-cyan-900/60 text-cyan-400 border-cyan-800",       dot: "bg-cyan-400" },
-      purple: { bg: "bg-purple-900/50 text-purple-300 border-purple-800/50", dot: "bg-purple-400" },
+      green:  { bg: "bg-green-900/50 text-green-700 dark:text-green-300 border-green-800/50", dot: "bg-green-400" },
+      red:    { bg: "bg-red-900/50 text-red-700 dark:text-red-300 border-red-800/50",       dot: "bg-red-400" },
+      orange: { bg: "bg-orange-900/40 text-orange-600 dark:text-orange-400 border-orange-700/50", dot: "bg-orange-400" },
+      yellow: { bg: "bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border-yellow-800/50", dot: "bg-yellow-400" },
+      blue:   { bg: "bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-800/50",    dot: "bg-blue-400" },
+      cyan:   { bg: "bg-cyan-900/60 text-cyan-600 dark:text-cyan-400 border-cyan-800",       dot: "bg-cyan-400" },
+      purple: { bg: "bg-purple-900/50 text-purple-700 dark:text-purple-300 border-purple-800/50", dot: "bg-purple-400" },
     }.freeze
 
     SIZES = {

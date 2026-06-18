@@ -72,7 +72,7 @@ module ApplicationHelper
       end
     else
       base   = "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
-      active_cls = "bg-red-950/50 text-red-400 border border-red-900/60"
+      active_cls = "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900/60"
       idle_cls   = "text-text-secondary hover:text-text-primary hover:bg-surface-inset/70"
 
       link_to path, class: "#{base} #{active ? active_cls : idle_cls}", title: name do

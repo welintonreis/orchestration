@@ -52,7 +52,7 @@
             <td class="px-5 py-3 text-right">
               <% if Current.user&.admin? || Current.user&.operator? %>
                 <%= button_to remove_config_path(cfg["ID"]), method: :delete,
-                      class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-red-900/40 text-text-secondary hover:text-red-400 border border-border-subtle hover:border-red-800 transition-colors",
+                      class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-red-900/40 text-text-secondary hover:text-red-600 dark:hover:text-red-400 border border-border-subtle hover:border-red-800 transition-colors",
                       data: { turbo_confirm: "Remover config #{cfg.dig("Spec","Name")}?" } do %>
                   Remover
                 <% end %>

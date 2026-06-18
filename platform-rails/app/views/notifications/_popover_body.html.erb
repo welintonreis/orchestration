@@ -26,9 +26,9 @@
                       else                 "bg-blue-500"
                       end
           level_text = case alert.level
-                       when "critical" then "text-red-400"
-                       when "warning"  then "text-yellow-400"
-                       else                 "text-blue-400"
+                       when "critical" then "text-red-600 dark:text-red-400"
+                       when "warning"  then "text-yellow-600 dark:text-yellow-400"
+                       else                 "text-blue-600 dark:text-blue-400"
                        end
         %>
         <%= button_to mark_read_notification_path(alert),

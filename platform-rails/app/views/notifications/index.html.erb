@@ -29,7 +29,7 @@
       <div class="flex items-start gap-4 p-4 bg-surface-raised border border-border border-l-4 <%= severity_class %> rounded-r-xl <%= alert.read_at ? 'opacity-60' : '' %>">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-xs font-semibold uppercase tracking-wider <%= alert.level == 'critical' ? 'text-red-400' : alert.level == 'warning' ? 'text-yellow-400' : 'text-cyan-400' %>"><%= alert.level %></span>
+            <span class="text-xs font-semibold uppercase tracking-wider <%= alert.level == 'critical' ? 'text-red-600 dark:text-red-400' : alert.level == 'warning' ? 'text-yellow-600 dark:text-yellow-400' : 'text-cyan-600 dark:text-cyan-400' %>"><%= alert.level %></span>
             <% unless alert.read_at %>
               <span class="w-2 h-2 rounded-full bg-cyan-400 flex-shrink-0"></span>
             <% end %>

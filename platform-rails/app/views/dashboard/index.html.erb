@@ -155,9 +155,9 @@
         </div>
       </div>
 
-      <%# ── Resource donut gauges — live via HostStatsChannel ── %>
-      <% donut_r = 16 %>
-      <% donut_c = (2 * Math::PI * donut_r).round(3) %>
+      <%# ── Resource gauges — segmented ring (circular version of the old
+          40-tick linear bar), live via HostStatsChannel ── %>
+      <% tick_count = 40 %>
       <%
         gauges = [
           { key: "cpu",  label: "CPU",  color: "#39FF14", value: @latest_metric&.cpu_percent  },
@@ -167,26 +167,26 @@
         ]
       %>
 
-      <div class="border-t border-border pt-3"
-           data-controller="host-stats"
-           data-host-stats-circumference-value="<%= donut_c %>">
+      <div class="border-t border-border pt-3" data-controller="host-stats">
 
         <div class="grid grid-cols-4 gap-2">
           <% gauges.each do |g| %>
             <% pct = g[:value] ? [[g[:value], 0].max, 100].min : 0 %>
-            <% offset = (donut_c * (1 - pct / 100.0)).round(3) %>
+            <% filled = (pct / 100.0 * tick_count).round %>
             <div class="flex flex-col items-center">
-              <div class="relative w-16 h-16">
-                <svg viewBox="0 0 40 40" class="w-16 h-16 -rotate-90">
-                  <circle cx="20" cy="20" r="<%= donut_r %>" fill="none" stroke="#1f2937" stroke-width="4"></circle>
-                  <circle cx="20" cy="20" r="<%= donut_r %>" fill="none" stroke="<%= g[:color] %>" stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-dasharray="<%= donut_c %>"
-                          stroke-dashoffset="<%= g[:value] ? offset : donut_c %>"
-                          data-host-stats-target="<%= g[:key] %>Circle"></circle>
+              <div class="relative w-32 h-32">
+                <svg viewBox="0 0 40 40" class="w-32 h-32">
+                  <g data-host-stats-target="<%= g[:key] %>Ticks" data-color="<%= g[:color] %>">
+                    <% tick_count.times do |i| %>
+                      <line x1="20" y1="2.5" x2="20" y2="6.5"
+                            transform="rotate(<%= (i * 360.0 / tick_count).round(2) %> 20 20)"
+                            stroke="<%= g[:value] && i < filled ? g[:color] : "var(--gauge-track)" %>"
+                            stroke-width="1.6" stroke-linecap="round" />
+                    <% end %>
+                  </g>
                 </svg>
                 <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-[11px] font-mono font-semibold" style="color:<%= g[:color] %>"
+                  <span class="text-2xl font-mono font-semibold" style="color:<%= g[:color] %>"
                         data-host-stats-target="<%= g[:key] %>Pct"><%= g[:value] ? ("%.0f" % g[:value]) : "—" %>%</span>
                 </div>
               </div>
@@ -239,7 +239,7 @@
           <%= @unread_count > 99 ? "99+" : @unread_count %>
         </span>
       </h2>
-      <%= link_to "View all", alerts_path, class: "text-xs text-cyan-400 hover:text-cyan-300 transition-colors" %>
+      <%= link_to "View all", alerts_path, class: "text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors" %>
     </div>
 
     <div class="divide-y divide-border">
@@ -248,9 +248,9 @@
 
           <%# Level badge %>
           <% badge_classes = case alert.level
-             when "critical" then "bg-red-900/60 text-red-300 border-red-800/60"
-             when "warning"  then "bg-yellow-900/60 text-yellow-300 border-yellow-800/60"
-             else                 "bg-blue-900/60 text-blue-300 border-blue-800/60"
+             when "critical" then "bg-red-900/60 text-red-700 dark:text-red-300 border-red-800/60"
+             when "warning"  then "bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 border-yellow-800/60"
+             else                 "bg-blue-900/60 text-blue-700 dark:text-blue-300 border-blue-800/60"
              end %>
           <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border flex-shrink-0 mt-0.5 <%= badge_classes %>">
             <%= alert.level %>

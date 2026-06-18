@@ -48,7 +48,7 @@
             </template>
           </div>
           <span class="text-xs font-medium transition-colors"
-                :class="step === <%= s[:n] %> ? 'text-text-primary' : step > <%= s[:n] %> ? 'text-green-400' : 'text-text-muted'">
+                :class="step === <%= s[:n] %> ? 'text-text-primary' : step > <%= s[:n] %> ? 'text-green-600 dark:text-green-400' : 'text-text-muted'">
             <%= s[:label] %>
           </span>
         </div>
@@ -112,7 +112,7 @@
                  :class="source === 'yaml' ? 'border-red-600 bg-red-950/30' : 'border-border-subtle hover:border-border-subtle bg-surface-inset/30'">
               <div class="w-12 h-12 rounded-xl flex items-center justify-center"
                    :class="source === 'yaml' ? 'bg-red-900/60' : 'bg-surface-inset'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
                 </svg>
               </div>
@@ -134,7 +134,7 @@
                  :class="source === 'zip' ? 'border-red-600 bg-red-950/30' : 'border-border-subtle hover:border-border-subtle bg-surface-inset/30'">
               <div class="w-12 h-12 rounded-xl flex items-center justify-center"
                    :class="source === 'zip' ? 'bg-red-900/60' : 'bg-surface-inset'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>
               </div>
@@ -150,7 +150,7 @@
           </label>
         </div>
 
-        <p class="mt-4 text-xs text-red-400" x-show="source === ''" x-cloak>Selecione uma origem para continuar.</p>
+        <p class="mt-4 text-xs text-red-600 dark:text-red-400" x-show="source === ''" x-cloak>Selecione uma origem para continuar.</p>
       </div>
     </div>
 
@@ -189,7 +189,7 @@
                   id: "yaml_content",
                   rows: 18,
                   placeholder: "version: '3.8'\nservices:\n  app:\n    image: nginx:latest\n    ports:\n      - \"80:80\"",
-                  class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-3 text-sm text-green-300 font-mono placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors resize-y" %>
+                  class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-3 text-sm text-green-700 dark:text-green-300 font-mono placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-colors resize-y" %>
             <p class="text-xs text-text-muted">Conteúdo completo do arquivo docker-compose.yml.</p>
           </div>
         </div>
@@ -255,7 +255,7 @@
                 <input type="radio" name="git_stack[deploy_mode]" value="swarm_stack" x-model="deployMode" class="sr-only">
                 <div class="p-4 rounded-xl border-2 transition-all text-center"
                      :class="deployMode === 'swarm_stack' ? 'border-red-600 bg-red-950/20' : 'border-border-subtle hover:border-border-subtle bg-surface-inset/30'">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2 text-red-400" viewBox="7 6 18 19"><path fill="currentColor" d="m22.505 11.637l-5.989-3.5a1 1 0 0 0-1.008-.001l-6.011 3.5A1 1 0 0 0 9 12.5v7a1 1 0 0 0 .497.864l6.011 3.5A.96.96 0 0 0 16 24c.174 0 .36-.045.516-.137l5.989-3.5A1 1 0 0 0 23 19.5v-7a1 1 0 0 0-.495-.863"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2 text-red-600 dark:text-red-400" viewBox="7 6 18 19"><path fill="currentColor" d="m22.505 11.637l-5.989-3.5a1 1 0 0 0-1.008-.001l-6.011 3.5A1 1 0 0 0 9 12.5v7a1 1 0 0 0 .497.864l6.011 3.5A.96.96 0 0 0 16 24c.174 0 .36-.045.516-.137l5.989-3.5A1 1 0 0 0 23 19.5v-7a1 1 0 0 0-.495-.863"/></svg>
                   <p class="text-sm font-medium text-text-primary">Swarm Stack</p>
                   <p class="text-xs text-text-secondary mt-0.5">Produção, alta disponibilidade</p>
                 </div>
@@ -264,7 +264,7 @@
                 <input type="radio" name="git_stack[deploy_mode]" value="compose" x-model="deployMode" class="sr-only">
                 <div class="p-4 rounded-xl border-2 transition-all text-center"
                      :class="deployMode === 'compose' ? 'border-red-600 bg-red-950/20' : 'border-border-subtle hover:border-border-subtle bg-surface-inset/30'">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
                   <p class="text-sm font-medium text-text-primary">Docker Compose</p>
                   <p class="text-xs text-text-secondary mt-0.5">Dev/staging, nó único</p>
                 </div>
@@ -295,7 +295,7 @@
 
           <%# Webhook info %>
           <div class="rounded-lg bg-cyan-950/40 border border-cyan-800/40 px-4 py-3">
-            <p class="text-xs text-cyan-400 font-medium mb-1">Webhook CI/CD</p>
+            <p class="text-xs text-cyan-600 dark:text-cyan-400 font-medium mb-1">Webhook CI/CD</p>
             <p class="text-xs text-text-secondary">
               Após criar a stack, um <strong class="text-text-primary">Webhook URL</strong> único será gerado.
               Configure-o no GitHub Actions, GitLab CI ou qualquer sistema CI/CD para acionar deploys automáticos.

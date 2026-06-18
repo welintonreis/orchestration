@@ -1,17 +1,16 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
 
-const SEGS = 100 // not used for donuts, kept for reference of historical bar count
+const TICK_COUNT = 40
+const DIM = "var(--gauge-track)"
 
 export default class extends Controller {
   static targets = [
-    "cpuCircle", "cpuPct",
-    "ramCircle", "ramPct",
-    "diskCircle", "diskPct",
-    "swapCircle", "swapPct",
+    "cpuTicks", "cpuPct",
+    "ramTicks", "ramPct",
+    "diskTicks", "diskPct",
+    "swapTicks", "swapPct",
   ]
-
-  static values = { circumference: Number }
 
   connect() {
     this.subscription = consumer.subscriptions.create(
@@ -33,13 +32,15 @@ export default class extends Controller {
 
   setGauge(name, pct) {
     const clamped = Math.min(Math.max(pct, 0), 100)
-    const circle  = this[`${name}CircleTarget`]
+    const ticksEl = this[`${name}TicksTarget`]
     const label   = this[`${name}PctTarget`]
-    const circumference = this.circumferenceValue
 
-    if (circle && circumference) {
-      const offset = circumference * (1 - clamped / 100)
-      circle.style.strokeDashoffset = offset
+    if (ticksEl) {
+      const color  = ticksEl.dataset.color
+      const filled = Math.round((clamped / 100) * TICK_COUNT)
+      ticksEl.querySelectorAll("line").forEach((line, i) => {
+        line.setAttribute("stroke", i < filled ? color : DIM)
+      })
     }
     if (label) label.textContent = `${pct.toFixed(0)}%`
   }

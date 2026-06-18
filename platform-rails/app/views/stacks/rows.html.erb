@@ -13,11 +13,11 @@
     <div class="text-sm text-text-secondary mt-1">Stacks</div>
   </div>
   <div class="bg-surface-raised border border-border rounded-xl p-5">
-    <div class="text-3xl font-bold text-green-400"><%= @active_total %></div>
+    <div class="text-3xl font-bold text-green-600 dark:text-green-400"><%= @active_total %></div>
     <div class="text-sm text-text-secondary mt-1">Ativas</div>
   </div>
   <div class="bg-surface-raised border border-border rounded-xl p-5">
-    <div class="text-3xl font-bold text-red-400"><%= @total - @active_total %></div>
+    <div class="text-3xl font-bold text-red-600 dark:text-red-400"><%= @total - @active_total %></div>
     <div class="text-sm text-text-secondary mt-1">Inativas</div>
   </div>
   <div class="bg-surface-raised border border-border rounded-xl p-5">
@@ -58,7 +58,7 @@
       </p>
       <p class="text-xs text-text-muted mt-1">
         <% if @query.present? %>
-          <%= link_to "Limpar busca", stacks_path, class: "text-cyan-400 hover:text-cyan-300" %>
+          <%= link_to "Limpar busca", stacks_path, class: "text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300" %>
         <% else %>
           Stacks aparecem quando Swarm está ativo com serviços implantados
         <% end %>
@@ -88,7 +88,7 @@
             <td class="px-4 py-3">
               <div class="flex items-center gap-2">
                 <div class="w-7 h-7 rounded-lg bg-surface-inset border border-border-subtle flex items-center justify-center flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-cyan-600 dark:text-cyan-400" viewBox="0 0 24 24">
                     <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
                       <path d="m20.27 7.796l-3.61 1.876l-4.392 2.236a.55.55 0 0 1-.536 0L7.341 9.672L3.73 7.796a.594.594 0 0 1 0-1.06l8.014-3.925a.57.57 0 0 1 .512 0l8.014 3.925a.594.594 0 0 1 0 1.06"/>
                       <path d="m7.34 9.672l-3.61 1.723a.594.594 0 0 0 0 1.06l3.61 1.876l4.392 2.236a.55.55 0 0 0 .536 0l4.391-2.236l3.611-1.875a.594.594 0 0 0 0-1.014l-3.61-1.77"/>
@@ -100,7 +100,7 @@
               </div>
             </td>
             <td class="px-4 py-3">
-              <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-300 border-cyan-800/40")) do %>
+              <%= render(Ui::BadgeComponent.new(color: "bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-800/40")) do %>
                 <%= stack["Services"] %> serviço<%= stack["Services"] == 1 ? "" : "s" %>
               <% end %>
             </td>
@@ -152,11 +152,11 @@
                         </td>
                         <td class="px-4 py-2.5">
                           <% if global_mode %>
-                            <%= render(Ui::BadgeComponent.new(color: "bg-purple-900/40 text-purple-300 border-purple-800/40", size: :xs)) { "global" } %>
+                            <%= render(Ui::BadgeComponent.new(color: "bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-800/40", size: :xs)) { "global" } %>
                           <% elsif replicated %>
                             <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs)) do %>
                               <span class="text-text-muted">replicated</span>
-                              <span class="text-cyan-400 font-semibold"><%= replicas %></span>
+                              <span class="text-cyan-600 dark:text-cyan-400 font-semibold"><%= replicas %></span>
                             <% end %>
                           <% else %>
                             <span class="text-text-muted">—</span>
@@ -173,7 +173,7 @@
                                 <%= render Ui::InputComponent.new(name: "replicas", type: :number, min: 0, max: 99,
                                       css_class: "w-14 px-1.5 py-1 rounded text-center", html_attrs: { "x-model" => "scaleInput" }) %>
                                 <button type="submit"
-                                        class="px-2 py-1 text-[10px] font-medium bg-cyan-800/40 hover:bg-cyan-700/50 text-cyan-300 border border-cyan-700/50 rounded transition-colors whitespace-nowrap">
+                                        class="px-2 py-1 text-[10px] font-medium bg-cyan-800/40 hover:bg-cyan-700/50 text-cyan-700 dark:text-cyan-300 border border-cyan-700/50 rounded transition-colors whitespace-nowrap">
                                   Escalar
                                 </button>
                               <% end %>
@@ -181,7 +181,7 @@
 
                             <%= render Ui::ButtonComponent.new(url: drain_stack_service_stacks_path(service_id: svc["ID"]),
                                   method: :post,
-                                  variant: "bg-orange-900/30 hover:bg-orange-800/40 text-orange-400 border-orange-800/40",
+                                  variant: "bg-orange-900/30 hover:bg-orange-800/40 text-orange-600 dark:text-orange-400 border-orange-800/40",
                                   size: "px-2 py-1 text-[10px] font-medium rounded", label: "Desidratar",
                                   css_class: "whitespace-nowrap",
                                   confirm: "Desidratar #{svc_name}? Isso vai zerar as réplicas.") %>

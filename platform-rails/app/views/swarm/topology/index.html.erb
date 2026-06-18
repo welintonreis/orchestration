@@ -15,87 +15,98 @@
     <p class="text-text-secondary text-sm">Nenhum nó encontrado neste cluster Swarm.</p>
   </div>
 <% else %>
-  <div class="space-y-5" x-data="{ open: {} }">
+  <div class="space-y-12">
     <% @topology.each do |entry| %>
       <% node = entry[:node] %>
-      <% node_id = node["ID"] %>
       <% role = node.dig("Spec", "Role") %>
       <% availability = node.dig("Spec", "Availability") %>
       <% state = node.dig("Status", "State") %>
-      <% state_class = state == "ready" ? "bg-green-900/40 text-green-400 border-green-800/60" : "bg-red-900/40 text-red-400 border-red-800/60" %>
+      <% state_class = state == "ready" ? "bg-green-900/40 text-green-600 dark:text-green-400 border-green-800/60" : "bg-red-900/40 text-red-600 dark:text-red-400 border-red-800/60" %>
 
-      <%# ── Node card ── %>
-      <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-inset/40">
-          <div class="flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 0a3 3 0 100 6m0-6H5.25"/>
-            </svg>
-            <div>
-              <p class="text-sm font-semibold text-text-primary"><%= node.dig("Description", "Hostname") %></p>
-              <p class="text-xs text-text-muted"><%= role %> · <%= availability %></p>
-            </div>
+      <%# ── Node box (root) ── %>
+      <div class="flex flex-col items-center">
+        <div class="inline-flex items-center gap-3 bg-surface-raised border-2 border-border-subtle rounded-xl px-6 py-4 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 0a3 3 0 100 6m0-6H5.25"/>
+          </svg>
+          <div class="text-left">
+            <p class="text-sm font-semibold text-text-primary"><%= node.dig("Description", "Hostname") %></p>
+            <p class="text-xs text-text-muted"><%= role %> · <%= availability %></p>
           </div>
           <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border <%= state_class %>"><%= state %></span>
         </div>
 
         <% if entry[:stacks].empty? %>
-          <p class="px-5 py-6 text-sm text-text-muted">Nenhuma stack agendada neste nó.</p>
+          <p class="text-sm text-text-muted mt-6">Nenhuma stack agendada neste nó.</p>
         <% else %>
-          <div class="divide-y divide-border">
-            <% entry[:stacks].each do |stack| %>
-              <% stack_key = "#{node_id}-#{stack[:name]}" %>
-              <div class="pl-6">
-                <%# ── Stack row ── %>
-                <button type="button" @click="open['<%= stack_key %>'] = !open['<%= stack_key %>']"
-                        class="w-full flex items-center justify-between px-3 py-3 text-left hover:bg-surface-inset/40 transition-colors">
-                  <span class="flex items-center gap-2 text-sm font-medium text-text-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-text-muted transition-transform" :class="open['<%= stack_key %>'] ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                    <%= stack[:name] %>
-                  </span>
-                  <span class="text-xs text-text-muted"><%= stack[:services].size %> serviço(s)</span>
-                </button>
+          <%# trunk line from node down to the stacks row %>
+          <div class="w-px h-8 bg-border-subtle"></div>
+          <% if entry[:stacks].size > 1 %>
+            <div class="h-px bg-border-subtle" style="width: calc(100% - 4rem); max-width: 100%;"></div>
+          <% end %>
 
-                <div x-show="open['<%= stack_key %>']" x-cloak class="pl-6 pb-2">
-                  <% stack[:services].each do |svc_entry| %>
-                    <% svc = svc_entry[:service] %>
-                    <% svc_name = svc&.dig("Spec", "Name") || "(serviço removido)" %>
-                    <div class="pl-3 border-l border-border-subtle ml-2 mb-2">
-                      <div class="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
-                        <%= svc_name %>
-                      </div>
-                      <div class="pl-5 space-y-1 pb-2">
-                        <% svc_entry[:containers].each do |task| %>
-                          <% task_state = task.dig("Status", "State") %>
-                          <% dead = !%w[running starting].include?(task_state) %>
-                          <% dot_class = case task_state
-                               when "running"  then "bg-green-400"
-                               when "starting" then "bg-blue-400"
-                               when "failed"   then "bg-red-400"
-                               else                 "bg-gray-500"
-                               end %>
-                          <div class="flex items-center gap-2 px-3 py-1 text-xs <%= dead ? 'text-text-muted' : 'text-text-secondary' %>">
-                            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 <%= dot_class %>"></span>
-                            <span class="font-mono <%= dead ? 'line-through opacity-60' : '' %>">
-                              <%= task.dig("Status", "ContainerStatus", "ContainerID")&.first(12) || task["ID"].first(12) %>
-                            </span>
-                            <span class="text-text-muted">·</span>
-                            <span><%= task_state %></span>
-                            <% if task.dig("Status", "Err").present? %>
-                              <span class="text-red-400 truncate"><%= task.dig("Status", "Err") %></span>
+          <div class="overflow-x-auto w-full">
+            <div class="inline-flex gap-6 px-4 pb-2" style="min-width: 100%; justify-content: <%= entry[:stacks].size > 3 ? 'flex-start' : 'center' %>;">
+              <% entry[:stacks].each do |stack| %>
+                <%# ── Stack column ── %>
+                <div class="flex flex-col items-center w-56 flex-shrink-0">
+                  <div class="w-px h-6 bg-border-subtle"></div>
+                  <div class="w-full bg-surface-raised border border-border rounded-lg px-4 py-2.5 text-center shadow-sm">
+                    <p class="text-sm font-semibold text-text-primary truncate"><%= stack[:name] %></p>
+                    <p class="text-[11px] text-text-muted"><%= stack[:services].size %> serviço(s)</p>
+                  </div>
+
+                  <% if stack[:services].any? %>
+                    <div class="w-px h-6 bg-border-subtle"></div>
+                    <div class="w-full bg-surface/60 border border-border rounded-lg p-3 space-y-4">
+                      <% stack[:services].each do |svc_entry| %>
+                        <% svc = svc_entry[:service] %>
+                        <% svc_name = svc&.dig("Spec", "Name") || "(serviço removido)" %>
+                        <div class="flex flex-col items-center">
+                          <div class="w-full bg-surface-inset border border-border-subtle rounded-md px-3 py-1.5 text-center">
+                            <p class="text-xs font-medium text-text-secondary truncate flex items-center justify-center gap-1.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                              <%= svc_name %>
+                            </p>
+                          </div>
+                          <div class="w-px h-3 bg-border-subtle"></div>
+                          <div class="flex flex-wrap gap-1 justify-center">
+                            <% svc_entry[:containers].each do |task| %>
+                              <% task_state = task.dig("Status", "State") %>
+                              <% dead = !%w[running starting].include?(task_state) %>
+                              <% dot_class = case task_state
+                                   when "running"  then "bg-green-400"
+                                   when "starting" then "bg-blue-400"
+                                   when "failed"   then "bg-red-400"
+                                   else                 "bg-gray-500"
+                                   end %>
+                              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border-subtle text-[10px] font-mono <%= dead ? 'text-text-muted opacity-70' : 'text-text-secondary' %>"
+                                    title="<%= task_state %><%= task.dig('Status', 'Err').present? ? " — #{task.dig('Status', 'Err')}" : '' %>">
+                                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 <%= dot_class %>"></span>
+                                <span class="<%= dead ? 'line-through' : '' %>">
+                                  <%= task.dig("Status", "ContainerStatus", "ContainerID")&.first(8) || task["ID"].first(8) %>
+                                </span>
+                              </span>
                             <% end %>
                           </div>
-                        <% end %>
-                      </div>
+                        </div>
+                      <% end %>
                     </div>
                   <% end %>
                 </div>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           </div>
         <% end %>
       </div>
     <% end %>
+  </div>
+
+  <%# ── Legend ── %>
+  <div class="flex items-center gap-5 mt-8 px-1 text-xs text-text-muted">
+    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-400"></span> running</span>
+    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-400"></span> starting</span>
+    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span> failed</span>
+    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-500"></span> <span class="line-through">finalizado</span></span>
   </div>
 <% end %>
