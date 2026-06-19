@@ -123,6 +123,13 @@ class ContainersController < ApplicationController
     browser = request.env["rack.hijack_io"]
     ttyd    = TCPSocket.new(TtydManager::BIND_ADDR, port)
 
+    # Disable Nagle on both sides. Each keystroke is a tiny packet; with Nagle on,
+    # TCP holds it waiting for an ACK of the previous small segment (which delayed
+    # ACK sits on for ~40ms), so typing echo stalls ~40ms/char even though ttyd
+    # itself is <5ms. nodelay sends each segment immediately.
+    enable_nodelay(browser)
+    enable_nodelay(ttyd)
+
     ttyd.write(ttyd_handshake(request.env))
 
     up   = Thread.new { IO.copy_stream(browser, ttyd) rescue nil; close_quietly(ttyd) }
@@ -224,6 +231,12 @@ class ContainersController < ApplicationController
       "Sec-WebSocket-Protocol: #{protocol}",
       "", ""
     ].join("\r\n")
+  end
+
+  def enable_nodelay(io)
+    io.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+  rescue StandardError
+    nil # not a TCP socket (or already closed) — nothing to tune
   end
 
   def close_quietly(io)
