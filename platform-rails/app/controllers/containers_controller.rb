@@ -115,13 +115,13 @@ class ContainersController < ApplicationController
 
     endpoint = active_environment&.endpoint
     user     = params[:root] == "1" ? "root" : params[:user].presence
-    port     = TtydManager.instance.get_or_spawn(params[:id], endpoint: endpoint, user: user)
+    session  = TtydManager.instance.start(params[:id], endpoint: endpoint, user: user)
 
     hijack = request.env["rack.hijack"]
     return head :internal_server_error unless hijack
     hijack.call
     browser = request.env["rack.hijack_io"]
-    ttyd    = TCPSocket.new(TtydManager::BIND_ADDR, port)
+    ttyd    = TCPSocket.new(TtydManager::BIND_ADDR, session.port)
 
     # Disable Nagle on both sides. Each keystroke is a tiny packet; with Nagle on,
     # TCP holds it waiting for an ACK of the previous small segment (which delayed
@@ -139,8 +139,7 @@ class ContainersController < ApplicationController
   ensure
     close_quietly(browser)
     close_quietly(ttyd)
-    TtydManager.instance.cleanup(params[:id], endpoint: active_environment&.endpoint,
-                                 user: (params[:root] == "1" ? "root" : params[:user].presence)) rescue nil
+    TtydManager.instance.stop(session&.token) rescue nil
     head :ok # ignored — the socket was fully hijacked
   end
 
