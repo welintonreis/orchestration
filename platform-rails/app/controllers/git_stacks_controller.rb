@@ -1,5 +1,5 @@
 class GitStacksController < ApplicationController
-  before_action :set_git_stack, only: %i[show edit update destroy deploy]
+  before_action :set_git_stack, only: %i[show edit update destroy deploy sync rollback refresh_drift]
 
   def index
     @git_stacks = GitStack.includes(:environment, :git_credential).order(:name)
@@ -79,6 +79,29 @@ class GitStacksController < ApplicationController
     redirect_to @git_stack, notice: "Deploy queued for \"#{@git_stack.name}\"."
   end
 
+  # Apply the desired git state to reconcile drift (Argo-style "Sync"). Same
+  # mechanism as deploy — name reflects intent in the UI.
+  def sync
+    @git_stack.update!(status: "deploying")
+    GitDeployJob.perform_later(@git_stack.id)
+    redirect_to @git_stack, notice: "Sync iniciado para \"#{@git_stack.name}\"."
+  end
+
+  def rollback
+    sha = params[:sha].presence
+    return redirect_to @git_stack, alert: "Revisão inválida." if sha.blank?
+
+    @git_stack.update!(status: "deploying")
+    GitDeployJob.perform_later(@git_stack.id, sha)
+    redirect_to @git_stack, notice: "Rollback para #{sha.first(12)} iniciado."
+  end
+
+  # Read-only drift refresh — recomputes sync_status/health against live swarm.
+  def refresh_drift
+    GitDriftJob.perform_later(@git_stack.id)
+    redirect_to @git_stack, notice: "Verificando divergência…"
+  end
+
   private
 
   def set_git_stack
@@ -90,7 +113,8 @@ class GitStacksController < ApplicationController
       :name, :source_type, :compose_file, :deploy_mode,
       :auto_update, :poll_interval, :yaml_content, :env_content,
       :environment_id, :repo_url, :branch, :git_credential_id,
-      :username, :token_ciphertext
+      :username, :token_ciphertext,
+      :self_heal, :sync_window, :pre_sync_cmd, :post_sync_cmd
     )
   end
 

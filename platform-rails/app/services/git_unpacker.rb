@@ -15,6 +15,12 @@ class GitUnpacker
     new(git_stack).unpack
   end
 
+  # Rollback support: ensure the repo, fetch the requested sha (the shallow
+  # clone may not contain an older commit), hard-checkout it. Returns repo_path.
+  def self.checkout(git_stack, ref)
+    new(git_stack).checkout(ref)
+  end
+
   # Keyed by id when the stack is persisted; an unsaved stack (the
   # compose-file preview/autocomplete on git_stacks/new, before the user
   # has actually created it) falls back to a digest of its repo_url so
@@ -38,6 +44,14 @@ class GitUnpacker
       clone
     end
     update_commit_sha
+    @repo_dir
+  end
+
+  def checkout(ref)
+    unpack
+    run_git("-C", @repo_dir.to_s, "fetch", "--depth", "1", "origin", ref)
+    run_git("-C", @repo_dir.to_s, "checkout", "--force", ref)
+    @stack.update_columns(last_commit_sha: ref, last_pulled_at: Time.current) if @stack.persisted?
     @repo_dir
   end
 

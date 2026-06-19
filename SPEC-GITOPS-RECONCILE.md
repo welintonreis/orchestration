@@ -1,7 +1,15 @@
 # Spec — GitOps Reconcile (Argo CD-inspired)
 
-**Status:** proposta — não implementado
+**Status:** implementado — v0.7.0
 **Versão alvo:** v0.7.0
+
+> Implementado: `GitDriftService` (drift read-only + diff normalizado), colunas
+> `sync_status`/`health`/`self_heal`/`sync_window`/`pre_sync_cmd`/`post_sync_cmd`,
+> tabela `git_stack_revisions` + rollback, ações `sync`/`rollback`/`refresh_drift`,
+> self-heal + sync window no `GitAutoPollJob`, hooks Pre/PostSync + gravação de
+> revisões no `GitDeployer`, UI de drift/badges/histórico em `/git_stacks`.
+> Nota: protocolo ttyd real usa prefixo de comando em ambas direções (output
+> também `0`), corrigido na implementação vs descrição simplificada do spec.
 
 ---
 

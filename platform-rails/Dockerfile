@@ -64,6 +64,20 @@ RUN ARCH=$(dpkg --print-architecture) && \
     rm /tmp/docker.tgz && \
     chmod +x /usr/local/bin/docker
 
+# ttyd — serves an interactive PTY (docker exec) over a loopback WebSocket.
+# ContainersController#ttyd_ws proxies the browser WS to it, replacing the
+# ActionCable + Solid Cable terminal transport (SQLite polling → ~100ms
+# keystroke lag). Static binary, no runtime deps.
+RUN ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in \
+      amd64) TARCH=x86_64 ;; \
+      arm64) TARCH=aarch64 ;; \
+      *) echo "unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.${TARCH}" \
+         -o /usr/local/bin/ttyd && \
+    chmod +x /usr/local/bin/ttyd
+
 COPY --from=deps  /usr/local/bundle /usr/local/bundle
 COPY --from=assets /rails/public/assets ./public/assets
 COPY . .

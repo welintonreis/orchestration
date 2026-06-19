@@ -1,25 +1,29 @@
 import { Controller } from "@hotwired/stimulus"
-import consumer from "channels/consumer"
 
-const XTERM_VERSION    = "5.3.0"
-const XTERM_FIT_VER    = "0.8.0"
-const XTERM_CSS        = `https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/css/xterm.css`
-const XTERM_JS         = `https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/lib/xterm.js`
-const XTERM_FIT_JS     = `https://cdn.jsdelivr.net/npm/xterm-addon-fit@${XTERM_FIT_VER}/lib/xterm-addon-fit.js`
+const XTERM_VERSION = "5.3.0"
+const XTERM_FIT_VER = "0.8.0"
+const XTERM_CSS     = `https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/css/xterm.css`
+const XTERM_JS      = `https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/lib/xterm.js`
+const XTERM_FIT_JS  = `https://cdn.jsdelivr.net/npm/xterm-addon-fit@${XTERM_FIT_VER}/lib/xterm-addon-fit.js`
+
+// ttyd wire protocol (command = first byte of each message).
+// Client → server: INPUT "0", RESIZE "1"+JSON, initial JSON_DATA "{...}".
+// Server → client: OUTPUT "0", SET_TITLE "1", SET_PREFERENCES "2".
+const CMD_OUTPUT = "0"
 
 export default class extends Controller {
   static targets = ["container"]
-  static values  = { containerId: String, endpoint: String, user: String }
+  static values  = { containerId: String, user: String, root: Boolean }
 
   async connect() {
     await this.#loadAssets()
     this.#setupTerminal()
-    this.#setupCable()
+    this.#openSocket()
   }
 
   disconnect() {
-    this.running = false
-    this.subscription?.unsubscribe()
+    this.subprotocolReady = false
+    this.ws?.close()
     this.term?.dispose()
     this.resizeObserver?.disconnect()
   }
@@ -72,29 +76,51 @@ export default class extends Controller {
     this.term.open(this.containerTarget)
     this.fitAddon.fit()
 
-    this.term.onData(data => this.subscription?.perform("input", { text: data }))
+    this.term.onData(data => this.#send(`0${data}`))
 
     this.resizeObserver = new ResizeObserver(() => {
       this.fitAddon.fit()
-      this.subscription?.perform("resize", { rows: this.term.rows, cols: this.term.cols })
+      this.#sendResize()
     })
     this.resizeObserver.observe(this.containerTarget)
   }
 
-  #setupCable() {
-    this.subscription = consumer.subscriptions.create(
-      { channel: "TerminalChannel", container_id: this.containerIdValue, endpoint: this.endpointValue, user: this.userValue || null },
-      {
-        connected: () => {
-          this.term.write("\x1b[1;32m● Connected\x1b[0m\r\n")
-          this.subscription.perform("resize", { rows: this.term.rows, cols: this.term.cols })
-        },
-        disconnected: ()     => this.term.write("\r\n\x1b[31m[disconnected]\x1b[0m\r\n"),
-        received:     (data) => {
-          if (data.output) this.term.write(data.output)
-          if (data.error)  this.term.write(`\r\n\x1b[31m[error] ${data.error}\x1b[0m\r\n`)
-        }
-      }
-    )
+  #socketUrl() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:"
+    const qs    = this.rootValue ? "?root=1"
+                : this.userValue ? `?user=${encodeURIComponent(this.userValue)}`
+                : ""
+    return `${proto}//${location.host}/containers/${this.containerIdValue}/ttyd-ws${qs}`
+  }
+
+  #openSocket() {
+    // "tty" subprotocol is required by ttyd.
+    this.ws = new WebSocket(this.#socketUrl(), ["tty"])
+    this.ws.binaryType = "arraybuffer"
+
+    this.ws.onopen = () => {
+      // ttyd's initial JSON_DATA message — empty AuthToken (ttyd started
+      // without --credential) plus the starting PTY dimensions.
+      this.ws.send(JSON.stringify({ AuthToken: "", columns: this.term.cols, rows: this.term.rows }))
+      this.term.write("\x1b[1;32m● Connected\x1b[0m\r\n")
+    }
+
+    this.ws.onmessage = (e) => {
+      const arr = new Uint8Array(e.data)
+      if (arr.length === 0) return
+      if (String.fromCharCode(arr[0]) === CMD_OUTPUT) this.term.write(arr.subarray(1))
+      // SET_TITLE / SET_PREFERENCES are ignored — we own the chrome.
+    }
+
+    this.ws.onclose = () => this.term.write("\r\n\x1b[31m[disconnected]\x1b[0m\r\n")
+    this.ws.onerror = () => this.term.write("\r\n\x1b[31m[connection error]\x1b[0m\r\n")
+  }
+
+  #send(str) {
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(str)
+  }
+
+  #sendResize() {
+    this.#send(`1${JSON.stringify({ columns: this.term.cols, rows: this.term.rows })}`)
   }
 }

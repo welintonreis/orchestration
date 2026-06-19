@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_18_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_19_000001) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -119,24 +119,45 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_18_000004) do
     t.index ["name"], name: "index_git_credentials_on_name", unique: true
   end
 
+  create_table "git_stack_revisions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "deploy_output"
+    t.datetime "deployed_at"
+    t.integer "git_stack_id", null: false
+    t.text "image_digests"
+    t.text "normalized_compose"
+    t.string "result", default: "success"
+    t.string "sha"
+    t.datetime "updated_at", null: false
+    t.index ["git_stack_id"], name: "index_git_stack_revisions_on_git_stack_id"
+  end
+
   create_table "git_stacks", force: :cascade do |t|
     t.boolean "auto_update", default: false
     t.string "branch", default: "main"
     t.string "compose_file", default: "docker-compose.yml"
     t.datetime "created_at", null: false
     t.string "deploy_mode", default: "swarm_stack"
+    t.text "drift_detail"
     t.text "env_content"
     t.integer "environment_id", null: false
     t.integer "git_credential_id"
+    t.string "health", default: "unknown"
     t.string "last_commit_sha"
     t.text "last_deploy_output"
     t.datetime "last_deployed_at"
+    t.datetime "last_drift_at"
     t.datetime "last_pulled_at"
     t.string "name", null: false
     t.integer "poll_interval", default: 300
+    t.string "post_sync_cmd"
+    t.string "pre_sync_cmd"
     t.string "repo_url"
+    t.boolean "self_heal", default: false
     t.string "source_type", default: "git", null: false
     t.string "status", default: "idle"
+    t.string "sync_status", default: "unknown"
+    t.string "sync_window"
     t.string "token_ciphertext"
     t.datetime "updated_at", null: false
     t.string "username"
@@ -222,6 +243,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_18_000004) do
   add_foreign_key "environment_registries", "environments"
   add_foreign_key "environment_tag_assignments", "environment_tags"
   add_foreign_key "environment_tag_assignments", "environments"
+  add_foreign_key "git_stack_revisions", "git_stacks"
   add_foreign_key "git_stacks", "environments"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_memberships", "teams"

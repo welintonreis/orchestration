@@ -79,8 +79,8 @@
   <%# xterm container %>
   <div data-controller="terminal"
        data-terminal-container-id-value="<%= @container_id %>"
-       data-terminal-endpoint-value="<%= @endpoint %>"
        data-terminal-user-value="<%= exec_user %>"
+       data-terminal-root-value="<%= is_root %>"
        class="flex-1 min-h-0">
     <div data-terminal-target="container" class="w-full h-full p-1"></div>
   </div>

@@ -1,10 +1,13 @@
 class GitStack < ApplicationRecord
-  DEPLOY_MODES = %w[swarm_stack compose].freeze
-  STATUSES     = %w[idle deploying deployed failed].freeze
-  SOURCE_TYPES = %w[git yaml zip].freeze
+  DEPLOY_MODES  = %w[swarm_stack compose].freeze
+  STATUSES      = %w[idle deploying deployed failed].freeze
+  SOURCE_TYPES  = %w[git yaml zip].freeze
+  SYNC_STATUSES = %w[synced out_of_sync unknown].freeze
+  HEALTH_STATES = %w[healthy progressing degraded missing unknown].freeze
 
   belongs_to :environment
   belongs_to :git_credential, optional: true
+  has_many :revisions, -> { recent }, class_name: "GitStackRevision", dependent: :destroy
 
   validates :name, presence: true
   validates :source_type, inclusion: { in: SOURCE_TYPES }
@@ -50,7 +53,54 @@ class GitStack < ApplicationRecord
     repo_url
   end
 
+  def out_of_sync? = sync_status == "out_of_sync"
+
+  # Parsed last drift diff for the UI. Shape: {"services" => [...], ...}.
+  def drift
+    return {} if drift_detail.blank?
+    JSON.parse(drift_detail)
+  rescue JSON::ParserError
+    {}
+  end
+
+  # Sync window gates auto/self-heal deploys to an allowed time range.
+  # Format: "<dow>-<dow> HH:MM-HH:MM" (e.g. "mon-fri 08:00-20:00"); blank =
+  # always open. Manual deploys bypass this entirely.
+  DOW = %w[sun mon tue wed thu fri sat].freeze
+
+  def within_sync_window?(now = Time.current)
+    spec = sync_window.to_s.strip.downcase
+    return true if spec.blank?
+
+    days, hours = spec.split(/\s+/, 2)
+    return true if hours.blank?
+
+    return false unless day_in_range?(days, now.wday)
+
+    from, to = hours.split("-", 2).map { |h| minutes_of_day(h) }
+    return true if from.nil? || to.nil?
+    cur = now.hour * 60 + now.min
+    from <= to ? cur.between?(from, to) : (cur >= from || cur <= to)
+  rescue StandardError
+    true # never block a deploy on a malformed window
+  end
+
   private
+
+  def day_in_range?(days, wday)
+    a, b = days.split("-", 2)
+    ai = DOW.index(a)
+    return true if ai.nil?
+    bi = b ? DOW.index(b) : ai
+    return true if bi.nil?
+    ai <= bi ? wday.between?(ai, bi) : (wday >= ai || wday <= bi)
+  end
+
+  def minutes_of_day(hhmm)
+    h, m = hhmm.to_s.split(":", 2)
+    return nil if h.nil?
+    h.to_i * 60 + m.to_i
+  end
 
   def generate_webhook_token
     self.webhook_token = SecureRandom.hex(32)

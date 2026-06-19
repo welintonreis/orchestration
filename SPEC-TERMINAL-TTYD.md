@@ -1,7 +1,15 @@
 # Spec — Terminal ttyd (Portainer-style)
 
-**Status:** proposta — não implementado  
+**Status:** implementado — v0.7.0  
 **Versão alvo:** v0.6.0
+
+> Implementado: ttyd 1.7.7 no Dockerfile, `TtydManager` (singleton, portas
+> 7681-7730), `ContainersController#ttyd_ws` (Rack hijack + proxy bidirecional),
+> rota `containers/:id/ttyd-ws`, `terminal_controller.js` reescrito p/ WebSocket
+> direto. Correção vs spec: protocolo ttyd real prefixa comando em **ambas**
+> direções (output = frame com 1º byte `0`, não binário cru) e exige mensagem
+> inicial `JSON_DATA` `{AuthToken,columns,rows}` + subprotocolo `tty` — o JS
+> implementa isso. Proxy continua transparente. `TerminalChannel` mantido (compat).
 
 ---
 

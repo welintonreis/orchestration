@@ -25,14 +25,101 @@
       src: git_stack_path(@git_stack),
       data: (@git_stack.status == "deploying" ? { controller: "metrics-refresh", "metrics-refresh-interval-value": 3000 } : {}) do %>
 
-<div class="flex items-center gap-3 mb-6">
+<div class="flex items-center gap-3 mb-6 flex-wrap">
   <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_class %>">
     <%= @git_stack.status %>
   </span>
+  <%= sync_status_badge(@git_stack) %>
+  <%= health_badge(@git_stack) %>
   <% if @git_stack.last_deployed_at %>
     <span class="text-sm text-text-muted">Last deployed <%= human_age(@git_stack.last_deployed_at) %></span>
   <% end %>
 </div>
+
+<%# ── Reconcile / drift panel (Argo-style) ── %>
+<div class="bg-surface-raised border border-border rounded-xl p-5 mb-6">
+  <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+    <div>
+      <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">Reconcile</h2>
+      <% if @git_stack.last_drift_at %>
+        <p class="text-xs text-text-muted mt-1">Verificado <%= human_age(@git_stack.last_drift_at) %></p>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= button_to "Verificar Drift", refresh_drift_git_stack_path(@git_stack), method: :post,
+            class: "inline-flex items-center gap-2 bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary text-sm font-medium px-3 py-1.5 rounded-lg transition-colors" %>
+      <% if @git_stack.out_of_sync? %>
+        <%= button_to "Sync", sync_git_stack_path(@git_stack), method: :post,
+              data: { turbo_confirm: "Aplicar estado do Git e reconciliar \"#{@git_stack.name}\"?" },
+              class: "inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors" %>
+      <% end %>
+    </div>
+  </div>
+
+  <% drift_services = @git_stack.drift["services"] %>
+  <% if @git_stack.drift["error"].present? %>
+    <p class="text-sm text-red-600 dark:text-red-400 font-mono">Erro ao verificar: <%= @git_stack.drift["error"] %></p>
+  <% elsif @git_stack.sync_status == "unknown" %>
+    <p class="text-sm text-text-muted">Sem verificação ainda. Clique em “Verificar Drift”.</p>
+  <% elsif drift_services.blank? %>
+    <p class="text-sm text-green-600 dark:text-green-400">Em sincronia com o Git — nenhuma divergência.</p>
+  <% else %>
+    <div class="space-y-3">
+      <% drift_services.each do |entry| %>
+        <div class="border border-border-subtle rounded-lg overflow-hidden">
+          <div class="flex items-center justify-between gap-2 px-3 py-2 bg-surface-inset">
+            <span class="text-sm font-mono text-text-primary"><%= entry["service"] %></span>
+            <span class="text-xs text-amber-600 dark:text-amber-400"><%= drift_state_label(entry) %></span>
+          </div>
+          <% if entry["fields"].present? %>
+            <table class="w-full text-xs font-mono">
+              <thead>
+                <tr class="text-text-muted text-left">
+                  <th class="px-3 py-1.5 font-medium">Campo</th>
+                  <th class="px-3 py-1.5 font-medium">Desejado (Git)</th>
+                  <th class="px-3 py-1.5 font-medium">Live (Swarm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% entry["fields"].each do |field, vals| %>
+                  <tr class="border-t border-border-subtle align-top">
+                    <td class="px-3 py-1.5 text-text-secondary"><%= field %></td>
+                    <td class="px-3 py-1.5 text-green-600 dark:text-green-400 break-all"><%= vals["desired"].inspect %></td>
+                    <td class="px-3 py-1.5 text-red-600 dark:text-red-400 break-all"><%= vals["live"].inspect %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<%# ── Revision history + rollback ── %>
+<% if @git_stack.revisions.any? %>
+  <div class="bg-surface-raised border border-border rounded-xl p-5 mb-6">
+    <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">Histórico de Revisões</h2>
+    <div class="space-y-2">
+      <% @git_stack.revisions.limit(10).each_with_index do |rev, i| %>
+        <div class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-surface-inset/50 border border-border-subtle">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="font-mono text-sm text-text-primary"><%= rev.short_sha.presence || "—" %></span>
+            <span class="text-xs px-2 py-0.5 rounded-full <%= rev.result == 'success' ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40' : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40' %>"><%= rev.result %></span>
+            <% if rev.deployed_at %><span class="text-xs text-text-muted truncate"><%= human_age(rev.deployed_at) %></span><% end %>
+            <% if i.zero? %><span class="text-[10px] uppercase tracking-widest text-cyan-600 dark:text-cyan-400">atual</span><% end %>
+          </div>
+          <% if i.positive? && rev.result == "success" && rev.sha.present? %>
+            <%= button_to "Rollback", rollback_git_stack_path(@git_stack, sha: rev.sha), method: :post,
+                  data: { turbo_confirm: "Rollback para #{rev.short_sha}? Isso reimplanta a versão anterior." },
+                  class: "flex-shrink-0 text-xs text-text-secondary hover:text-text-primary px-2.5 py-1 rounded-lg bg-surface-inset hover:bg-surface-active border border-border-subtle transition-colors" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 

@@ -32,6 +32,7 @@
           <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Environment</th>
           <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Mode</th>
           <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Sync</th>
           <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Last Deploy</th>
           <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Auto-update</th>
           <th class="px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Actions</th>
@@ -62,6 +63,12 @@
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= status_class %>">
                 <%= stack.status %>
               </span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <div class="flex items-center gap-1.5">
+                <%= sync_status_badge(stack) %>
+                <%= health_badge(stack) %>
+              </div>
             </td>
             <td class="px-4 py-3 text-sm text-text-secondary"><%= human_age(stack.last_deployed_at) %></td>
             <td class="px-4 py-3 text-sm text-text-secondary">

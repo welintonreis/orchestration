@@ -24,6 +24,7 @@ Rails.application.routes.draw do
   end
   get "containers/:id/logs",     to: "containers#logs",     as: :container_logs
   get "containers/:id/terminal", to: "containers#terminal", as: :container_terminal
+  get "containers/:id/ttyd-ws",  to: "containers#ttyd_ws",  as: :container_ttyd_ws
   resources :images, only: %i[index show] do
     member { delete :remove }
     collection do
@@ -79,7 +80,12 @@ Rails.application.routes.draw do
   post "swarm/services/bulk_scale",           to: "swarm/services#bulk_scale",         as: :bulk_scale_swarm_services
   resources :git_credentials
   resources :git_stacks do
-    member { post :deploy }
+    member do
+      post :deploy
+      post :sync
+      post :rollback
+      post :refresh_drift
+    end
     collection { post :files }
   end
   namespace :webhooks do

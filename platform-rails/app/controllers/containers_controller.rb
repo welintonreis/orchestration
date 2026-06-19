@@ -101,6 +101,42 @@ class ContainersController < ApplicationController
     redirect_to containers_path, alert: "Container not found."
   end
 
+  # Raw WebSocket proxy: hijacks the Rack socket and pipes bytes straight to a
+  # ttyd process (spawned per session by TtydManager) serving `docker exec`.
+  # This replaces the ActionCable terminal transport — no Solid Cable / SQLite
+  # in the path, so keystroke latency drops from ~100ms to <5ms. The browser's
+  # WS upgrade handshake is replayed to ttyd verbatim (same Sec-WebSocket-Key),
+  # so ttyd's computed accept matches and the proxy never parses WS frames.
+  #
+  # Blocks one Puma thread for the lifetime of the terminal (raise
+  # WEB_CONCURRENCY if many concurrent sessions are expected).
+  def ttyd_ws
+    return head :bad_request unless request.env["HTTP_UPGRADE"].to_s.downcase == "websocket"
+
+    endpoint = active_environment&.endpoint
+    user     = params[:root] == "1" ? "root" : params[:user].presence
+    port     = TtydManager.instance.get_or_spawn(params[:id], endpoint: endpoint, user: user)
+
+    hijack = request.env["rack.hijack"]
+    return head :internal_server_error unless hijack
+    hijack.call
+    browser = request.env["rack.hijack_io"]
+    ttyd    = TCPSocket.new(TtydManager::BIND_ADDR, port)
+
+    ttyd.write(ttyd_handshake(request.env))
+
+    up   = Thread.new { IO.copy_stream(browser, ttyd) rescue nil; close_quietly(ttyd) }
+    down = Thread.new { IO.copy_stream(ttyd, browser) rescue nil; close_quietly(browser) }
+    up.join
+    down.join
+  ensure
+    close_quietly(browser)
+    close_quietly(ttyd)
+    TtydManager.instance.cleanup(params[:id], endpoint: active_environment&.endpoint,
+                                 user: (params[:root] == "1" ? "root" : params[:user].presence)) rescue nil
+    head :ok # ignored — the socket was fully hijacked
+  end
+
   # Action methods — all POST/DELETE, redirect back
   %w[start stop restart kill pause unpause].each do |action|
     define_method(action) do
@@ -169,6 +205,32 @@ class ContainersController < ApplicationController
   end
 
   private
+
+  # Replays the browser's WS upgrade onto ttyd's /ws endpoint. Forwarding the
+  # same Sec-WebSocket-Key/Version/Protocol means ttyd's 101 response carries an
+  # accept hash the browser already expects — no per-side handshake math needed.
+  # ttyd requires the "tty" subprotocol.
+  def ttyd_handshake(env)
+    key      = env["HTTP_SEC_WEBSOCKET_KEY"]
+    version  = env["HTTP_SEC_WEBSOCKET_VERSION"].presence || "13"
+    protocol = env["HTTP_SEC_WEBSOCKET_PROTOCOL"].presence || "tty"
+    [
+      "GET /ws HTTP/1.1",
+      "Host: #{TtydManager::BIND_ADDR}",
+      "Upgrade: websocket",
+      "Connection: Upgrade",
+      "Sec-WebSocket-Key: #{key}",
+      "Sec-WebSocket-Version: #{version}",
+      "Sec-WebSocket-Protocol: #{protocol}",
+      "", ""
+    ].join("\r\n")
+  end
+
+  def close_quietly(io)
+    io&.close
+  rescue IOError, Errno::EBADF
+    nil
+  end
 
   CONCURRENCY = 12
 
