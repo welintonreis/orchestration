@@ -13,6 +13,7 @@ export default class extends Controller {
     this.lines      = []
     this.autoScroll = true
     this._onScroll  = this.#onScroll.bind(this)
+    this.#updateScrollBtn()
     this.outputTarget.addEventListener("scroll", this._onScroll)
 
     this.subscription = consumer.subscriptions.create(
@@ -74,10 +75,17 @@ export default class extends Controller {
 
   #updateScrollBtn() {
     if (!this.hasScrollBtnTarget) return
-    const on = this.autoScroll
-    this.scrollBtnTarget.classList.toggle("bg-cyan-900/30", on)
-    this.scrollBtnTarget.classList.toggle("text-cyan-400",  on)
-    this.scrollBtnTarget.classList.toggle("text-gray-500",  !on)
+    const btn = this.scrollBtnTarget
+    const on  = this.autoScroll
+    btn.classList.toggle("bg-cyan-100",             on)
+    btn.classList.toggle("dark:bg-cyan-900/30",     on)
+    btn.classList.toggle("text-cyan-600",           on)
+    btn.classList.toggle("dark:text-cyan-400",      on)
+    btn.classList.toggle("border-cyan-300",         on)
+    btn.classList.toggle("dark:border-cyan-800/50", on)
+    btn.classList.toggle("bg-surface-inset",       !on)
+    btn.classList.toggle("text-text-muted",        !on)
+    btn.classList.toggle("border-border",          !on)
   }
 
   #addLine(text, forceClass = null) {

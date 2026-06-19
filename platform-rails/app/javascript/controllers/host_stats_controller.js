@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
 
-const TICK_COUNT = 40
+const TICK_COUNT = 45
 const DIM = "var(--gauge-track)"
 
 export default class extends Controller {

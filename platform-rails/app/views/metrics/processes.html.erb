@@ -18,32 +18,83 @@
         <path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.186.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.186.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.186.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/>
       </svg>
     SVG
+
+    state_style = ->(s) {
+      case s
+      when "R" then ["#4ade80", "Running"]
+      when "D" then ["#facc15", "Disk wait"]
+      when "Z" then ["#f87171", "Zombie"]
+      when "T" then ["#60a5fa", "Stopped"]
+      else          ["#6b7280", "Sleep"]
+      end
+    }
+
+    fmt_uptime = ->(secs) {
+      return nil unless secs&.positive?
+      case secs
+      when 0...60      then "#{secs.to_i}s"
+      when 60...3600   then "#{(secs / 60).to_i}m"
+      when 3600...86400 then "#{(secs / 3600).to_i}h"
+      else "#{(secs / 86400).to_i}d"
+      end
+    }
+
+    fmt_mem = ->(kb) {
+      mb = kb / 1024.0
+      mb >= 1024 ? "#{"%.1f" % (mb / 1024)}G" : "#{mb.round(1)}M"
+    }
   %>
 
   <% if @top_processes.any? %>
-    <%# Header row %>
-    <div class="grid grid-cols-[22px_1fr_52px_52px] gap-x-2 px-1 mb-1.5">
+    <%# Header %>
+    <div class="grid grid-cols-[22px_1fr_44px_44px] gap-x-2 px-1 mb-2">
       <span></span>
-      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Process</span>
+      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Processo</span>
       <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider text-right">CPU%</span>
-      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider text-right">MEM</span>
+      <span class="text-[10px] font-semibold text-text-muted uppercase tracking-wider text-right">MEM%</span>
     </div>
 
     <div class="space-y-0.5">
       <% @top_processes.each do |p| %>
         <% cpu_color = p[:cpu] >= 80 ? "#f87171" : p[:cpu] >= 40 ? "#facc15" : "#4ade80" %>
-        <% mem_mb = (p[:mem_kb] / 1024.0).round(1) %>
-        <div class="grid grid-cols-[22px_1fr_52px_52px] gap-x-2 items-center px-1 py-0.5 rounded hover:bg-surface-inset/40 transition-colors">
-          <span class="flex items-center justify-center">
-            <%= p[:docker] ? docker_svg : host_svg %>
-          </span>
-          <span class="text-xs font-mono text-text-secondary truncate"><%= p[:name] %></span>
-          <span class="text-xs font-mono text-right font-semibold" style="color:<%= cpu_color %>">
-            <%= p[:cpu] > 0 ? "%.1f" % p[:cpu] : "0.0" %>
-          </span>
-          <span class="text-xs font-mono text-text-secondary text-right">
-            <%= mem_mb >= 1000 ? "%.1fG" % (mem_mb / 1024.0) : "#{mem_mb}M" %>
-          </span>
+        <% state_color, state_title = state_style.call(p[:state]) %>
+        <% uptime_str = fmt_uptime.call(p[:uptime_sec]) %>
+
+        <div class="px-1 py-1 rounded hover:bg-surface-inset/40 transition-colors">
+          <%# Main row: icon · name · cpu% · mem% %>
+          <div class="grid grid-cols-[22px_1fr_44px_44px] gap-x-2 items-center">
+            <span class="flex items-center justify-center">
+              <%= p[:docker] ? docker_svg : host_svg %>
+            </span>
+            <span class="text-xs font-mono text-text-primary truncate font-medium"><%= p[:name] %></span>
+            <span class="text-xs font-mono text-right font-semibold" style="color:<%= cpu_color %>">
+              <%= p[:cpu] > 0 ? "%.1f" % p[:cpu] : "0.0" %>
+            </span>
+            <span class="text-xs font-mono text-right font-semibold" style="color:<%= cpu_color %>">
+              <%= "%.1f" % p[:mem_pct] %>
+            </span>
+          </div>
+
+          <%# Meta row: pid · state · threads · rss · uptime %>
+          <div class="pl-7 flex items-center gap-2.5 mt-0.5 flex-wrap">
+            <span class="text-[10px] font-mono text-text-muted">pid <span class="text-text-secondary"><%= p[:pid] %></span></span>
+
+            <span class="text-[10px] font-mono font-semibold" style="color:<%= state_color %>" title="<%= state_title %>">
+              <%= p[:state] %>
+            </span>
+
+            <% if p[:threads] > 1 %>
+              <span class="text-[10px] font-mono text-text-muted">
+                <span class="text-text-secondary"><%= p[:threads] %></span>T
+              </span>
+            <% end %>
+
+            <span class="text-[10px] font-mono text-text-muted"><%= fmt_mem.call(p[:mem_kb]) %></span>
+
+            <% if uptime_str %>
+              <span class="text-[10px] font-mono text-text-muted">up <span class="text-text-secondary"><%= uptime_str %></span></span>
+            <% end %>
+          </div>
         </div>
       <% end %>
     </div>

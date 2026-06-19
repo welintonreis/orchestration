@@ -60,7 +60,7 @@
 
         <%# ══════════════════════════════ SIDEBAR ══════════════════════════════ %>
         <nav class="relative flex flex-col flex-shrink-0 bg-surface-raised border-r border-border transition-all duration-200 h-screen sticky top-0 w-56"
-             :class="sb ? 'w-56' : 'w-14'">
+             :style="sb ? '' : 'width:3.5rem'">
 
           <%# ── Brand ──
               Static fallback classes (w-10 h-10, px-3 gap-3) match the sb:true
@@ -69,11 +69,12 @@
               :class bindings evaluate, causing a visible flash of an
               oversized logo and full-width sidebar on every full page load. %>
           <div class="flex items-center h-14 border-b border-border overflow-hidden flex-shrink-0 transition-all duration-200 px-3 gap-3"
-               :class="sb ? 'px-3 gap-3' : 'justify-center px-2'">
+               :class="sb ? '' : 'justify-center'"
+               :style="sb ? '' : 'padding-left:0.5rem;padding-right:0.5rem'">
 
             <img src="/redhusky-logo.png"
                  class="flex-shrink-0 rounded-full transition-all duration-200 w-10 h-10"
-                 :class="sb ? 'w-10 h-10' : 'w-8 h-8'"
+                 :style="sb ? '' : 'width:2rem;height:2rem'"
                  alt="RedHusky">
 
             <span class="font-extrabold text-xl tracking-tight leading-none transition-all duration-200 overflow-hidden whitespace-nowrap flex-1"
@@ -85,7 +86,7 @@
           <%# ── Sidebar toggle ── %>
           <button @click="sb = !sb"
                   class="flex items-center border-b border-border text-text-muted hover:text-text-primary hover:bg-surface-inset/60 transition-colors justify-end px-3 py-1.5 w-full"
-                  :class="sb ? 'justify-end px-3 py-1.5 w-full' : 'justify-center py-1.5 w-full'">
+                  :style="sb ? '' : 'justify-content:center'">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0" :class="sb ? '' : 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="11 17 6 12 11 7"/>
               <polyline points="18 17 13 12 18 7"/>

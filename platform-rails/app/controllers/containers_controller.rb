@@ -129,6 +129,9 @@ class ContainersController < ApplicationController
     count  = (result["ContainersDeleted"] || []).size
     freed  = result.dig("SpaceReclaimed").to_i
     freed_mb = freed > 0 ? " (#{(freed.to_f / 1_048_576).round(1)} MB liberados)" : ""
+    AuditLog.record(user: Current.user, action: "containers_prune",
+                    metadata: { count: count, space_reclaimed_bytes: freed,
+                                deleted: result["ContainersDeleted"] || [] })
     redirect_to containers_path, notice: "#{count} container(s) parado(s) removido(s).#{freed_mb}"
   rescue => e
     redirect_to containers_path, alert: "Erro ao limpar containers: #{e.message}"

@@ -85,7 +85,10 @@ export default class extends Controller {
     this.subscription = consumer.subscriptions.create(
       { channel: "TerminalChannel", container_id: this.containerIdValue, endpoint: this.endpointValue, user: this.userValue || null },
       {
-        connected:    ()     => this.term.write("\x1b[1;32m● Connected\x1b[0m\r\n"),
+        connected: () => {
+          this.term.write("\x1b[1;32m● Connected\x1b[0m\r\n")
+          this.subscription.perform("resize", { rows: this.term.rows, cols: this.term.cols })
+        },
         disconnected: ()     => this.term.write("\r\n\x1b[31m[disconnected]\x1b[0m\r\n"),
         received:     (data) => {
           if (data.output) this.term.write(data.output)

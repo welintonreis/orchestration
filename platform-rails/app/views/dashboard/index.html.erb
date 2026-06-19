@@ -157,13 +157,13 @@
 
       <%# ── Resource gauges — segmented ring (circular version of the old
           40-tick linear bar), live via HostStatsChannel ── %>
-      <% tick_count = 40 %>
+      <% tick_count = 45 %>
       <%
         gauges = [
-          { key: "cpu",  label: "CPU",  color: "#39FF14", value: @latest_metric&.cpu_percent  },
-          { key: "ram",  label: "RAM",  color: "#22d3ee", value: @latest_metric&.ram_percent  },
+          { key: "cpu",  label: "CPU",  color: "var(--gauge-cpu)",  value: @latest_metric&.cpu_percent  },
+          { key: "ram",  label: "RAM",  color: "var(--gauge-ram)",  value: @latest_metric&.ram_percent  },
           { key: "disk", label: "Disk", color: "var(--gauge-disk)", value: @latest_metric&.disk_percent },
-          { key: "swap", label: "Swap", color: "#f97316", value: @latest_metric&.swap_percent },
+          { key: "swap", label: "Swap", color: "var(--gauge-swap)", value: @latest_metric&.swap_percent },
         ]
       %>
 
@@ -181,7 +181,7 @@
                       <line x1="20" y1="2.5" x2="20" y2="6.5"
                             transform="rotate(<%= (i * 360.0 / tick_count).round(2) %> 20 20)"
                             stroke="<%= g[:value] && i < filled ? g[:color] : "var(--gauge-track)" %>"
-                            stroke-width="1.6" stroke-linecap="round" />
+                            stroke-width="1.4" stroke-linecap="butt" />
                     <% end %>
                   </g>
                 </svg>

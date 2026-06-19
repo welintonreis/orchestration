@@ -203,20 +203,18 @@
                 >
                   <div class="flex items-center gap-1.5">
                     <span class="text-text-muted flex items-center flex-shrink-0"><%= cpu_icon(css_class: "w-6 h-6") %></span>
-                    <div class="flex items-end gap-px" data-stats-target="cpuBar">
-                      <% 20.times do |i| %>
-                        <div class="w-1 h-4 rounded-sm bg-surface-active transition-colors duration-300" data-index="<%= i %>"></div>
-                      <% end %>
-                    </div>
+                    <div class="flex items-end gap-px"
+                         data-controller="seg-bar"
+                         data-seg-bar-pct-value="0"
+                         data-stats-target="cpuBar"></div>
                     <span data-stats-target="cpuText" class="text-sm font-mono text-text-secondary w-12 text-right tabular-nums">—</span>
                   </div>
                   <div class="flex items-center gap-1.5">
                     <span class="text-text-muted flex items-center flex-shrink-0"><%= ram_icon(css_class: "w-6 h-6") %></span>
-                    <div class="flex items-end gap-px" data-stats-target="memBar">
-                      <% 20.times do |i| %>
-                        <div class="w-1 h-4 rounded-sm bg-surface-active transition-colors duration-300" data-index="<%= i %>"></div>
-                      <% end %>
-                    </div>
+                    <div class="flex items-end gap-px"
+                         data-controller="seg-bar"
+                         data-seg-bar-pct-value="0"
+                         data-stats-target="memBar"></div>
                     <span data-stats-target="memText" class="text-sm font-mono text-text-secondary w-12 text-right tabular-nums">—</span>
                   </div>
                 </div>

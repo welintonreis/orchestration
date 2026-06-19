@@ -14,7 +14,7 @@ export default class extends Controller {
       },
       {
         received: (data) => {
-          if (data.stats) this.updateStats(data.stats)
+          if (data.stats) this.#updateStats(data.stats)
         }
       }
     )
@@ -24,27 +24,17 @@ export default class extends Controller {
     this.subscription?.unsubscribe()
   }
 
-  updateStats(stats) {
-    const cpu = this.calcCpu(stats)
-    const mem = this.calcMem(stats)
+  #updateStats(stats) {
+    const cpu = this.#calcCpu(stats)
+    const mem = this.#calcMem(stats)
 
-    if (this.hasCpuBarTarget)  this.updateSegments(this.cpuBarTarget, cpu)
+    if (this.hasCpuBarTarget)  this.cpuBarTarget.dataset.segBarPctValue  = cpu
     if (this.hasCpuTextTarget) this.cpuTextTarget.textContent = `${cpu.toFixed(1)}%`
-    if (this.hasMemBarTarget)  this.updateSegments(this.memBarTarget, mem)
+    if (this.hasMemBarTarget)  this.memBarTarget.dataset.segBarPctValue  = mem
     if (this.hasMemTextTarget) this.memTextTarget.textContent = `${mem.toFixed(1)}%`
   }
 
-  updateSegments(container, pct) {
-    const segs   = Array.from(container.querySelectorAll("[data-index]"))
-    const filled = Math.round((pct / 100) * segs.length)
-    const color  = this.segColor(pct)
-    segs.forEach((seg, i) => {
-      seg.classList.remove("bg-gray-700", "bg-green-400", "bg-yellow-400", "bg-red-400")
-      seg.classList.add(i < filled ? color : "bg-gray-700")
-    })
-  }
-
-  calcCpu(stats) {
+  #calcCpu(stats) {
     try {
       const cur  = stats.cpu_stats
       const prev = stats.precpu_stats
@@ -55,17 +45,11 @@ export default class extends Controller {
     } catch { return 0 }
   }
 
-  calcMem(stats) {
+  #calcMem(stats) {
     try {
       const usage = stats.memory_stats.usage - (stats.memory_stats.stats?.cache || 0)
       const limit = stats.memory_stats.limit
       return limit > 0 ? (usage / limit) * 100 : 0
     } catch { return 0 }
-  }
-
-  segColor(pct) {
-    if (pct >= 80) return "bg-red-400"
-    if (pct >= 60) return "bg-yellow-400"
-    return "bg-green-400"
   }
 }
