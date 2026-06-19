@@ -1,54 +1,33 @@
 import { Controller } from "@hotwired/stimulus"
-
-const XTERM_VERSION = "5.3.0"
-const XTERM_FIT_VER = "0.8.0"
-const XTERM_CSS     = `https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/css/xterm.css`
-const XTERM_JS      = `https://cdn.jsdelivr.net/npm/xterm@${XTERM_VERSION}/lib/xterm.js`
-const XTERM_FIT_JS  = `https://cdn.jsdelivr.net/npm/xterm-addon-fit@${XTERM_FIT_VER}/lib/xterm-addon-fit.js`
+import { Terminal } from "@xterm/xterm"
+import { FitAddon } from "@xterm/addon-fit"
+import { WebLinksAddon } from "@xterm/addon-web-links"
+import { ClipboardAddon } from "@xterm/addon-clipboard"
 
 // ttyd wire protocol (command = first byte of each message).
 // Client → server: INPUT "0", RESIZE "1"+JSON, initial JSON_DATA "{...}".
 // Server → client: OUTPUT "0", SET_TITLE "1", SET_PREFERENCES "2".
 const CMD_OUTPUT = "0"
 
+// xterm + addons are vendored locally (vendor/javascript, pinned in
+// importmap.rb) and imported statically above. The old build pulled them from
+// jsdelivr at controller-connect time via injected <script>/<link> tags — a
+// blocking, serial network round-trip on every terminal open. Same-origin
+// modules load in parallel with the page (modulepreload) and are browser-cached,
+// so the terminal now opens instantly.
 export default class extends Controller {
   static targets = ["container"]
   static values  = { containerId: String, user: String, root: Boolean }
 
-  async connect() {
-    await this.#loadAssets()
+  connect() {
     this.#setupTerminal()
     this.#openSocket()
   }
 
   disconnect() {
-    this.subprotocolReady = false
     this.ws?.close()
     this.term?.dispose()
     this.resizeObserver?.disconnect()
-  }
-
-  #loadAssets() {
-    return Promise.all([
-      this.#loadStyle(XTERM_CSS),
-      this.#loadScript(XTERM_JS).then(() => this.#loadScript(XTERM_FIT_JS))
-    ])
-  }
-
-  #loadScript(src) {
-    if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve()
-    return new Promise((res, rej) => {
-      const s = Object.assign(document.createElement("script"), { src, onload: res, onerror: rej })
-      document.head.appendChild(s)
-    })
-  }
-
-  #loadStyle(href) {
-    if (document.querySelector(`link[href="${href}"]`)) return Promise.resolve()
-    return new Promise(res => {
-      const l = Object.assign(document.createElement("link"), { rel: "stylesheet", href, onload: res })
-      document.head.appendChild(l)
-    })
   }
 
   #setupTerminal() {
@@ -57,6 +36,11 @@ export default class extends Controller {
       fontFamily:  '"JetBrains Mono","Fira Code",Menlo,Monaco,Consolas,monospace',
       fontSize:    13,
       lineHeight:  1.25,
+      scrollback:  5000,
+      allowProposedApi: true,
+      // Right-click is reserved for copy/paste (see #setupContextMenu); don't let
+      // xterm hijack it to select a word.
+      rightClickSelectsWord: false,
       theme: {
         background:         "#0d1117",
         foreground:         "#e6edf3",
@@ -71,18 +55,36 @@ export default class extends Controller {
       }
     })
 
-    this.fitAddon = new FitAddon.FitAddon()
+    this.fitAddon = new FitAddon()
     this.term.loadAddon(this.fitAddon)
+    this.term.loadAddon(new WebLinksAddon())
+    this.term.loadAddon(new ClipboardAddon())
+    // NOTE: no WebglAddon — its glyph atlas leaves 2–3 rows overlapping when
+    // output scrolls/reflows. The DOM renderer is plenty fast for a shell.
+
     this.term.open(this.containerTarget)
     this.fitAddon.fit()
+    this.term.focus()
+    this.containerTarget.addEventListener("click", () => this.term.focus())
 
-    this.term.onData(data => this.#send(`0${data}`))
+    this.term.onData(data => this.#send(`${CMD_OUTPUT}${data}`))
+    this.term.onResize(() => this.#sendResize())
 
-    this.resizeObserver = new ResizeObserver(() => {
-      this.fitAddon.fit()
-      this.#sendResize()
-    })
+    this.resizeObserver = new ResizeObserver(() => this.fitAddon.fit())
     this.resizeObserver.observe(this.containerTarget)
+
+    this.#setupContextMenu()
+    this.#setupKeyboardShortcuts()
+
+    // The web font loads async (font-display: swap); xterm caches glyph metrics
+    // at open(), so re-fit and repaint once the font is ready to fix character
+    // alignment.
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        try { this.fitAddon.fit() } catch {}
+        this.term?.refresh(0, (this.term.rows || 1) - 1)
+      })
+    }
   }
 
   #socketUrl() {
@@ -103,6 +105,7 @@ export default class extends Controller {
       // without --credential) plus the starting PTY dimensions.
       this.ws.send(JSON.stringify({ AuthToken: "", columns: this.term.cols, rows: this.term.rows }))
       this.term.write("\x1b[1;32m● Connected\x1b[0m\r\n")
+      this.term.focus()
     }
 
     this.ws.onmessage = (e) => {
@@ -122,5 +125,103 @@ export default class extends Controller {
 
   #sendResize() {
     this.#send(`1${JSON.stringify({ columns: this.term.cols, rows: this.term.rows })}`)
+  }
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────────
+
+  #setupKeyboardShortcuts() {
+    this.term.attachCustomKeyEventHandler((event) => {
+      if (event.type !== "keydown") return true
+
+      // Ctrl+C with active selection → copy (not SIGINT).
+      if (event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "c" && this.term.hasSelection()) {
+        this.#copy(this.term.getSelection())
+        this.term.clearSelection()
+        return false
+      }
+      // Ctrl+Shift+C → copy selection.
+      if (event.ctrlKey && event.shiftKey && event.key === "C") {
+        const sel = this.term.getSelection()
+        if (sel) { this.#copy(sel); this.term.clearSelection() }
+        return false
+      }
+      // Ctrl+Shift+V → paste.
+      if (event.ctrlKey && event.shiftKey && event.key === "V") {
+        navigator.clipboard.readText().then(text => this.#send(`${CMD_OUTPUT}${text}`)).catch(() => {})
+        return false
+      }
+      return true
+    })
+  }
+
+  // ── Mouse: right-click copy/paste, auto-copy on select ──────────────────────
+
+  #setupContextMenu() {
+    // Capture phase fires before xterm's own mouse handlers on the child screen
+    // element. Swallow the right button there so xterm never forwards it to the
+    // PTY as a mouse-tracking report. Right button = copy/paste.
+    const swallowRight = (e) => {
+      if (e.button === 2) { e.preventDefault(); e.stopPropagation() }
+    }
+    this.containerTarget.addEventListener("mousedown", swallowRight, true)
+    this.containerTarget.addEventListener("mouseup", swallowRight, true)
+
+    // Auto-copy when a left-button drag finishes with text selected. Runs on
+    // mouseup (selection finalized, still inside the user gesture) so the
+    // clipboard write is allowed.
+    this.containerTarget.addEventListener("mouseup", (e) => {
+      if (e.button !== 0) return
+      const sel = this.term.getSelection()
+      if (sel) this.#writeClipboard(sel)
+    })
+
+    this.containerTarget.addEventListener("contextmenu", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (this.term.hasSelection()) {
+        this.#copy(this.term.getSelection())
+        this.term.clearSelection()
+      } else {
+        navigator.clipboard.readText().then(text => this.#send(`${CMD_OUTPUT}${text}`)).catch(() => {})
+      }
+      this.term.focus()
+    }, true)
+  }
+
+  // ── Clipboard ───────────────────────────────────────────────────────────────
+
+  #copy(text) {
+    if (text) this.#writeClipboard(text)
+  }
+
+  // execCommand("copy") runs synchronously inside the user gesture and needs no
+  // secure context — the most broadly reliable path, so try it first. The async
+  // Clipboard API rejects in a later microtask, after the gesture's activation
+  // has expired, so chaining it off a failed execCommand would itself be denied.
+  #writeClipboard(text) {
+    if (this.#execCopy(text)) return Promise.resolve(true)
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => false)
+    }
+    return Promise.resolve(false)
+  }
+
+  #execCopy(text) {
+    try {
+      const ta = document.createElement("textarea")
+      ta.value = text
+      ta.setAttribute("readonly", "")
+      ta.style.position = "fixed"
+      ta.style.top = "-9999px"
+      document.body.appendChild(ta)
+      const active = document.activeElement
+      ta.select()
+      const ok = document.execCommand("copy")
+      document.body.removeChild(ta)
+      if (active && active.focus) active.focus()
+      return ok
+    } catch {
+      return false
+    }
   }
 }

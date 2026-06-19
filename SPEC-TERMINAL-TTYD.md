@@ -193,3 +193,26 @@ Essa mudança isolada elimina o lag sem precisar de ttyd. Pode ser feita agora c
 
 1. **Agora (fix rápido):** `ActionCable.server.broadcast` → `transmit` em `TerminalChannel` — elimina lag, 5min
 2. **v0.6.0 (ttyd completo):** Dockerfile + TtydManager + proxy action + terminal_controller.js rewrite
+
+---
+
+## Follow-up frontend — v0.7.1 (perf + polish)
+
+ttyd resolveu a latência do transporte, mas o terminal continuava lento ao
+**abrir** e cru no uso. Causa raiz e correções (lições portadas do RedHusky SSH,
+`/root/docker/redhusky-remote-ssh`):
+
+| Sintoma | Causa raiz | Fix |
+|---|---|---|
+| Demora ~1s pra abrir, pisca | `terminal_controller.js` injetava `<script>`/`<link>` do **jsdelivr CDN** (xterm **5.3.0**) a cada `connect()` — round-trip serial, bloqueante, versão velha | xterm 6.0.0 + addons **vendorizados** (`vendor/javascript`, pin no `importmap.rb`), `import` ESM estático. Carrega same-origin em paralelo (modulepreload), cacheado |
+| CSS do CDN | `<link>` jsdelivr | `app/assets/stylesheets/xterm.css` via Propshaft, `content_for :head` só na view do terminal |
+| Sem copiar/colar | nada implementado | auto-copy ao selecionar (mouseup), botão direito = copiar/colar, Ctrl+Shift+C/V, Ctrl+C com seleção = copiar |
+| Botão direito enviava coords ao PTY | xterm encaminhava como mouse-tracking report | swallow do botão direito na fase de captura |
+| Links não clicáveis | sem addon | `WebLinksAddon` |
+| Histórico curto, fonte desalinhada | sem scrollback; glyph metrics cacheados antes da web font | `scrollback: 5000`; re-`fit()` em `document.fonts.ready` |
+
+**Sem** WebGL renderer de propósito — o glyph atlas deixa 2–3 linhas sobrepostas
+ao rolar (mesmo bug visto no RedHusky SSH). Protocolo ttyd, `TtydManager`, proxy
+e view (header/root toggle) inalterados.
+
+Re-vendorizar (upgrade de versão): `./bin/importmap pin @xterm/xterm @xterm/addon-fit @xterm/addon-web-links @xterm/addon-clipboard` (baixa pra `vendor/javascript`).

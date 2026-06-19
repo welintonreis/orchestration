@@ -1,5 +1,9 @@
 <% page_title "Terminal — #{@container_name}" %>
 
+<% content_for :head do %>
+  <%= stylesheet_link_tag "xterm" %>
+<% end %>
+
 <%
   current_user_param = params[:user].presence
   is_root = current_user_param == "root" || params[:root] == "1"
