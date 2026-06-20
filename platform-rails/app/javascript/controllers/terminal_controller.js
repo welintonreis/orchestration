@@ -88,11 +88,14 @@ export default class extends Controller {
   }
 
   #socketUrl() {
-    const proto = location.protocol === "https:" ? "wss:" : "ws:"
-    const qs    = this.rootValue ? "?root=1"
-                : this.userValue ? `?user=${encodeURIComponent(this.userValue)}`
-                : ""
-    return `${proto}//${location.host}/containers/${this.containerIdValue}/ttyd-ws${qs}`
+    const proto  = location.protocol === "https:" ? "wss:" : "ws:"
+    const params = new URLSearchParams()
+    if (this.rootValue) params.set("root", "1")
+    else if (this.userValue) params.set("user", this.userValue)
+    // Forward ?debug=1 from the page URL so the proxy logs sent-vs-ran frames.
+    if (new URLSearchParams(location.search).get("debug") === "1") params.set("debug", "1")
+    const qs = params.toString()
+    return `${proto}//${location.host}/containers/${this.containerIdValue}/ttyd-ws${qs ? "?" + qs : ""}`
   }
 
   #openSocket() {

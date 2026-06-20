@@ -132,8 +132,17 @@ class ContainersController < ApplicationController
 
     ttyd.write(ttyd_handshake(request.env))
 
-    up   = Thread.new { IO.copy_stream(browser, ttyd) rescue nil; close_quietly(ttyd) }
-    down = Thread.new { IO.copy_stream(ttyd, browser) rescue nil; close_quietly(browser) }
+    # Manual readpartial pump in BOTH directions. IO.copy_stream with the
+    # rack.hijack socket as *source* (browser→ttyd) silently forwards nothing —
+    # Puma's hijacked IO doesn't satisfy copy_stream's source read path, so
+    # keystrokes never reached ttyd and the terminal "accepted no input" while
+    # output (ttyd→browser) still flowed. The readpartial loop reads the hijack
+    # socket correctly; TCP_NODELAY (set above) keeps per-keystroke latency low.
+    # Frames are decoded+logged only when debug is on (?debug=1 / TTYD_DEBUG_LOG).
+    log_id = ttyd_debug_log? ? params[:id].to_s[0, 12] : nil
+    Rails.logger.info("[ttyd][#{log_id}] session open (user=#{user || '/bin/sh'})") if log_id
+    up   = Thread.new { pump(browser, ttyd, log_id, :in)  rescue nil; close_quietly(ttyd) }
+    down = Thread.new { pump(ttyd, browser, log_id, :out) rescue nil; close_quietly(browser) }
     up.join
     down.join
   ensure
@@ -230,6 +239,60 @@ class ContainersController < ApplicationController
       "Sec-WebSocket-Protocol: #{protocol}",
       "", ""
     ].join("\r\n")
+  end
+
+  # ── ttyd debug logging ─────────────────────────────────────────────────────
+  # Off by default (the pump just relays). Enable per-terminal with ?debug=1
+  # (forwarded by the terminal Stimulus controller) or globally with
+  # TTYD_DEBUG_LOG=1 to decode+log every ttyd frame both ways, so the input
+  # typed in the browser can be compared against what the container's shell
+  # echoed/ran.
+  def ttyd_debug_log?
+    params[:debug] == "1" || ENV["TTYD_DEBUG_LOG"] == "1"
+  end
+
+  # Pipe src→dst byte-for-byte (forward first, so any logging never adds latency
+  # to the keystroke). When log_id is set (debug on) the WebSocket frames are
+  # also decoded and logged; otherwise it's a plain low-latency relay.
+  def pump(src, dst, log_id, direction)
+    decoder = log_id ? TtydWsDecoder.new : nil
+    loop do
+      chunk = src.readpartial(16_384)
+      dst.write(chunk)
+      decoder&.feed(chunk) { |_op, payload| log_ttyd_frame(log_id, direction, payload) }
+    end
+  rescue EOFError, IOError, Errno::EBADF, Errno::ECONNRESET
+    nil
+  end
+
+  # ttyd wire protocol: first byte of each payload is the command.
+  #   client→server: "0" stdin, "1" resize(JSON), "{" initial auth JSON
+  #   server→client: "0" stdout, "1" set-title, "2" set-preferences
+  def log_ttyd_frame(log_id, direction, payload)
+    return if payload.nil? || payload.empty?
+    cmd  = payload[0]
+    data = payload.byteslice(1..) || ""
+
+    if direction == :in
+      case cmd
+      when "0" then Rails.logger.info("[ttyd][#{log_id}][SENT] #{printable(data)}")
+      when "1" then Rails.logger.info("[ttyd][#{log_id}][resize] #{data}")
+      else          Rails.logger.info("[ttyd][#{log_id}][init] #{printable(payload)}")
+      end
+    elsif cmd == "0" # only stdout matters for "what the container ran"
+      Rails.logger.info("[ttyd][#{log_id}][RAN ] #{printable(data)}")
+    end
+  end
+
+  # Make bytes log-safe: scrub invalid UTF-8, drop ANSI escape sequences, and
+  # render control chars visibly so CR/LF/Ctrl-C are obvious in the log.
+  def printable(str)
+    str.to_s.dup.force_encoding("UTF-8").scrub("?")
+       .gsub(/\e\[[0-9;?]*[ -\/]*[@-~]/, "")
+       .gsub(/\e[@-Z\\-_]/, "")
+       .gsub("\r", "\\r").gsub("\n", "\\n").gsub("\t", "\\t")
+       .gsub(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/) { format("<%02X>", _1.ord) }
+       .slice(0, 600)
   end
 
   def enable_nodelay(io)
