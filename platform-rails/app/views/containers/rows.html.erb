@@ -1,5 +1,16 @@
-<turbo-frame id="containers-content">
+<%# refresh="morph": frame.reload() (Atualizar button / action redirects) morphs
+    the rows in place instead of replacing them, so scroll position and the
+    focused search box survive the refresh. %>
+<turbo-frame id="containers-content" refresh="morph">
 <%
+  # Current filter/search/sort/page state, threaded through every action link
+  # and the bulk form so server redirects can echo it back (see
+  # ContainersController#list_filter_params) — actions no longer wipe the view.
+  list_params = {
+    statuses: @selected_statuses, q: @query, infra: @infra_filter,
+    sort: @sort, dir: @sort_dir, per_page: params[:per_page], page: @page
+  }.compact_blank
+
   sort_link = ->(column, label) {
     active    = @sort == column
     next_dir  = active && @sort_dir == "asc" ? "desc" : "asc"
@@ -10,9 +21,12 @@
     end
   }
 %>
+<%# Flash lives in the layout (outside this frame); render it here too so the
+    success/error toast shows right after an action without needing an F5. %>
+<%= render "shared/flash" %>
 <div class="bg-surface-raised border border-border rounded-xl overflow-hidden"
      data-controller="filter bulk-select"
-     data-bulk-select-url-value="<%= bulk_action_containers_path %>"
+     data-bulk-select-url-value="<%= bulk_action_containers_path(list_params) %>"
      data-filter-url-value="<%= containers_path(statuses: @selected_statuses, per_page: params[:per_page], infra: @infra_filter, sort: @sort, dir: @sort_dir) %>"
      data-filter-frame-value="containers-content">
   <% if @containers.empty? %>
@@ -52,9 +66,22 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <%# Atualizar: reload only the rows frame (morph). Keeps filters/search/
+            scroll and surfaces swarm-recreated containers without an F5. %>
+        <button type="button"
+                data-controller="refresh"
+                data-refresh-frame-value="containers-content"
+                data-action="refresh#reload"
+                title="Atualizar lista"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary border border-border-subtle rounded-lg transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Atualizar
+        </button>
         <span data-bulk-select-target="count" class="hidden text-xs text-text-secondary whitespace-nowrap"></span>
         <% if Current.user&.admin? || Current.user&.operator? %>
-          <%= button_to prune_containers_path, method: :delete,
+          <%= button_to prune_containers_path(list_params), method: :delete,
                 class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-800/50 text-orange-700 dark:text-orange-300 border border-orange-700/40 rounded-lg transition-colors",
                 data: { turbo_confirm: "Remover todos os containers parados? Esta ação não pode ser desfeita." } do %>
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -256,24 +283,24 @@
               <div class="flex items-center justify-end gap-2" data-controller="loading">
                 <% if Current.user&.admin? || Current.user&.operator? %>
                   <% if state == "running" %>
-                    <%= render Ui::ButtonComponent.new(url: stop_container_path(c["Id"]), method: :post,
+                    <%= render Ui::ButtonComponent.new(url: stop_container_path(c["Id"], list_params), method: :post,
                           variant: :yellow, icon: :stop, title: "Stop", loading: true,
                           confirm: "Stop container #{container_name}?") %>
-                    <%= render Ui::ButtonComponent.new(url: restart_container_path(c["Id"]), method: :post,
+                    <%= render Ui::ButtonComponent.new(url: restart_container_path(c["Id"], list_params), method: :post,
                           variant: :cyan, icon: :restart, title: "Restart", loading: true,
                           confirm: "Restart container #{container_name}?") %>
-                    <%= render Ui::ButtonComponent.new(url: kill_container_path(c["Id"]), method: :post,
+                    <%= render Ui::ButtonComponent.new(url: kill_container_path(c["Id"], list_params), method: :post,
                           variant: :red, icon: :kill, title: "Kill", loading: true, form_class: "inline-flex",
                           confirm: "Force kill #{container_name}? Immediate and ungraceful.") %>
-                    <%= render Ui::ButtonComponent.new(url: pause_container_path(c["Id"]), method: :post,
+                    <%= render Ui::ButtonComponent.new(url: pause_container_path(c["Id"], list_params), method: :post,
                           variant: :blue, icon: :pause, title: "Pause", loading: true) %>
                   <% elsif state == "paused" %>
-                    <%= render Ui::ButtonComponent.new(url: unpause_container_path(c["Id"]), method: :post,
+                    <%= render Ui::ButtonComponent.new(url: unpause_container_path(c["Id"], list_params), method: :post,
                           variant: :green, icon: :unpause, title: "Unpause", loading: true) %>
                   <% else %>
-                    <%= render Ui::ButtonComponent.new(url: start_container_path(c["Id"]), method: :post,
+                    <%= render Ui::ButtonComponent.new(url: start_container_path(c["Id"], list_params), method: :post,
                           variant: :green, icon: :play, title: "Start", loading: true) %>
-                    <%= render Ui::ButtonComponent.new(url: remove_container_path(c["Id"]), method: :delete,
+                    <%= render Ui::ButtonComponent.new(url: remove_container_path(c["Id"], list_params), method: :delete,
                           variant: :red, icon: :remove, title: "Remove", loading: true,
                           confirm: "Remove container #{container_name}? Cannot be undone.") %>
                   <% end %>

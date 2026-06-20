@@ -1,6 +1,17 @@
 <% page_title "Topologia" %>
 <% page_subtitle "Mapa do cluster — nós, stacks, serviços e containers (incluindo finalizados)" %>
 
+<%# Turbo 8 page-refresh morphing, scoped to this page only (not global — the
+    dashboard draws charts client-side and would fight a morph). The 15s
+    metrics-refresh does Turbo.visit(currentURL), a same-URL refresh, so morph
+    updates node/stack/container cards in place and keeps the scroll position —
+    you can watch containers at the bottom of a long cluster without it jumping
+    back to the top. %>
+<% content_for :head do %>
+  <meta name="turbo-refresh-method" content="morph">
+  <meta name="turbo-refresh-scroll" content="preserve">
+<% end %>
+
 <% content_for :page_icon do %>
   <%= sidebar_icon(:topology, css_class: "w-7 h-7") %>
 <% end %>

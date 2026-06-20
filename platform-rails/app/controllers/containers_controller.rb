@@ -80,7 +80,7 @@ class ContainersController < ApplicationController
   def show
     @container = current_docker_client.container(params[:id])
   rescue DockerClient::NotFoundError
-    redirect_to containers_path, alert: "Container not found."
+    redirect_to containers_path(list_filter_params), alert: "Container not found."
   end
 
   def logs
@@ -98,7 +98,7 @@ class ContainersController < ApplicationController
     @endpoint       = active_environment&.endpoint || "unix:///var/run/docker.sock"
     @exec_user      = params[:root] == "1" ? "root" : params[:user].presence
   rescue DockerClient::NotFoundError
-    redirect_to containers_path, alert: "Container not found."
+    redirect_to containers_path(list_filter_params), alert: "Container not found."
   end
 
   # Raw WebSocket proxy: hijacks the Rack socket and pipes bytes straight to a
@@ -159,9 +159,9 @@ class ContainersController < ApplicationController
       AuditLog.record(user: Current.user, action: "container_#{action}",
                       target_type: "Container", target_id: params[:id],
                       ip_address: request.remote_ip)
-      redirect_to containers_path, notice: "Container #{action}ed."
+      redirect_to containers_path(list_filter_params), notice: "Container #{action}ed."
     rescue => e
-      redirect_to containers_path, alert: "Error: #{e.message}"
+      redirect_to containers_path(list_filter_params), alert: "Error: #{e.message}"
     end
   end
 
@@ -170,9 +170,9 @@ class ContainersController < ApplicationController
     AuditLog.record(user: Current.user, action: "container_remove",
                     target_type: "Container", target_id: params[:id],
                     ip_address: request.remote_ip)
-    redirect_to containers_path, notice: "Container removed."
+    redirect_to containers_path(list_filter_params), notice: "Container removed."
   rescue => e
-    redirect_to containers_path, alert: "Error: #{e.message}"
+    redirect_to containers_path(list_filter_params), alert: "Error: #{e.message}"
   end
 
   def prune
@@ -183,9 +183,9 @@ class ContainersController < ApplicationController
     AuditLog.record(user: Current.user, action: "containers_prune",
                     metadata: { count: count, space_reclaimed_bytes: freed,
                                 deleted: result["ContainersDeleted"] || [] })
-    redirect_to containers_path, notice: "#{count} container(s) parado(s) removido(s).#{freed_mb}"
+    redirect_to containers_path(list_filter_params), notice: "#{count} container(s) parado(s) removido(s).#{freed_mb}"
   rescue => e
-    redirect_to containers_path, alert: "Erro ao limpar containers: #{e.message}"
+    redirect_to containers_path(list_filter_params), alert: "Erro ao limpar containers: #{e.message}"
   end
 
   def bulk_action
@@ -213,13 +213,22 @@ class ContainersController < ApplicationController
     end
 
     if errors.any?
-      redirect_to containers_path, alert: "#{errors.size} error(s): #{errors.first(3).join('; ')}"
+      redirect_to containers_path(list_filter_params), alert: "#{errors.size} error(s): #{errors.first(3).join('; ')}"
     else
-      redirect_to containers_path, notice: "#{action.capitalize}ed #{ids.size} container(s)."
+      redirect_to containers_path(list_filter_params), notice: "#{action.capitalize}ed #{ids.size} container(s)."
     end
   end
 
   private
+
+  # Current list filter/search/pagination state, echoed back on every action
+  # redirect so stop/start/restart/kill/remove/bulk/prune don't drop the
+  # filters the user is monitoring with. The row action links and the bulk
+  # form carry these params on the request; here we pass them straight back to
+  # containers_path so the reloaded rows frame keeps the same view.
+  def list_filter_params
+    params.permit(:q, :infra, :sort, :dir, :per_page, :page, statuses: []).to_h.compact_blank
+  end
 
   # Replays the browser's WS upgrade onto ttyd's /ws endpoint. Forwarding the
   # same Sec-WebSocket-Key/Version/Protocol means ttyd's 101 response carries an

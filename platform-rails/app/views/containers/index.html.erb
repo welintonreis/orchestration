@@ -44,7 +44,7 @@
   <% end %>
 <% end %>
 
-<turbo-frame id="containers-content" src="<%= rows_containers_path(statuses: params[:statuses], per_page: params[:per_page], infra: params[:infra], sort: params[:sort], dir: params[:dir], q: params[:q], page: params[:page]) %>">
+<turbo-frame id="containers-content" refresh="morph" src="<%= rows_containers_path(statuses: params[:statuses], per_page: params[:per_page], infra: params[:infra], sort: params[:sort], dir: params[:dir], q: params[:q], page: params[:page]) %>">
   <div class="bg-surface-raised border border-border rounded-xl overflow-hidden animate-pulse">
     <div class="px-4 pt-3 pb-2 border-b border-border flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
