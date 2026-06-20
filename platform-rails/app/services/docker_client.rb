@@ -363,9 +363,10 @@ class DockerClient
 
   def stream(path, query: {}, &block)
     @connection.get(
-      path: "/v1.47#{path}",
-      query: query,
-      headers: headers,
+      path:           "/v1.47#{path}",
+      query:          query,
+      headers:        headers,
+      read_timeout:   nil,
       response_block: ->(chunk, _remaining, _total) { block.call(chunk) }
     )
   end

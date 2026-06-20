@@ -2,6 +2,15 @@
 import { Turbo } from "@hotwired/turbo-rails"
 import "controllers"
 
+// Alpine x-show sets style="display:none" — idiomorph would remove that attribute
+// when morphing (server HTML has no inline style), causing Alpine-controlled
+// dropdowns to flash open briefly. Skip morphing of any x-show element so Alpine
+// retains ownership of its display state. Sibling/parent elements (e.g. bell
+// button with badge count) morph normally.
+document.addEventListener("turbo:before-morph-element", (event) => {
+  if (event.target.hasAttribute("x-show")) event.preventDefault()
+})
+
 // Wire up the custom confirm modal. Runs after Turbo ESM is ready — no polling needed.
 Turbo.config.forms.confirm = function showConfirm(msg) {
   const modal    = document.getElementById("confirm-modal")
