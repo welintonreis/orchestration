@@ -22,9 +22,11 @@ Rails.application.routes.draw do
       delete :remove
     end
   end
-  get "containers/:id/logs",     to: "containers#logs",     as: :container_logs
-  get "containers/:id/terminal", to: "containers#terminal", as: :container_terminal
-  get "containers/:id/ttyd-ws",  to: "containers#ttyd_ws",  as: :container_ttyd_ws
+  get "containers/:id/logs",          to: "containers#logs",          as: :container_logs
+  get "containers/:id/terminal",      to: "containers#terminal",      as: :container_terminal
+  get "containers/:id/ttyd-ws",       to: "containers#ttyd_ws",       as: :container_ttyd_ws
+  get "containers/:id/files",         to: "containers#files",         as: :container_files
+  get "containers/:id/files/download",to: "containers#files_download",as: :container_files_download
   resources :images, only: %i[index show] do
     member { delete :remove }
     collection do

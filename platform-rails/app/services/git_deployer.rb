@@ -17,6 +17,18 @@ class GitDeployer
       return
     end
 
+    # CI gate: block deploy when latest pipeline has not passed.
+    ci_ok, ci_msg = GitlabCiChecker.call(@stack)
+    unless ci_ok
+      fail_with("CI check failed — #{ci_msg}")
+      Alert.create!(
+        level:    "warning",
+        resource: "git_deploy",
+        message:  "Git stack \"#{@stack.name}\" deploy blocked: #{ci_msg}"
+      )
+      return
+    end
+
     write_env_file
 
     pre_out, pre_ok = run_hook(@stack.pre_sync_cmd)

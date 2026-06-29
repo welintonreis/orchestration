@@ -33,8 +33,10 @@ class GitStack < ApplicationRecord
   # otherwise the inline username/token entered on this stack directly
   # (the "fill it in now, don't save it" path from the deploy wizard).
   def auth_username = git_credential&.username || username
-  def auth_token     = git_credential&.token    || token_ciphertext
-  def ssh_key         = git_credential&.ssh_key
+  def auth_token    = git_credential&.token    || token_ciphertext
+  def ssh_key       = git_credential&.ssh_key
+
+  def ci_token = ci_token_ciphertext
   def auth_type
     return git_credential.auth_type if git_credential
     auth_token.present? ? "token" : "none"

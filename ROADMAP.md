@@ -234,21 +234,23 @@ Fase 13 independente após Fase 7 (precisa de environments + dashboard base).
 
 ---
 
-## Estado Atual — Fases 0-14 CONCLUÍDAS (Jun 2026)
+## Estado Atual — v0.9.0 (Jun 2026)
 
 **Branch:** `develop` em `gitlab.redhusky.com.br/redhusky/orchestration`
 **Stack:** Rails 8.1.3, Ruby 3.3.11, Docker 29.5.3
-**Versão:** v0.5.4
+**Versão:** v0.9.0
 **Deploy:** `bash deploy/deploy-prod.sh` (bump VERSION antes)
 
-### Implementado recentemente (v0.5.x)
-- Topology: filtro Ativo/Inativo/Ambos com cascata e persistência via sessionStorage
-- Services: botões Scale ±1 e Forçar Atualização (force pull) por linha — remove escalar/desidratar
-- Images: paginação por repositório (fix: 10 por página mostrava 3 linhas)
-- Logs: auto-scroll desliga ao rolar para cima, religa ao voltar ao fundo
+### Implementado em v0.9.0 (insights Tera Brain)
+- **dtach terminal persistence** (`DTACH_SESSIONS=1`): shell sobrevive a disconnects do browser; `dtach -A` cria ou reanexa à mesma sessão por container+user+endpoint. Requer `dtach` instalado (já no Dockerfile).
+- **Container file browser** (`/containers/:id/files`): navega sistema de arquivos de qualquer container rodando; download de arquivo/diretório (tar). Reusa `exec_run_output` + `container_archive_get` do DockerClient.
+- **Alert webhook** (Settings → Alert Webhook URL): POST JSON para N8N/Slack/etc a cada novo alerta. Campo configurável em Settings → Geral; `AlertNotifierJob` via Solid Queue.
+- **GitAutoPollJob skip early** (escala pbi-swarm 46 serviços): quando SHA não mudou e self_heal=false, pula git pull + drift check. Reduz O(N) clones desnecessários a cada ciclo de poll.
+- **GitLab CI check antes de deploy**: campos `ci_check_enabled`, `ci_gitlab_url`, `ci_project_id`, `ci_token` por GitStack. `GitlabCiChecker` bloqueia deploy se pipeline não passou.
 
-### Bugs conhecidos / pendentes
+### Pendentes
 - RBAC roles não enforced nos controllers — pendente (Fase v1.1)
+- Container file browser: somente leitura/download; upload/delete como v1.0 feature
 
 ---
 

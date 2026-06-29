@@ -123,6 +123,41 @@
         <p class="text-xs text-text-muted -mt-2">Comandos shell rodados no diretório do compose (com o .env). PreSync que falha aborta o deploy.</p>
       </div>
 
+      <%# ── CI Check (GitLab) ── %>
+      <div class="border-t border-border-subtle pt-5 space-y-4">
+        <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">CI Check (GitLab)</h3>
+        <div class="flex items-start gap-3">
+          <%= f.check_box :ci_check_enabled,
+                class: "mt-0.5 h-4 w-4 rounded border-border-subtle bg-surface-sunken text-cyan-600 focus:ring-cyan-600 focus:ring-offset-surface-sunken" %>
+          <div>
+            <%= f.label :ci_check_enabled, "Bloquear deploy se pipeline não passou", class: "text-sm text-text-secondary" %>
+            <p class="text-xs text-text-muted">Consulta o GitLab API antes de cada deploy. Deploy só ocorre se o último pipeline da branch estiver em status <code class="text-xs">success</code>.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <%= f.label :ci_gitlab_url, "GitLab URL", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
+            <%= f.url_field :ci_gitlab_url,
+                  placeholder: "https://gitlab.redhusky.com.br",
+                  class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+          </div>
+          <div>
+            <%= f.label :ci_project_id, "Project ID ou namespace/projeto", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
+            <%= f.text_field :ci_project_id,
+                  placeholder: "redhusky/meu-app",
+                  class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+          </div>
+        </div>
+        <div>
+          <%= f.label :ci_token_ciphertext, "GitLab Token (read_api scope)", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
+          <%= f.password_field :ci_token_ciphertext,
+                placeholder: "glpat-...",
+                autocomplete: "off",
+                class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+          <p class="mt-1.5 text-xs text-text-muted">Token com permissão <code class="text-xs">read_api</code> no projeto. Deixe em branco para manter o token atual.</p>
+        </div>
+      </div>
+
       <%# Webhook info for new records %>
       <% if git_stack.new_record? %>
         <div class="rounded-lg bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/40 px-4 py-3">

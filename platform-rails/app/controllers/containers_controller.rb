@@ -101,6 +101,32 @@ class ContainersController < ApplicationController
     redirect_to containers_path(list_filter_params), alert: "Container not found."
   end
 
+  def files
+    @container_id   = params[:id]
+    @container      = current_docker_client.container(@container_id)
+    @container_name = @container.dig("Name")&.sub(/^\//, "") || @container_id[0..11]
+    @path = sanitize_container_path(params[:path] || "/")
+    output = current_docker_client.exec_run_output(@container_id, ["ls", "-la", @path])
+    @entries = parse_ls_output(output)
+  rescue DockerClient::NotFoundError
+    redirect_to containers_path(list_filter_params), alert: "Container not found."
+  rescue => e
+    @entries = []
+    flash.now[:alert] = "Erro ao listar: #{e.message}"
+  end
+
+  def files_download
+    container_id = params[:id]
+    file_path    = sanitize_container_path(params[:path] || "/")
+    tar_data     = current_docker_client.container_archive_get(container_id, file_path)
+    filename     = File.basename(file_path)
+    send_data tar_data, filename: "#{filename}.tar", type: "application/x-tar", disposition: "attachment"
+  rescue DockerClient::NotFoundError
+    redirect_to container_files_path(params[:id]), alert: "Container not found."
+  rescue => e
+    redirect_to container_files_path(params[:id], path: File.dirname(params[:path].to_s)), alert: "Erro: #{e.message}"
+  end
+
   # Raw WebSocket proxy: hijacks the Rack socket and pipes bytes straight to a
   # ttyd process (spawned per session by TtydManager) serving `docker exec`.
   # This replaces the ActionCable terminal transport — no Solid Cable / SQLite
@@ -302,6 +328,30 @@ class ContainersController < ApplicationController
        .gsub("\r", "\\r").gsub("\n", "\\n").gsub("\t", "\\t")
        .gsub(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/) { format("<%02X>", _1.ord) }
        .slice(0, 600)
+  end
+
+  def sanitize_container_path(path)
+    File.expand_path(path.to_s, "/").then { |p| p.start_with?("/") ? p : "/" }
+  end
+
+  def parse_ls_output(output)
+    entries = []
+    output.each_line do |line|
+      line = line.chomp
+      next if line.start_with?("total") || line.blank?
+      m = line.match(/^([dlrwxst\-]+)\s+\d+\s+\S+\s+\S+\s+(\d+)\s+([\d\-]+ ?[\d:]+|\w+ +\d+ +[\d:]+)\s+(.+)$/)
+      next unless m
+      perms, size, date, name = m.captures
+      next if name.nil? || name =~ /\A\.\.?\z/
+      display_name = name.split(" -> ").first.strip
+      type = case perms[0]
+             when "d" then :directory
+             when "l" then :symlink
+             else :file
+             end
+      entries << { name: display_name, type: type, size: size.to_i, modified: date.strip, permissions: perms }
+    end
+    entries.sort_by { |e| [e[:type] == :directory ? 0 : 1, e[:name].downcase] }
   end
 
   def enable_nodelay(io)

@@ -20,6 +20,13 @@
           <input type="text" name="app_url" value="<%= @settings[:app_url] %>"
             class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500">
         </div>
+        <div class="mb-4">
+          <label class="block text-xs font-medium text-text-secondary mb-1">Alert Webhook URL</label>
+          <input type="url" name="alert_webhook_url" value="<%= @settings[:alert_webhook_url] %>"
+            placeholder="https://n8n.example.com/webhook/..."
+            class="w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500">
+          <p class="text-xs text-text-muted mt-1">POST JSON para cada novo alerta — compatível com N8N, Slack webhook, etc. Deixe vazio para desativar.</p>
+        </div>
         <div class="mb-5 flex items-center justify-between py-2 border-b border-border">
           <div>
             <p class="text-sm text-text-primary">Analytics</p>

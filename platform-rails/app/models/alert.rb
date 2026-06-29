@@ -9,6 +9,8 @@ class Alert < ApplicationRecord
   scope :by_resource,  ->(r) { where(resource: r) }
   scope :recent,       -> { order(created_at: :desc) }
 
+  after_create_commit :schedule_webhook_notification
+
   def read? = read_at.present?
 
   def mark_read!
@@ -17,5 +19,11 @@ class Alert < ApplicationRecord
 
   def self.mark_all_read!
     unread.update_all(read_at: Time.current)
+  end
+
+  private
+
+  def schedule_webhook_notification
+    AlertNotifierJob.perform_later(id) if AppSetting.get("alert_webhook_url").present?
   end
 end

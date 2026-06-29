@@ -1,6 +1,7 @@
 require "socket"
 require "securerandom"
 require "singleton"
+require "digest"
 
 # Spawns and tracks one ttyd process per terminal connection. ttyd serves an
 # interactive PTY (docker exec) over a loopback WebSocket; ContainersController#
@@ -14,6 +15,11 @@ require "singleton"
 # cached process keyed by container/user; every other connection then landed on
 # an already-spent `--once` ttyd that refused the proxy's connection, so the WS
 # upgrade hung and the terminal silently accepted no input.)
+#
+# Session persistence (DTACH_SESSIONS=1): wraps docker exec in dtach so the
+# shell survives browser disconnects. dtach -A creates the session on first
+# connect and reattaches on subsequent ones — the shell state (history, running
+# commands) is preserved across reconnects to the same container+user+endpoint.
 class TtydManager
   include Singleton
 
@@ -69,8 +75,28 @@ class TtydManager
     cmd += ["-H", host] if host
     cmd += ["exec", "-it"]
     cmd += ["-u", user] if user.present?
-    # Prefer bash, fall back to sh — same shell selection the old exec used.
-    cmd + [container_id, "/bin/sh", "-c", "exec bash 2>/dev/null || exec sh"]
+    # Prefer bash, fall back to sh.
+    shell = [container_id, "/bin/sh", "-c", "exec bash 2>/dev/null || exec sh"]
+
+    if dtach_enabled?
+      # dtach -A: attach to existing session or create new one.
+      # The shell persists after the browser disconnects — reconnecting to the
+      # same container+user+endpoint lands back in the same running shell.
+      ["dtach", "-A", dtach_socket(container_id, endpoint, user), "--"] + cmd + shell
+    else
+      cmd + shell
+    end
+  end
+
+  def dtach_enabled?
+    ENV["DTACH_SESSIONS"] == "1"
+  end
+
+  # Stable socket path per container+endpoint+user tuple so reconnects land
+  # in the same dtach session. Short hash suffix keeps filename safe.
+  def dtach_socket(container_id, endpoint, user)
+    key = Digest::MD5.hexdigest("#{endpoint}:#{user}")[0..7]
+    "/tmp/dtach-#{container_id[0..11]}-#{key}.sock"
   end
 
   # The app's endpoint string (unix:///… or tcp://…) maps onto docker's -H flag;

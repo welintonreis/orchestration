@@ -15,6 +15,14 @@ class GitAutoPollJob < ApplicationJob
     new_sha        = GitPollService.call(stack)
     commit_changed = new_sha.present? && new_sha != prev_sha
 
+    # Skip the expensive git pull + drift inspect when nothing changed and
+    # self_heal is off. For large swarms (dozens of stacks) this avoids an
+    # O(N) fan-out of git clones + docker service inspects every poll cycle.
+    unless commit_changed || stack.self_heal?
+      stack.update_column(:last_commit_sha, new_sha) if new_sha.present? && new_sha != prev_sha
+      return
+    end
+
     # Pull + read-only drift check (also advances last_commit_sha to new_sha).
     repo = GitUnpacker.call(stack)
     GitDriftService.call(stack, repo_path: repo)

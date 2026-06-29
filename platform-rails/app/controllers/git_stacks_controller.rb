@@ -2,7 +2,7 @@ class GitStacksController < ApplicationController
   before_action :set_git_stack, only: %i[show edit update destroy deploy sync rollback refresh_drift]
 
   def index
-    @git_stacks = GitStack.includes(:environment, :git_credential).order(:name)
+    redirect_to stacks_path
   end
 
   def show
@@ -114,7 +114,8 @@ class GitStacksController < ApplicationController
       :auto_update, :poll_interval, :yaml_content, :env_content,
       :environment_id, :repo_url, :branch, :git_credential_id,
       :username, :token_ciphertext,
-      :self_heal, :sync_window, :pre_sync_cmd, :post_sync_cmd
+      :self_heal, :sync_window, :pre_sync_cmd, :post_sync_cmd,
+      :ci_check_enabled, :ci_gitlab_url, :ci_project_id, :ci_token_ciphertext
     )
   end
 

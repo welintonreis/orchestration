@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_19_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_29_000001) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -135,6 +135,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_000001) do
   create_table "git_stacks", force: :cascade do |t|
     t.boolean "auto_update", default: false
     t.string "branch", default: "main"
+    t.boolean "ci_check_enabled", default: false
+    t.string "ci_gitlab_url"
+    t.string "ci_project_id"
+    t.string "ci_token_ciphertext"
     t.string "compose_file", default: "docker-compose.yml"
     t.datetime "created_at", null: false
     t.string "deploy_mode", default: "swarm_stack"
