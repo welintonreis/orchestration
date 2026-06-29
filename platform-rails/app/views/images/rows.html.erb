@@ -74,6 +74,8 @@
       </span>
       <form method="post" action="<%= batch_remove_images_path %>"
             x-ref="batchForm"
+            data-controller="prune-progress"
+            data-prune-progress-label-value="as imagens selecionadas"
             data-turbo-confirm="Remover as imagens selecionadas? Esta ação não pode ser desfeita.">
         <input type="hidden" name="_method" value="delete">
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
@@ -105,6 +107,7 @@
         <% orphan_ids = @images.select { |i| i["_unused"] }.map { |i| i["Id"] } %>
         <% if orphan_ids.any? && (Current.user&.admin? || Current.user&.operator?) %>
           <form method="post" action="<%= batch_remove_images_path %>"
+                data-controller="prune-progress"
                 data-turbo-confirm="Remover <%= orphan_ids.size %> imagem(ns) não utilizada(s)? Esta ação não pode ser desfeita.">
             <input type="hidden" name="_method" value="delete">
             <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
