@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 
 services:
   web:
@@ -33,9 +33,15 @@ services:
       - traefik
     deploy:
       replicas: 1
+      update_config:
+        parallelism: 1
+        order: start-first
+        delay: 10s
+        failure_action: rollback
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
+        max_attempts: 3
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik"

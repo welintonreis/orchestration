@@ -221,4 +221,99 @@
     </div>
   <% end %>
 </div>
+<%# ══ Managed Stacks (GitStack) ══ %>
+<div class="mt-6 bg-surface-raised border border-border rounded-xl overflow-hidden">
+  <div class="px-5 py-4 border-b border-border flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">Stacks Gerenciadas</h2>
+      <span class="text-xs text-text-muted bg-surface-inset border border-border-subtle px-2 py-0.5 rounded-full"><%= @git_stacks.size %></span>
+    </div>
+    <%= link_to new_git_stack_path,
+          class: "inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-inset px-2.5 py-1.5 rounded-lg border border-border-subtle transition-colors" do %>
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Nova Stack
+    <% end %>
+  </div>
+
+  <% if @git_stacks.empty? %>
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-text-muted mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+      </svg>
+      <p class="text-sm text-text-muted">Nenhuma stack gerenciada.</p>
+      <%= link_to "Criar stack", new_git_stack_path, class: "mt-3 text-xs text-red-600 dark:text-red-400 hover:text-red-500 underline-offset-2 underline" %>
+    </div>
+  <% else %>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left">
+          <th class="px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
+          <th class="px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Origem</th>
+          <th class="px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+          <th class="px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Ambiente</th>
+          <th class="px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Último Deploy</th>
+          <th class="px-5 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border/60">
+        <% @git_stacks.each do |gs| %>
+          <% status_class = case gs.status
+             when "idle"      then "bg-surface-inset text-text-secondary border-border-subtle"
+             when "deploying" then "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800/60 animate-pulse"
+             when "deployed"  then "bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 border-green-300 dark:border-green-800/60"
+             when "failed"    then "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 border-red-300 dark:border-red-800/60"
+             else                  "bg-surface-inset text-text-muted border-border-subtle"
+             end %>
+          <% source_icon = case gs.source_type
+             when "git"  then { label: "Git", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-800/40" }
+             when "yaml" then { label: "YAML", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-800/40" }
+             when "zip"  then { label: "ZIP", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-800/40" }
+             else             { label: gs.source_type, color: "text-text-muted", bg: "bg-surface-inset border-border-subtle" }
+             end %>
+          <tr class="hover:bg-surface-inset/30 transition-colors">
+            <td class="px-5 py-3">
+              <%= link_to gs.name, git_stack_path(gs),
+                    class: "font-medium text-text-primary hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors" %>
+            </td>
+            <td class="px-5 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border <%= source_icon[:bg] %> <%= source_icon[:color] %>">
+                <%= source_icon[:label] %>
+              </span>
+            </td>
+            <td class="px-5 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border capitalize <%= status_class %>">
+                <%= gs.status %>
+              </span>
+            </td>
+            <td class="px-5 py-3 text-xs text-text-secondary"><%= gs.environment.name %></td>
+            <td class="px-5 py-3 text-xs text-text-muted">
+              <%= gs.last_deployed_at ? time_ago_in_words(gs.last_deployed_at) + " atrás" : "—" %>
+            </td>
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-1">
+                <%= link_to git_stack_path(gs),
+                      class: "p-1.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors",
+                      title: "Detalhes" do %>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <% end %>
+                <%= button_to deploy_git_stack_path(gs), method: :post,
+                      class: "p-1.5 rounded text-text-muted hover:text-green-600 dark:hover:text-green-400 hover:bg-surface-active transition-colors",
+                      title: "Deploy",
+                      form: { data: { turbo_confirm: "Deploy '#{gs.name}'?" } } do %>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <% end %>
+                <%= link_to edit_git_stack_path(gs),
+                      class: "p-1.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-active transition-colors",
+                      title: "Editar" do %>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
+
 </turbo-frame>

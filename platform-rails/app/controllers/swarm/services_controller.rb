@@ -13,12 +13,40 @@ module Swarm
     end
 
     def rows
-      @services = current_docker_client.services
-      @nodes    = current_docker_client.nodes
+      all_services = current_docker_client.services
+      @nodes       = current_docker_client.nodes
+
+      @query = params[:q].to_s.strip
+      if @query.present?
+        q = @query.downcase
+        all_services = all_services.select do |s|
+          name  = (s.dig("Spec", "Name") || "").downcase
+          image = (s.dig("Spec", "TaskTemplate", "ContainerSpec", "Image") || "").split("@").first.downcase
+          name.include?(q) || image.include?(q)
+        end
+      end
+
+      @total    = all_services.size
+      @per_page = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 25)
+      @page     = [params[:page]&.to_i || 1, 1].max
+      if @per_page
+        @total_pages = [(@total.to_f / @per_page).ceil, 1].max
+        @page        = [@page, @total_pages].min
+        @services    = all_services.drop((@page - 1) * @per_page).first(@per_page)
+      else
+        @total_pages = 1
+        @services    = all_services
+      end
+
       render "rows", layout: false
     rescue => e
-      @services = []
-      @nodes    = []
+      @services    = []
+      @nodes       = []
+      @total       = 0
+      @page        = 1
+      @total_pages = 1
+      @per_page    = 25
+      @query       = ""
       render "rows", layout: false
     end
 

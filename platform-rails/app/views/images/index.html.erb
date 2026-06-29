@@ -45,7 +45,7 @@
     <%# Pull direto por nome %>
     <div>
       <p class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Pull direto</p>
-      <%= form_with url: pull_images_path, method: :post, data: { turbo_frame: "_top" },
+      <%= form_with url: pull_images_path, method: :post, data: { turbo_frame: "_top", controller: "pull-progress" },
             class: "flex items-center gap-2" do |f| %>
         <%= f.text_field :image, placeholder: "nginx, postgres:15, ghcr.io/user/app",
               class: "flex-1 bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono",

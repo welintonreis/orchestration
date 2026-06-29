@@ -7,7 +7,8 @@ class ImagesController < ApplicationController
   # rendering the skeleton+nested lazy-frame shell never re-fires the
   # follow-up fetch. Render rows directly instead.
   def index
-    rows if turbo_frame_request?
+    # ponytail: _top means full-page nav — skip rows so the layout (and flash) renders
+    rows if turbo_frame_request? && turbo_frame_request_id != "_top"
   end
 
   def rows

@@ -315,7 +315,7 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         Anterior
       </button>
-      <%= link_to "Cancelar", git_stacks_path, x_show: "step === 1",
+      <%= link_to "Cancelar", stacks_path, x_show: "step === 1",
             class: "inline-flex items-center justify-center w-36 px-4 py-2 bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary text-sm font-medium rounded-lg transition-colors border border-border-subtle" %>
 
       <button type="button" @click="next()" x-show="step < 3"

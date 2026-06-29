@@ -40,6 +40,7 @@ class StacksController < ApplicationController
       end
     end
 
+    @git_stacks   = GitStack.includes(:environment).order(:name)
     @total        = all_stacks.size
     @active_total = all_stacks.count { |s| s["Active"] }
     @per_page = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 10)
@@ -57,6 +58,7 @@ class StacksController < ApplicationController
   rescue => e
     @stacks = []
     @nodes  = []
+    @git_stacks   = GitStack.includes(:environment).order(:name) rescue []
     @total = @page = @total_pages = @active_total = 0
     @per_page = 10
     @query = ""
