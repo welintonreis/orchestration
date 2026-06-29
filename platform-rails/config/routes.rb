@@ -30,7 +30,9 @@ Rails.application.routes.draw do
   resources :images, only: %i[index show] do
     member { delete :remove }
     collection do
-      get  :rows
+      get    :rows
+      get    :search
+      post   :pull
       delete :batch_remove
       delete :prune_orphans
     end

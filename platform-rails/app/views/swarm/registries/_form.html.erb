@@ -5,22 +5,78 @@
     </div>
   <% end %>
 
-  <div class="mb-4">
-    <%= f.label :name, "Nome", class: "block text-xs font-medium text-text-secondary mb-1" %>
-    <%= f.text_field :name, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: DockerHub, ECR, Harbor" %>
-  </div>
-  <div class="mb-4">
-    <%= f.label :url, "URL", class: "block text-xs font-medium text-text-secondary mb-1" %>
-    <%= f.text_field :url, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "registry.example.com" %>
-  </div>
-  <div class="mb-4">
-    <%= f.label :username, "Usuário", class: "block text-xs font-medium text-text-secondary mb-1" %>
-    <%= f.text_field :username, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
-  </div>
-  <div class="mb-5">
-    <%= f.label :encrypted_password, registry.new_record? ? "Senha / Token" : "Senha / Token (deixe vazio para manter)", class: "block text-xs font-medium text-text-secondary mb-1" %>
-    <%= f.password_field :encrypted_password, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
-  </div>
+  <div x-data="{ isPublic: <%= registry.public? ? 'true' : 'false' %> }">
+
+    <div class="mb-4">
+      <%= f.label :name, "Nome", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :name, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "ex: Docker Hub, Quay.io, Harbor" %>
+    </div>
+
+    <div class="mb-4">
+      <%= f.label :url, "URL", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :url, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500", placeholder: "registry.example.com ou docker.io" %>
+    </div>
+
+    <%# Público toggle %>
+    <div class="mb-4 flex items-center gap-3 p-3 rounded-lg bg-surface-inset border border-border-subtle">
+      <%= f.check_box :public, class: "w-4 h-4 rounded", "x-model": "isPublic", "@change": "isPublic = $event.target.checked" %>
+      <div>
+        <div class="text-sm font-medium text-text-primary">Registry público</div>
+        <div class="text-xs text-text-muted">Sem autenticação. Habilita busca de imagens na UI.</div>
+      </div>
+    </div>
+
+    <%# Tipo de API — só para públicos com busca -%>
+    <div class="mb-4" x-show="isPublic" x-transition>
+      <%= f.label :api_type, "API de busca", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.select :api_type,
+            [["Nenhuma (sem busca)", ""], ["Docker Hub", "docker_hub"], ["Quay.io", "quay"], ["Registry v2 genérico", "generic_v2"]],
+            {},
+            class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      <p class="mt-1 text-xs text-text-muted">Determina como a UI busca imagens neste registry.</p>
+    </div>
+
+    <%# Credenciais — ocultas quando público -%>
+    <div x-show="!isPublic" x-transition>
+      <div class="mb-4">
+        <%= f.label :username, "Usuário", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.text_field :username, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div class="mb-5">
+        <%= f.label :encrypted_password, registry.new_record? ? "Senha / Token" : "Senha / Token (vazio = manter)", class: "block text-xs font-medium text-text-secondary mb-1" %>
+        <%= f.password_field :encrypted_password, class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+    </div>
+
+    <%# Atalhos para registries conhecidos -%>
+    <% if registry.new_record? %>
+      <div class="mb-5">
+        <p class="text-xs text-text-muted mb-2">Preencher automaticamente:</p>
+        <div class="flex flex-wrap gap-2">
+          <% [
+            { label: "Docker Hub", url: "docker.io",    api: "docker_hub", pub: true },
+            { label: "Quay.io",    url: "quay.io",      api: "quay",       pub: true },
+            { label: "GHCR",       url: "ghcr.io",      api: "",           pub: true },
+            { label: "ECR",        url: "amazonaws.com", api: "",           pub: false },
+          ].each do |preset| %>
+            <button type="button"
+                    class="px-2.5 py-1 text-xs rounded-lg border border-border-subtle text-text-secondary hover:text-text-primary hover:bg-surface-inset transition-colors"
+                    @click="
+                      $el.closest('form').querySelector('[name=\'swarm_registry[name]\']').value = '<%= preset[:label] %>';
+                      $el.closest('form').querySelector('[name=\'swarm_registry[url]\']').value  = '<%= preset[:url] %>';
+                      $el.closest('form').querySelector('[name=\'swarm_registry[api_type]\']').value = '<%= preset[:api] %>';
+                      isPublic = <%= preset[:pub] %>;
+                      $el.closest('form').querySelector('[name=\'swarm_registry[public]\']').checked = <%= preset[:pub] %>;
+                    ">
+              <%= preset[:label] %>
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+  </div><%# /x-data %>
+
   <div class="flex items-center gap-3">
     <%= f.submit registry.new_record? ? "Adicionar" : "Salvar", class: "btn-primary" %>
     <%= link_to "Cancelar", swarm_registries_path, class: "btn-secondary" %>

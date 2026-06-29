@@ -42,7 +42,7 @@ module Swarm
     end
 
     def registry_params
-      params.require(:swarm_registry).permit(:name, :url, :username, :encrypted_password)
+      params.require(:swarm_registry).permit(:name, :url, :username, :encrypted_password, :public, :api_type)
     end
   end
 end

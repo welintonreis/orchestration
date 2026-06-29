@@ -1,5 +1,5 @@
 class ImagesController < ApplicationController
-  before_action :require_operator!, only: %i[remove batch_remove prune_orphans]
+  before_action :require_operator!, only: %i[remove batch_remove prune_orphans pull]
 
   # remove/batch_remove/prune_orphans redirect back here from inside the
   # lazy turbo-frame (images-content) — same self-referential nested-frame
@@ -111,5 +111,27 @@ class ImagesController < ApplicationController
     redirect_to images_path, notice: "#{count} imagem(ns) órfã(s) removida(s).#{freed_mb}"
   rescue => e
     redirect_to images_path, alert: "Erro ao limpar órfãos: #{e.message}"
+  end
+
+  def search
+    @registries = SwarmRegistry.public_registries.searchable.order(:name)
+    @registry   = @registries.find_by(id: params[:registry_id]) || @registries.first
+    @query      = params[:q].to_s.strip
+    @results    = @registry && @query.present? ? RegistrySearchService.call(@registry, @query) : []
+    render layout: false
+  end
+
+  def pull
+    image    = params[:image].to_s.strip
+    tag      = params[:tag].to_s.strip.presence || "latest"
+    redirect_to(images_path, alert: "Nome da imagem inválido.") and return if image.blank? || image.include?(" ")
+
+    ImagePullJob.perform_later(
+      image:    image,
+      tag:      tag,
+      user_id:  Current.user&.id,
+      endpoint: docker_endpoint
+    )
+    redirect_to images_path, notice: "Pull de #{image}:#{tag} iniciado em background — acompanhe nos logs de auditoria."
   end
 end

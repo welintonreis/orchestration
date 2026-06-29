@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_29_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -206,9 +206,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000001) do
   end
 
   create_table "swarm_registries", force: :cascade do |t|
+    t.string "api_type"
     t.datetime "created_at", null: false
     t.string "encrypted_password"
     t.string "name"
+    t.boolean "public", default: false, null: false
     t.datetime "updated_at", null: false
     t.string "url"
     t.string "username"
