@@ -1,0 +1,17 @@
+unread_warning:
+  level: warning
+  resource: cpu
+  message: "CPU above threshold"
+  read_at:
+
+read_alert:
+  level: info
+  resource: disk
+  message: "Disk usage normalized"
+  read_at: <%= 1.hour.ago.iso8601 %>
+
+critical_alert:
+  level: critical
+  resource: ram
+  message: "RAM critically high"
+  read_at:

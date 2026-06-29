@@ -1,0 +1,23 @@
+admin_user:
+  email_address: admin@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  role: admin
+  active: true
+
+operator_user:
+  email_address: operator@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  role: operator
+  active: true
+
+readonly_user:
+  email_address: readonly@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  role: readonly
+  active: true
+
+inactive_user:
+  email_address: inactive@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  role: operator
+  active: false

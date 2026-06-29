@@ -1,0 +1,7 @@
+app_name_setting:
+  key: app_name
+  value: RedHusky Test
+
+webhook_url_setting:
+  key: alert_webhook_url
+  value: "https://n8n.example.com/webhook/test"

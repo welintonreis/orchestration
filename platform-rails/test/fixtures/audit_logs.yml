@@ -1,0 +1,15 @@
+deploy_action:
+  user: admin_user
+  action: deploy
+  target_type: GitStack
+  target_id: "1"
+  metadata: {}
+  ip_address: "127.0.0.1"
+
+login_action:
+  user: operator_user
+  action: login
+  target_type:
+  target_id:
+  metadata: {}
+  ip_address: "10.0.0.1"

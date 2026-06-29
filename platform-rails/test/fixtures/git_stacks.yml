@@ -1,0 +1,93 @@
+basic_git_stack:
+  name: my-app
+  source_type: git
+  repo_url: "https://gitlab.example.com/org/app.git"
+  branch: main
+  compose_file: docker-compose.yml
+  deploy_mode: swarm_stack
+  status: idle
+  sync_status: unknown
+  health: unknown
+  auto_update: false
+  self_heal: false
+  poll_interval: 300
+  ci_check_enabled: false
+  environment: local_env
+  uuid: "aaaaaaaa-0000-0000-0000-000000000001"
+  webhook_token: "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222"
+
+auto_update_stack:
+  name: auto-app
+  source_type: git
+  repo_url: "https://gitlab.example.com/org/auto.git"
+  branch: main
+  compose_file: docker-compose.yml
+  deploy_mode: swarm_stack
+  status: deployed
+  sync_status: synced
+  health: healthy
+  auto_update: true
+  self_heal: false
+  poll_interval: 60
+  ci_check_enabled: false
+  last_commit_sha: "abc123"
+  environment: local_env
+  uuid: "aaaaaaaa-0000-0000-0000-000000000002"
+  webhook_token: "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2223"
+
+self_heal_stack:
+  name: self-heal-app
+  source_type: git
+  repo_url: "https://gitlab.example.com/org/heal.git"
+  branch: main
+  compose_file: docker-compose.yml
+  deploy_mode: swarm_stack
+  status: deployed
+  sync_status: out_of_sync
+  health: degraded
+  auto_update: true
+  self_heal: true
+  poll_interval: 300
+  ci_check_enabled: false
+  last_commit_sha: "def456"
+  environment: local_env
+  uuid: "aaaaaaaa-0000-0000-0000-000000000003"
+  webhook_token: "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2224"
+
+ci_check_stack:
+  name: ci-app
+  source_type: git
+  repo_url: "https://gitlab.example.com/org/ci.git"
+  branch: main
+  compose_file: docker-compose.yml
+  deploy_mode: swarm_stack
+  status: idle
+  sync_status: unknown
+  health: unknown
+  auto_update: false
+  self_heal: false
+  poll_interval: 300
+  ci_check_enabled: true
+  ci_gitlab_url: "https://gitlab.example.com"
+  ci_project_id: "redhusky/ci-app"
+  ci_token_ciphertext: "glpat-test-token"
+  environment: local_env
+  uuid: "aaaaaaaa-0000-0000-0000-000000000004"
+  webhook_token: "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2225"
+
+yaml_stack:
+  name: yaml-app
+  source_type: yaml
+  yaml_content: "version: '3'\nservices:\n  web:\n    image: nginx"
+  compose_file: docker-compose.yml
+  deploy_mode: compose
+  status: idle
+  sync_status: unknown
+  health: unknown
+  auto_update: false
+  self_heal: false
+  poll_interval: 300
+  ci_check_enabled: false
+  environment: local_env
+  uuid: "aaaaaaaa-0000-0000-0000-000000000005"
+  webhook_token: "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2226"
