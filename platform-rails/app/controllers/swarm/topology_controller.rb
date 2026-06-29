@@ -62,7 +62,7 @@ module Swarm
 
     def system_prune
       DockerSystemPruneJob.perform_later(user_id: Current.user&.id)
-      redirect_to swarm_topology_path, notice: "docker system prune iniciado em background — resultado nos logs de auditoria."
+      redirect_to swarm_topology_path, notice: "docker system prune -a iniciado em background (imagens + containers inativos, volumes preservados) — resultado nos logs de auditoria."
     rescue => e
       redirect_to swarm_topology_path, alert: "Erro: #{e.message}"
     end
