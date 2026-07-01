@@ -11,3 +11,5 @@ pin "@xterm/xterm", to: "@xterm--xterm.js" # @6.0.0
 pin "@xterm/addon-clipboard", to: "@xterm--addon-clipboard.js" # @0.2.0
 pin "@xterm/addon-fit", to: "@xterm--addon-fit.js" # @0.11.0
 pin "@xterm/addon-web-links", to: "@xterm--addon-web-links.js" # @0.12.0
+pin "jsvectormap" # @1.7.0
+pin "jsvectormap/world", to: "jsvectormap-world.js" # @1.7.0 map data, loaded after jsvectormap sets window.jsVectorMap

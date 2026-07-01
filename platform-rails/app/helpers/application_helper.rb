@@ -112,6 +112,7 @@ module ApplicationHelper
     when "ambiente/policies"    then home + [["Ambiente", nil], ["Políticas", ambiente_policies_path]]
     when "ambiente/registries"  then home + [["Ambiente", nil], ["Registries", ambiente_registries_path]]
     when "ambiente/groups"      then home + [["Ambiente", nil], ["Grupos", ambiente_groups_path]]
+    when "security"         then home + [["Segurança", security_path]]
     when "roles"            then home + [["Funções", roles_path]]
     when "teams"            then home + [["Times", teams_path]]
     when "users"            then home + [["Usuários", users_path]]

@@ -123,6 +123,8 @@ Rails.application.routes.draw do
   get "metrics/latest",    to: "metrics#latest",    as: :metrics_latest
   get "metrics/processes", to: "metrics#processes", as: :metrics_processes
 
+  get "security", to: "security#index", as: :security
+
   # ── Teams & Roles ──
   resources :teams do
     member do

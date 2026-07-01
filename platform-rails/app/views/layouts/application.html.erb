@@ -108,7 +108,8 @@
               </span>
             </div>
 
-            <%= sidebar_link "Dashboard",   root_path,        icon: :dashboard,  open: "sb" %>
+            <%= sidebar_link "Dashboard",   root_path,        icon: :dashboard,   open: "sb" %>
+            <%= sidebar_link "Segurança",   security_path,    icon: :auth_shield, open: "sb" %>
             <%= sidebar_link "Stacks",      stacks_path,      icon: :stacks,     open: "sb" %>
             <%= sidebar_link "Serviços",    swarm_services_path, icon: :services, open: "sb" %>
             <%= sidebar_link "Containers",  containers_path,  icon: :containers, open: "sb" %>

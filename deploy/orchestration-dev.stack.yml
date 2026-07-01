@@ -17,6 +17,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
+      - /srv/redhusky/security:/host/security:ro
       - orchestration-dev-storage:/rails/storage
       - ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks-dev}:${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks-dev}
     networks:
