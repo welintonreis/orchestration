@@ -8,7 +8,7 @@ class EnvironmentsController < ApplicationController
 
     @environments.each do |env|
       begin
-        client = DockerClient.new(endpoint: env.endpoint)
+        client = DockerClient.new(endpoint: env.effective_endpoint)
         info   = client.info
 
         swarm_active = info.dig("Swarm", "LocalNodeState") == "active"
@@ -78,7 +78,7 @@ class EnvironmentsController < ApplicationController
     @environment = Environment.new(environment_params)
     if @environment.save
       begin
-        DockerClient.new(endpoint: @environment.endpoint).info
+        DockerClient.new(endpoint: @environment.effective_endpoint).info
         flash[:notice] = "Ambiente \"#{@environment.name}\" criado e acessível."
       rescue => e
         flash[:notice] = "Ambiente \"#{@environment.name}\" criado, mas sem acesso ao Docker: #{e.message}"

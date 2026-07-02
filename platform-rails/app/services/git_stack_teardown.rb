@@ -23,7 +23,7 @@ class GitStackTeardown
   private
 
   def teardown_swarm
-    client = DockerClient.new(endpoint: @stack.environment.endpoint)
+    client = DockerClient.new(endpoint: @stack.environment.effective_endpoint)
     services_in_stack(client).each do |svc|
       id = svc["ID"]
       client.service_scale(id, 0)
@@ -41,6 +41,7 @@ class GitStackTeardown
     compose_path = File.join(GitUnpacker.repo_dir(@stack).to_s, @stack.compose_file)
     return unless File.exist?(compose_path)
 
-    Open3.capture3("docker", "compose", "-f", compose_path, "down", chdir: File.dirname(compose_path))
+    host = @stack.environment.effective_endpoint
+    Open3.capture3("docker", "-H", host, "compose", "-f", compose_path, "down", chdir: File.dirname(compose_path))
   end
 end

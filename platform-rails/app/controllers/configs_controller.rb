@@ -1,4 +1,6 @@
 class ConfigsController < ApplicationController
+  include SwarmGuard
+
   def index
     @configs = current_docker_client.configs
   rescue => e

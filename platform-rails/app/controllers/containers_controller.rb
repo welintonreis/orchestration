@@ -95,7 +95,7 @@ class ContainersController < ApplicationController
     @container_id   = params[:id]
     @container      = current_docker_client.container(@container_id)
     @container_name = @container.dig("Name")&.sub(/^\//, "") || @container_id[0..11]
-    @endpoint       = active_environment&.endpoint || "unix:///var/run/docker.sock"
+    @endpoint       = active_environment&.effective_endpoint || "unix:///var/run/docker.sock"
     @exec_user      = params[:root] == "1" ? "root" : params[:user].presence
   rescue DockerClient::NotFoundError
     redirect_to containers_path(list_filter_params), alert: "Container not found."
@@ -139,7 +139,7 @@ class ContainersController < ApplicationController
   def ttyd_ws
     return head :bad_request unless request.env["HTTP_UPGRADE"].to_s.downcase == "websocket"
 
-    endpoint = active_environment&.endpoint
+    endpoint = active_environment&.effective_endpoint
     user     = params[:root] == "1" ? "root" : params[:user].presence
     session  = TtydManager.instance.start(params[:id], endpoint: endpoint, user: user)
 

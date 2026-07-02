@@ -39,6 +39,17 @@ class EnvironmentTest < ActiveSupport::TestCase
     assert_not environments(:local_env).tcp?
   end
 
+  test "valid edge environment" do
+    env = Environment.new(name: "edge/box1", endpoint_type: "edge", endpoint: "edge://11111111-1111-1111-1111-111111111111")
+    assert env.valid?
+    assert env.edge?
+  end
+
+  test "effective_endpoint passes through unix/tcp endpoints unchanged" do
+    assert_equal environments(:local_env).endpoint, environments(:local_env).effective_endpoint
+    assert_equal environments(:tcp_env).endpoint, environments(:tcp_env).effective_endpoint
+  end
+
   test "activate! sets this env active and deactivates others" do
     local = environments(:local_env)
     remote = environments(:tcp_env)

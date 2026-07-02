@@ -1,5 +1,5 @@
 class GitStacksController < ApplicationController
-  before_action :set_git_stack, only: %i[show edit update destroy deploy sync rollback refresh_drift]
+  before_action :set_git_stack, only: %i[show edit update destroy deploy deploy_fleet sync rollback refresh_drift]
 
   def index
     redirect_to stacks_path
@@ -11,7 +11,8 @@ class GitStacksController < ApplicationController
   def new
     @git_stack = GitStack.new(source_type: "git", compose_file: "docker-compose.yml", deploy_mode: "swarm_stack", auto_update: false, poll_interval: 300, branch: "main")
     @environments    = Environment.order(:name)
-    @git_credentials = GitCredential.order(:name)
+    @git_credentials    = GitCredential.order(:name)
+    @environment_groups = EnvironmentGroup.order(:name)
   end
 
   def create
@@ -20,14 +21,16 @@ class GitStacksController < ApplicationController
       redirect_to @git_stack, notice: "Git stack \"#{@git_stack.name}\" created."
     else
       @environments    = Environment.order(:name)
-      @git_credentials = GitCredential.order(:name)
+      @git_credentials    = GitCredential.order(:name)
+      @environment_groups = EnvironmentGroup.order(:name)
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
     @environments    = Environment.order(:name)
-    @git_credentials = GitCredential.order(:name)
+    @git_credentials    = GitCredential.order(:name)
+    @environment_groups = EnvironmentGroup.order(:name)
   end
 
   def update
@@ -36,7 +39,8 @@ class GitStacksController < ApplicationController
       redirect_to @git_stack, notice: "Git stack \"#{@git_stack.name}\" updated."
     else
       @environments    = Environment.order(:name)
-      @git_credentials = GitCredential.order(:name)
+      @git_credentials    = GitCredential.order(:name)
+      @environment_groups = EnvironmentGroup.order(:name)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -79,6 +83,16 @@ class GitStacksController < ApplicationController
     redirect_to @git_stack, notice: "Deploy queued for \"#{@git_stack.name}\"."
   end
 
+  def deploy_fleet
+    unless @git_stack.fleet?
+      redirect_to @git_stack, alert: "Este stack não tem um grupo de destino configurado."
+      return
+    end
+    @git_stack.update!(status: "deploying")
+    EdgeFleetDeployJob.perform_later(@git_stack.id)
+    redirect_to @git_stack, notice: "Fleet deploy iniciado para \"#{@git_stack.name}\" (#{@git_stack.target_group.name})."
+  end
+
   # Apply the desired git state to reconcile drift (Argo-style "Sync"). Same
   # mechanism as deploy — name reflects intent in the UI.
   def sync
@@ -112,7 +126,7 @@ class GitStacksController < ApplicationController
     params.require(:git_stack).permit(
       :name, :source_type, :compose_file, :deploy_mode,
       :auto_update, :poll_interval, :yaml_content, :env_content,
-      :environment_id, :repo_url, :branch, :git_credential_id,
+      :environment_id, :target_group_id, :repo_url, :branch, :git_credential_id,
       :username, :token_ciphertext,
       :self_heal, :sync_window, :pre_sync_cmd, :post_sync_cmd,
       :ci_check_enabled, :ci_gitlab_url, :ci_project_id, :ci_token_ciphertext

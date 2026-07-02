@@ -3,6 +3,14 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resource :setup, only: [ :show, :create ]
 
+  # ── Edge agent API (own token auth, no session/cookies) ──
+  namespace :api do
+    post "edge/enroll",           to: "edge#enroll"
+    post "edge/heartbeat",        to: "edge#heartbeat"
+    post "edge/commands/:id/ack", to: "edge#ack", as: :edge_command_ack
+    get  "edge/tunnel",           to: "edge_tunnels#connect", as: :edge_tunnel
+  end
+
   # ── Main app routes ──
   root "dashboard#index"
 
@@ -86,6 +94,7 @@ Rails.application.routes.draw do
   resources :git_stacks do
     member do
       post :deploy
+      post :deploy_fleet
       post :sync
       post :rollback
       post :refresh_drift
@@ -171,7 +180,9 @@ Rails.application.routes.draw do
     resources :credentials, except: [:show]
     get  "edge",      to: "edge#index",     as: :edge
     post "edge",      to: "edge#update"
-    post "edge/regenerate_key", to: "edge#regenerate_key", as: :edge_regenerate_key
+    post "edge/regenerate_key",     to: "edge#regenerate_key",     as: :edge_regenerate_key
+    post "edge/generate_enrollment", to: "edge#generate_enrollment", as: :edge_generate_enrollment
+    post "edge/nodes/:id/revoke",   to: "edge#revoke_node",        as: :edge_revoke_node
     get  "help",      to: "help#index",     as: :help
   end
 

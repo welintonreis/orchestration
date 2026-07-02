@@ -1,4 +1,6 @@
 class HostMetric < ApplicationRecord
+  belongs_to :edge_node, optional: true
+
   validates :cpu_percent, :ram_percent, :disk_percent, :swap_percent,
             :load_1m, :load_5m, :load_15m,
             presence: true, numericality: { greater_than_or_equal_to: 0 }

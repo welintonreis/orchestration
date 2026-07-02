@@ -160,4 +160,15 @@ class GitStackTest < ActiveSupport::TestCase
     assert stack.webhook_token.present?
     assert_equal 64, stack.webhook_token.length
   end
+
+  # Fleet deploy target
+
+  test "fleet? is false without a target_group" do
+    assert_not build_git_stack.fleet?
+  end
+
+  test "fleet? is true once a target_group is set" do
+    group = EnvironmentGroup.create!(name: "fleet-group-#{SecureRandom.hex(4)}")
+    assert build_git_stack(target_group: group).fleet?
+  end
 end

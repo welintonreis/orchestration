@@ -7,7 +7,10 @@ class GitStack < ApplicationRecord
 
   belongs_to :environment
   belongs_to :git_credential, optional: true
+  belongs_to :target_group, class_name: "EnvironmentGroup", optional: true
   has_many :revisions, -> { recent }, class_name: "GitStackRevision", dependent: :destroy
+
+  def fleet? = target_group.present?
 
   validates :name, presence: true
   validates :source_type, inclusion: { in: SOURCE_TYPES }

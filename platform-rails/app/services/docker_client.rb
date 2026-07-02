@@ -20,6 +20,29 @@ class DockerClient
     get("/version")
   end
 
+  # "docker" or "podman" — Podman's daemon speaks the same compat API but
+  # identifies itself in /version's Components list. Cached per-endpoint
+  # (not per-instance) since DockerClient itself is rebuilt every request.
+  def runtime
+    Rails.cache.fetch("docker_client/runtime/#{@endpoint}", expires_in: 10.minutes) do
+      components = version["Components"] || []
+      components.any? { |c| c["Name"] == "Podman Engine" } ? "podman" : "docker"
+    rescue Error
+      "docker"
+    end
+  end
+
+  # Podman never runs Swarm, regardless of what LocalNodeState reports —
+  # ponytail: no separate podman probe, absence of swarm is the capability.
+  def capabilities
+    @capabilities ||= begin
+      swarm = runtime == "docker" && info["Swarm"]&.dig("LocalNodeState") == "active"
+      { swarm: swarm, compose: true, pods: runtime == "podman" }
+    rescue Error
+      { swarm: false, compose: true, pods: false }
+    end
+  end
+
   # Containers
 
   def containers(all: false)

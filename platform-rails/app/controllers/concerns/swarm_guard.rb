@@ -8,8 +8,7 @@ module SwarmGuard
   private
 
   def require_swarm
-    info = current_docker_client.info rescue {}
-    unless info["Swarm"]&.dig("LocalNodeState") == "active"
+    unless current_docker_client.capabilities[:swarm]
       redirect_to root_path, alert: "Swarm is not active on this environment."
     end
   end

@@ -9,9 +9,18 @@ class ApplicationController < ActionController::Base
 
   prepend_before_action :check_setup
 
-  helper_method :current_docker_client, :active_environment
+  helper_method :current_docker_client, :active_environment, :runtime_capabilities
 
   private
+
+  # Nav visibility: Podman capability is cheap to check (cached 10min) and
+  # tolerant of a down/unreachable daemon — never raises, worst case shows
+  # the swarm-only nav items on an environment that'll redirect on click.
+  def runtime_capabilities
+    @runtime_capabilities ||= current_docker_client.capabilities
+  rescue DockerClient::Error
+    { swarm: true, compose: true, pods: false }
+  end
 
   def check_setup
     redirect_to setup_path unless User.any?
@@ -37,6 +46,6 @@ class ApplicationController < ActionController::Base
   # Thread.new multiple requests) must give each thread its own client
   # built from this rather than reusing current_docker_client.
   def docker_endpoint
-    active_environment&.endpoint || "unix:///var/run/docker.sock"
+    active_environment&.effective_endpoint || "unix:///var/run/docker.sock"
   end
 end

@@ -37,6 +37,18 @@
               class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
       </div>
 
+      <%# Fleet deploy target — optional. Deploy still targets Environment above by
+          default; setting a group additionally enables "Deploy em Frota" (same
+          stack applied to every environment in the group, one at a time). %>
+      <div>
+        <%= f.label :target_group_id, "Grupo de destino (fleet deploy, opcional)", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
+        <%= f.select :target_group_id,
+              @environment_groups.map { |g| [g.name, g.id] },
+              { prompt: "— Nenhum (deploy só no Environment acima) —", include_blank: false },
+              class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
+        <p class="mt-1.5 text-xs text-text-muted">Quando definido, "Deploy em Frota" aplica este stack a todos os environments do grupo, um de cada vez.</p>
+      </div>
+
       <%# Compose file %>
       <div>
         <%= f.label :compose_file, "Compose File", class: "block text-sm font-medium text-text-secondary mb-1.5" %>

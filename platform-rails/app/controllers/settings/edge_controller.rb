@@ -3,11 +3,9 @@ module Settings
     before_action :require_admin!
 
     def index
-      @info = current_docker_client.info rescue {}
-      @edge_key = AppSetting.get("edge_key", default: SecureRandom.hex(32))
-      AppSetting.set("edge_key", @edge_key) if AppSetting.get("edge_key").nil?
+      @edge_key     = EdgeEnrollmentToken.edge_key
       @edge_enabled = AppSetting.get("edge_enabled", default: "false") == "true"
-      @edge_nodes = AppSetting.get("edge_node_count", default: "0").to_i
+      @nodes        = EdgeNode.order(:name)
     end
 
     def update
@@ -19,7 +17,34 @@ module Settings
 
     def regenerate_key
       AppSetting.set("edge_key", SecureRandom.hex(32))
-      redirect_to settings_edge_path, notice: "Chave Edge regenerada."
+      redirect_to settings_edge_path, notice: "Chave Edge regenerada. Enrollment tokens já emitidos deixam de funcionar."
+    end
+
+    # Shows the one-liner exactly once (via flash) — same shown-once
+    # treatment as a freshly generated node token; nothing sensitive is
+    # persisted server-side beyond the signed, short-lived token itself.
+    def generate_enrollment
+      name = params[:node_name].to_s.strip
+      if name.blank?
+        redirect_to settings_edge_path, alert: "Nome do node é obrigatório."
+        return
+      end
+
+      token = EdgeEnrollmentToken.generate(node_name: name)
+      flash[:enrollment_command] = <<~SH.strip
+        docker run -d --restart=always --name redhusk-edge-agent \\
+          -v /var/run/docker.sock:/var/run/docker.sock \\
+          -e EDGE_URL=#{request.base_url} \\
+          -e EDGE_ENROLLMENT_TOKEN=#{token} \\
+          redhusk/orchestration-agent:v0.1.0
+      SH
+      redirect_to settings_edge_path
+    end
+
+    def revoke_node
+      node = EdgeNode.find(params[:id])
+      node.revoke!
+      redirect_to settings_edge_path, notice: "Node \"#{node.name}\" revogado."
     end
   end
 end

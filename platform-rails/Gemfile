@@ -17,6 +17,11 @@ gem "bcrypt", "~> 3.1.7"
 # Docker API via Unix socket (no sidecar, no docker-api gem)
 gem "excon"
 
+# WS frame codec for the edge tunnel's agent-facing side (already a
+# transitive dep via actioncable/websocket-driver) — pinning it directly
+# since EdgeTunnelRegistry drives it by hand, not through ActionCable.
+gem "websocket-driver"
+
 # Hotwire
 gem "turbo-rails"
 gem "stimulus-rails"

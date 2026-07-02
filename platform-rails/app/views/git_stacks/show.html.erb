@@ -3,6 +3,11 @@
 <% content_for :title_actions do %>
   <%= button_to "Deploy Now", deploy_git_stack_path(@git_stack), method: :post,
         class: "inline-flex items-center gap-2 bg-cyan-700 hover:bg-cyan-600 text-text-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
+  <% if @git_stack.fleet? %>
+    <%= button_to "Deploy em Frota (#{@git_stack.target_group.name})", deploy_fleet_git_stack_path(@git_stack), method: :post,
+          data: { turbo_confirm: "Deployar \"#{@git_stack.name}\" em todos os environments do grupo \"#{@git_stack.target_group.name}\"?" },
+          class: "inline-flex items-center gap-2 bg-amber-700 hover:bg-amber-600 text-text-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
+  <% end %>
   <%= link_to "Edit", edit_git_stack_path(@git_stack),
         class: "inline-flex items-center gap-2 bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors" %>
 <% end %>

@@ -1,4 +1,5 @@
 class SecretsController < ApplicationController
+  include SwarmGuard
   before_action :require_operator!, only: %i[remove batch_remove]
 
   # remove/batch_remove redirect back here from inside the lazy

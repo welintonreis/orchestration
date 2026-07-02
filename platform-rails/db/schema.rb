@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_200003) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -52,6 +52,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
     t.index ["action"], name: "index_audit_logs_on_action"
     t.index ["created_at"], name: "index_audit_logs_on_created_at"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
+  end
+
+  create_table "edge_commands", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "edge_node_id", null: false
+    t.datetime "expires_at", null: false
+    t.string "kind", null: false
+    t.text "payload"
+    t.text "result"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["edge_node_id", "status"], name: "index_edge_commands_on_edge_node_id_and_status"
+    t.index ["edge_node_id"], name: "index_edge_commands_on_edge_node_id"
+  end
+
+  create_table "edge_nodes", force: :cascade do |t|
+    t.string "agent_version"
+    t.string "arch"
+    t.datetime "created_at", null: false
+    t.integer "environment_id", null: false
+    t.datetime "last_seen_at"
+    t.string "name", null: false
+    t.string "os"
+    t.datetime "revoked_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid", null: false
+    t.index ["environment_id"], name: "index_edge_nodes_on_environment_id"
+    t.index ["token_digest"], name: "index_edge_nodes_on_token_digest", unique: true
+    t.index ["uuid"], name: "index_edge_nodes_on_uuid", unique: true
   end
 
   create_table "environment_group_memberships", force: :cascade do |t|
@@ -162,6 +192,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
     t.string "status", default: "idle"
     t.string "sync_status", default: "unknown"
     t.string "sync_window"
+    t.integer "target_group_id"
     t.string "token_ciphertext"
     t.datetime "updated_at", null: false
     t.string "username"
@@ -170,6 +201,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
     t.text "yaml_content"
     t.index ["environment_id"], name: "index_git_stacks_on_environment_id"
     t.index ["git_credential_id"], name: "index_git_stacks_on_git_credential_id"
+    t.index ["target_group_id"], name: "index_git_stacks_on_target_group_id"
     t.index ["uuid"], name: "index_git_stacks_on_uuid", unique: true
   end
 
@@ -177,6 +209,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
     t.float "cpu_percent", null: false
     t.datetime "created_at", null: false
     t.float "disk_percent", null: false
+    t.integer "edge_node_id"
     t.float "load_15m", null: false
     t.float "load_1m", null: false
     t.float "load_5m", null: false
@@ -184,6 +217,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
     t.float "swap_percent", default: 0.0, null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_host_metrics_on_created_at"
+    t.index ["edge_node_id"], name: "index_host_metrics_on_edge_node_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -244,13 +278,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_29_000002) do
   end
 
   add_foreign_key "audit_logs", "users"
+  add_foreign_key "edge_commands", "edge_nodes"
+  add_foreign_key "edge_nodes", "environments"
   add_foreign_key "environment_group_memberships", "environment_groups"
   add_foreign_key "environment_group_memberships", "environments"
   add_foreign_key "environment_registries", "environments"
   add_foreign_key "environment_tag_assignments", "environment_tags"
   add_foreign_key "environment_tag_assignments", "environments"
   add_foreign_key "git_stack_revisions", "git_stacks"
+  add_foreign_key "git_stacks", "environment_groups", column: "target_group_id"
   add_foreign_key "git_stacks", "environments"
+  add_foreign_key "host_metrics", "edge_nodes"
   add_foreign_key "sessions", "users"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"

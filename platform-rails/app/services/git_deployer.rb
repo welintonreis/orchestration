@@ -92,7 +92,7 @@ class GitDeployer
   end
 
   def resolved_image_digests
-    client = DockerClient.new(endpoint: @stack.environment.endpoint)
+    client = DockerClient.new(endpoint: @stack.environment.effective_endpoint)
     client.services
           .select { |s| s.dig("Spec", "Labels", "com.docker.stack.namespace") == @stack.name }
           .each_with_object({}) do |s, acc|
@@ -134,11 +134,12 @@ class GitDeployer
   # user-supplied) weren't escaped, which was a command injection hole.
   # Array args go straight to exec, no shell involved.
   def build_command
+    host = @stack.environment.effective_endpoint
     case @stack.deploy_mode
     when "swarm_stack"
-      ["docker", "stack", "deploy", "--compose-file", @compose, "--with-registry-auth", @stack.name]
+      ["docker", "-H", host, "stack", "deploy", "--compose-file", @compose, "--with-registry-auth", @stack.name]
     when "compose"
-      ["docker", "compose", "-f", @compose, "up", "-d", "--remove-orphans"]
+      ["docker", "-H", host, "compose", "-f", @compose, "up", "-d", "--remove-orphans"]
     end
   end
 

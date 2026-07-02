@@ -125,7 +125,7 @@ class GitDriftService
   # ── live side (swarm) ──
 
   def client
-    @client ||= DockerClient.new(endpoint: @stack.environment.endpoint)
+    @client ||= DockerClient.new(endpoint: @stack.environment.effective_endpoint)
   end
 
   def live_raw_services

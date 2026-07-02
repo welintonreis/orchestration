@@ -1,7 +1,41 @@
 # Spec: Edge Compute Avançado (agents multi-host)
 
-> Criado: 2026-07-02 | Status: draft | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado (fases 1-3), aguardando bump/deploy | Autor: Claude/Welinton
 > Substitui o stub atual de Settings→Edge (edge_key/edge_enabled em AppSetting)
+
+> Implementado: `EdgeNode`/`EdgeCommand` models, `EdgeEnrollmentToken`
+> (`ActiveSupport::MessageVerifier`, sem JWT — o uuid embutido no token é o
+> guard de single-use via unique index, não um nonce em cache), agent Go
+> em `agent/` (enroll, heartbeat+métricas, dtach não se aplica aqui),
+> `EdgeTunnelRegistry` + `Api::EdgeTunnelsController` (WS), fleet deploy via
+> `EdgeFleetDeployJob`. `Environment#effective_endpoint` torna tudo
+> transparente: `DockerClient`/`TtydManager`/`GitDeployer` não sabem que
+> edge nodes existem. Verificado end-to-end neste sandbox: agent real
+> enrolado contra servidor dev real, containers/dashboard carregados através
+> do túnel batendo no docker.sock local.
+>
+> Desvios da descrição original (decisões, não bugs):
+> - **N conexões WS dedicadas, não yamux sobre 1 WS** — yamux não tem
+>   implementação madura em Ruby; multiplexar streams à mão sem nenhum
+>   agente real para testar contra era o lugar errado pra introduzir bugs
+>   sutis num túnel de rede. Cada open_stream = 1 WS de dado dedicado
+>   (agent disca de novo, ainda 100% outbound). Overhead maior por conexão
+>   concorrente, troca aceitável por correção verificável.
+> - **Framing WS via gem `websocket-driver`** (lado hub) e `gorilla/websocket`
+>   (lado agent Go) — nenhum parser/masking escrito à mão; ambas já
+>   maduras/testadas (websocket-driver já era dependência transitiva via
+>   actioncable).
+> - **k3s-via-edge (fase 4) não implementado** — bloqueado por depender de
+>   `feature-kubernetes-k3s.md`, que ainda não existe.
+> - **Sem tabela de histórico por-node no fleet deploy** — resultados
+>   agregados em `git_stacks.status`/`last_deploy_output` (mesmas colunas do
+>   deploy single-environment), não em linhas por node. Promover pra tabela
+>   própria é o follow-up natural quando fleet deploy for usado o bastante
+>   pra querer histórico.
+> - **`EdgeCommand` (fila offline-tolerante) implementada e testada, mas sem
+>   producer real** — heartbeat já poll/acks pendentes, mas nada hoje
+>   enfileira um "kind" concreto (open_stream usa o control channel ao vivo,
+>   não a fila). Infra pronta pro próximo uso.
 
 ## Objetivo
 

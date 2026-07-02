@@ -93,6 +93,7 @@ class ContainersControllerTest < ActionDispatch::IntegrationTest
   # a full mock library.
   def docker_client_with(methods)
     obj = Object.new
+    obj.define_singleton_method(:capabilities) { { swarm: false, compose: true, pods: false } }
     methods.each do |method_name, (return_val, *)|
       obj.define_singleton_method(method_name) { |*| return_val }
     end
@@ -101,6 +102,7 @@ class ContainersControllerTest < ActionDispatch::IntegrationTest
 
   def docker_client_raising(error_class)
     obj = Object.new
+    obj.define_singleton_method(:capabilities) { { swarm: false, compose: true, pods: false } }
     obj.define_singleton_method(:container) { |*| raise error_class }
     obj.define_singleton_method(:exec_run_output) { |*| raise error_class }
     obj

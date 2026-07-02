@@ -49,22 +49,87 @@
         Regenerar Chave
       <% end %>
     </div>
+
+    <div class="bg-surface-raised border border-border rounded-xl p-6">
+      <h3 class="text-sm font-semibold text-text-primary mb-3">Novo Node Edge</h3>
+      <p class="text-xs text-text-secondary mb-3">Gera um token de enrollment de uso único (válido por 15 minutos) e o comando <code>docker run</code> pronto para colar no host remoto.</p>
+      <%= form_with url: settings_edge_generate_enrollment_path, method: :post, local: true, class: "flex items-center gap-2" do %>
+        <input type="text" name="node_name" placeholder="nome-do-node" required
+          class="flex-1 bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
+        <button type="submit" class="btn-primary whitespace-nowrap">Gerar Comando</button>
+      <% end %>
+
+      <% if flash[:enrollment_command] %>
+        <div class="mt-4">
+          <p class="text-xs text-amber-600 dark:text-amber-400 mb-2">Copie agora — este comando não será mostrado de novo (o token expira em 15 min e só pode ser usado uma vez).</p>
+          <div class="flex items-start gap-2">
+            <pre id="enrollment-command" class="flex-1 px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs font-mono text-text-secondary whitespace-pre-wrap break-all"><%= flash[:enrollment_command] %></pre>
+            <%= button_to "Copiar", "#", onclick: "navigator.clipboard.writeText(document.getElementById('enrollment-command').textContent); this.textContent='Copiado!'; setTimeout(() => this.textContent='Copiar', 2000); return false;", class: "btn-secondary text-xs px-3 py-2 whitespace-nowrap" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
   </div>
 
   <div class="space-y-4">
     <div class="bg-surface-raised border border-border rounded-xl p-5">
       <h3 class="text-sm font-semibold text-text-primary mb-2">Nós Edge</h3>
-      <p class="text-3xl font-bold text-text-primary"><%= @edge_nodes %></p>
+      <p class="text-3xl font-bold text-text-primary"><%= @nodes.size %></p>
       <p class="text-xs text-text-muted mt-1">registrado(s)</p>
     </div>
     <div class="bg-surface-raised border border-border rounded-xl p-5">
       <h3 class="text-sm font-semibold text-text-primary mb-2">Como usar</h3>
       <ol class="text-xs text-text-secondary space-y-2 list-decimal list-inside">
         <li>Habilite o Edge Compute acima</li>
-        <li>Copie a chave Edge</li>
-        <li>No host remoto, instale o agente Docker</li>
-        <li>Configure o agente com a chave e URL desta instância</li>
+        <li>Gere um comando de enrollment com um nome pro node</li>
+        <li>Cole e rode o comando no host remoto (Docker já instalado)</li>
+        <li>O node aparece abaixo assim que enviar o primeiro heartbeat</li>
       </ol>
     </div>
   </div>
+</div>
+
+<div class="bg-surface-raised border border-border rounded-xl p-6 mt-6">
+  <h3 class="text-sm font-semibold text-text-primary mb-4">Nós registrados</h3>
+  <% if @nodes.empty? %>
+    <p class="text-sm text-text-muted">Nenhum node edge registrado ainda.</p>
+  <% else %>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-text-muted uppercase tracking-wide border-b border-border">
+          <th class="py-2 pr-4">Nome</th>
+          <th class="py-2 pr-4">Status</th>
+          <th class="py-2 pr-4">Último contato</th>
+          <th class="py-2 pr-4">Agente</th>
+          <th class="py-2 pr-4">SO/Arch</th>
+          <th class="py-2 pr-4"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @nodes.each do |node| %>
+          <tr class="border-b border-border-subtle last:border-0">
+            <td class="py-2 pr-4 text-text-primary"><%= node.name %></td>
+            <td class="py-2 pr-4">
+              <% status_classes = { "online" => "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800/50",
+                                     "offline" => "bg-surface-inset text-text-secondary border-border-subtle",
+                                     "revoked" => "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800/50" } %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border <%= status_classes[node.status] %>">
+                <%= node.status.capitalize %>
+              </span>
+            </td>
+            <td class="py-2 pr-4 text-text-secondary"><%= node.last_seen_at ? time_ago_in_words(node.last_seen_at) + " atrás" : "nunca" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= node.agent_version || "—" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= [node.os, node.arch].compact.join("/").presence || "—" %></td>
+            <td class="py-2 pr-4 text-right">
+              <% unless node.revoked? %>
+                <%= button_to "Revogar", settings_edge_revoke_node_path(node), method: :post,
+                    data: { turbo_confirm: "Revogar o node \"#{node.name}\"? O agente perde acesso imediatamente." },
+                    class: "text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
 </div>
