@@ -216,3 +216,56 @@ ao rolar (mesmo bug visto no RedHusky SSH). Protocolo ttyd, `TtydManager`, proxy
 e view (header/root toggle) inalterados.
 
 Re-vendorizar (upgrade de versão): `./bin/importmap pin @xterm/xterm @xterm/addon-fit @xterm/addon-web-links @xterm/addon-clipboard` (baixa pra `vendor/javascript`).
+
+---
+
+## Postmortem — terminal "mudo/parado" (v0.9.14, 2026-07-02)
+
+**Sintoma:** terminal conectava (`● Connected`), mas nunca mostrava prompt nem
+eco de teclas — parecia travado/lento. Nenhum erro em log.
+
+**Causa raiz:** o fallback de shell no `TtydManager#docker_exec_cmd`:
+
+```sh
+/bin/sh -c 'exec bash 2>/dev/null || exec sh'
+```
+
+O redirect `2>/dev/null` aplicado a um `exec` é **herdado permanentemente**
+pelo processo exec'ado. Bash interativo escreve **prompt (PS1) e eco de
+teclas no stderr** — tudo ia para `/dev/null`. stdout de comandos ainda
+apareceria, mas sem prompt/eco o terminal parece morto. Containers só com
+`sh` (sem bash) não eram afetados — por isso o bug parecia intermitente.
+
+**Fix:**
+
+```sh
+/bin/sh -c 'command -v bash >/dev/null 2>&1 && exec bash; exec sh'
+```
+
+Detecta bash sem tocar no stderr da sessão. Também adicionado
+`-e TERM=xterm-256color` no `docker exec` (cores corretas em TUIs).
+
+**Como foi diagnosticado (método reutilizável):**
+
+1. **Probe Python end-to-end** (`websockets`): login via cookie de sessão →
+   WS `wss://…/containers/:id/ttyd-ws` subprotocolo `tty` → envia JSON_DATA
+   inicial → mede: tempo até 1º output, latência de eco por tecla (10×),
+   round-trip de comando. Reproduziu: WS abria, init chegava (debug log
+   `[init]`), `docker exec` spawnava (visto em `/proc`), **zero output**.
+2. **Bisseção por camadas:** ttyd rodado direto no host (sem
+   Traefik/Thruster/Puma) com o MESMO comando → também mudo ⇒ proxy Rails
+   inocente. ttyd com `bash` local puro → prompt OK ⇒ culpa do wrapper
+   `docker exec …`.
+3. **A/B do wrapper:** com `2>/dev/null` = mudo; com `command -v` = prompt
+   `root@…#`. Confirmado.
+
+**Números pós-fix (caminho completo via orchestration.redhusky.com.br):**
+prompt em ~250ms, eco p50 = 13ms (min 5ms), comando round-trip 9ms.
+
+**Debug tools que ficam:** `?debug=1` na URL do terminal (ou
+`TTYD_DEBUG_LOG=1`) loga frames decodificados nas duas direções
+(`[SENT]`/`[RAN]`) — compara o que o browser mandou vs o que o shell rodou.
+
+**Regra geral:** nunca usar `exec CMD 2>/dev/null` para fallback de shell
+interativo — o stderr morre para a sessão inteira. Shells interativos
+(bash/zsh/sh) escrevem prompt e eco no stderr, não no stdout.

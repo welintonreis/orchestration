@@ -79,7 +79,9 @@ class DockerClient
     end
   end
 
-  def exec_create(container_id, cmd: ["sh", "-c", "exec bash 2>/dev/null || exec sh"], tty: true, user: nil, env: nil)
+  # Probe for bash with `command -v` — `exec bash 2>/dev/null` would pin the
+  # interactive session's stderr (where bash writes prompt + echo) to /dev/null.
+  def exec_create(container_id, cmd: ["sh", "-c", "command -v bash >/dev/null 2>&1 && exec bash; exec sh"], tty: true, user: nil, env: nil)
     body = { AttachStdin: true, AttachStdout: true, AttachStderr: true, Tty: tty, Cmd: cmd }
     body[:User] = user if user.present?
     body[:Env]  = Array(env).presence || ["TERM=xterm-256color"]

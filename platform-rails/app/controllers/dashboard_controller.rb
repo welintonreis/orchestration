@@ -1,22 +1,32 @@
 class DashboardController < ApplicationController
   def index
-    client = current_docker_client
+    # Seven sequential Docker API round-trips made the dashboard take ~5.5s
+    # on a busy host. Fan them out — one DockerClient per thread (an Excon
+    # connection can't be shared across threads, same as
+    # ContainersController#fetch_container_resources).
+    endpoint = docker_endpoint
+    fetch = {
+      docker_info: -> (c) { c.info },
+      containers:  -> (c) { c.containers(all: true) },
+      images:      -> (c) { c.images },
+      volumes:     -> (c) { c.volumes["Volumes"] || [] },
+      networks:    -> (c) { c.networks },
+      services:    -> (c) { c.services },
+      nodes:       -> (c) { c.nodes }
+    }
+    results = fetch.map { |key, call|
+      Thread.new { [key, (call.call(DockerClient.new(endpoint: endpoint)) rescue nil)] }
+    }.map(&:value).to_h
 
-    @docker_info = client.info rescue {}
-    @containers  = client.containers(all: true) rescue []
-    @images      = client.images rescue []
-    @volumes     = (client.volumes rescue {})["Volumes"] || []
-    @networks    = client.networks rescue []
+    @docker_info = results[:docker_info] || {}
+    @containers  = results[:containers]  || []
+    @images      = results[:images]      || []
+    @volumes     = results[:volumes]     || []
+    @networks    = results[:networks]    || []
 
-    # Swarm
     @swarm_active = @docker_info["Swarm"]&.dig("LocalNodeState") == "active"
-    if @swarm_active
-      @services = client.services rescue []
-      @nodes    = client.nodes rescue []
-    else
-      @services = []
-      @nodes    = []
-    end
+    @services     = @swarm_active ? (results[:services] || []) : []
+    @nodes        = @swarm_active ? (results[:nodes]    || []) : []
 
     @latest_metric  = HostMetric.latest
     @metrics_24h    = HostMetric.last_24h.order(:created_at)
