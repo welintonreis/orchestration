@@ -73,10 +73,14 @@ class TtydManager
     cmd  = ["docker"]
     host = docker_host(endpoint)
     cmd += ["-H", host] if host
-    cmd += ["exec", "-it"]
+    cmd += ["exec", "-it", "-e", "TERM=xterm-256color"]
     cmd += ["-u", user] if user.present?
-    # Prefer bash, fall back to sh.
-    shell = [container_id, "/bin/sh", "-c", "exec bash 2>/dev/null || exec sh"]
+    # Prefer bash, fall back to sh. Probe with `command -v` instead of
+    # redirecting exec's stderr: `exec bash 2>/dev/null` pins the WHOLE
+    # interactive session's stderr to /dev/null, and bash writes its prompt
+    # and keystroke echo to stderr — the terminal connected but showed
+    # nothing, appearing frozen.
+    shell = [container_id, "/bin/sh", "-c", "command -v bash >/dev/null 2>&1 && exec bash; exec sh"]
 
     if dtach_enabled?
       # dtach -A: attach to existing session or create new one.
