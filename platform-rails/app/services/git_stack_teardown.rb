@@ -17,6 +17,7 @@ class GitStackTeardown
     case @stack.deploy_mode
     when "swarm_stack" then teardown_swarm
     when "compose"      then teardown_compose
+    when "kubernetes"   then teardown_kubernetes
     end
   end
 
@@ -43,5 +44,20 @@ class GitStackTeardown
 
     host = @stack.environment.effective_endpoint
     Open3.capture3("docker", "-H", host, "compose", "-f", compose_path, "down", chdir: File.dirname(compose_path))
+  end
+
+  def teardown_kubernetes
+    return if @stack.repo_url.blank?
+
+    manifest_path = File.join(GitUnpacker.repo_dir(@stack).to_s, @stack.compose_file)
+    return unless File.exist?(manifest_path)
+
+    env = @stack.environment
+    KubeClient.with_temp_kubeconfig(api_url: env.kube_api_url, token: env.kube_token, ca_cert: env.kube_ca_cert, client_cert: env.kube_client_cert, client_key: env.kube_client_key) do |kubeconfig|
+      Open3.capture3(
+        { "KUBECONFIG" => kubeconfig }, "kubectl", "delete", "-f", manifest_path,
+        chdir: File.dirname(manifest_path)
+      )
+    end
   end
 end

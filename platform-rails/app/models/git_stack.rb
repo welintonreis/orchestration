@@ -1,5 +1,5 @@
 class GitStack < ApplicationRecord
-  DEPLOY_MODES  = %w[swarm_stack compose].freeze
+  DEPLOY_MODES  = %w[swarm_stack compose kubernetes].freeze
   STATUSES      = %w[idle deploying deployed failed].freeze
   SOURCE_TYPES  = %w[git yaml zip].freeze
   SYNC_STATUSES = %w[synced out_of_sync unknown].freeze

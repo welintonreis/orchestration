@@ -1,7 +1,30 @@
 # Spec: Kubernetes — Fase 1 (k3s single-node)
 
-> Criado: 2026-07-02 | Status: draft | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado, aguardando bump/deploy | Autor: Claude/Welinton
 > Depende de: `feature-runtime-abstraction-podman.md` (conceito de capability por environment)
+
+> Implementado: `KubeClient` (Excon + kubectl shellout p/ apply/exec, mesma
+> filosofia do `DockerClient`), migration `environments.kube_*` (+ `encrypts`
+> real via Active Record Encryption — chaves geradas e adicionadas às
+> credentials nesta sessão), telas `Kube::` completas (Workloads/Pods/
+> Services/ConfigMaps/Secrets/Nodes/Apply), sidebar troca Docker/Swarm por
+> Kubernetes quando o environment ativo é k8s, terminal via ttyd+kubectl exec
+> (kubeconfig temporário, token nunca no argv), `GitStack#deploy_mode
+> "kubernetes"` (kubectl apply/delete), kubectl instalado no Dockerfile
+> (pinado v1.31.4, testado no build real). Testado via Excon stub (mesmo
+> padrão do DockerClient) — sem k3s real neste host por decisão explícita
+> (evitar mudar infra do host de produção só para verificação).
+>
+> Desvios/cortes de escopo:
+> - **Logs sem streaming ao vivo na UI** — `KubeClient#pod_logs` já suporta
+>   `follow:` (chunked), mas a tela renderiza snapshot estático (like
+>   `container_logs` antes do LogsChannel). Streaming fica pra depois.
+> - **kubectl exec sem troca de usuário** — ao contrário de `docker exec -u`,
+>   `kubectl exec` não tem flag equivalente; não implementado (usaria `su`
+>   dentro do container, frágil e fora de escopo).
+> - **effective_endpoint não usado por ambientes k8s** — Docker/TtydManager/
+>   GitDeployer continuam intocados; k8s tem seu próprio client e telas
+>   inteiramente separados (por design, ver Anti-patterns).
 
 ## Objetivo
 

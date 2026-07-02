@@ -110,4 +110,40 @@ class TtydManagerTest < ActiveSupport::TestCase
   ensure
     ENV["DTACH_SESSIONS"] = original
   end
+
+  # kubectl_exec_cmd
+
+  test "kubectl_exec_cmd sets KUBECONFIG via env, not kubectl argv" do
+    cmd = manager.send(:kubectl_exec_cmd, "web-1", "default", nil, "/tmp/kubeconfig-abc")
+    assert_equal "env", cmd.first
+    assert_equal "KUBECONFIG=/tmp/kubeconfig-abc", cmd[1]
+    assert_equal "kubectl", cmd[2]
+    assert_not_includes cmd.join(" "), "--token"
+  end
+
+  test "kubectl_exec_cmd targets the given namespace and pod" do
+    cmd = manager.send(:kubectl_exec_cmd, "web-1", "prod", nil, "/tmp/kc")
+    assert_includes cmd, "-n"
+    assert_equal "prod", cmd[cmd.index("-n") + 1]
+    assert_includes cmd, "web-1"
+  end
+
+  test "kubectl_exec_cmd includes -c when a container is given" do
+    cmd = manager.send(:kubectl_exec_cmd, "web-1", "default", "app", "/tmp/kc")
+    assert_includes cmd, "-c"
+    assert_equal "app", cmd[cmd.index("-c") + 1]
+  end
+
+  test "kubectl_exec_cmd omits the container flag when no container given" do
+    # "-c" still appears once, from the trailing `/bin/sh -c "..."` — only
+    # kubectl's own container flag (a second "-c" before the pod name) should
+    # be absent.
+    cmd = manager.send(:kubectl_exec_cmd, "web-1", "default", nil, "/tmp/kc")
+    assert_equal 1, cmd.count("-c")
+  end
+
+  test "kubectl_exec_cmd probes for bash before falling back to sh" do
+    cmd = manager.send(:kubectl_exec_cmd, "web-1", "default", nil, "/tmp/kc")
+    assert_includes cmd.last, "command -v bash"
+  end
 end

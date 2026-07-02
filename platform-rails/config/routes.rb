@@ -11,6 +11,36 @@ Rails.application.routes.draw do
     get  "edge/tunnel",           to: "edge_tunnels#connect", as: :edge_tunnel
   end
 
+  # ── Kubernetes (environment endpoint_type: kubernetes) ──
+  namespace :kube do
+    get "fleet", to: "fleet#index", as: :fleet
+
+    get    "workloads",                  to: "workloads#index",   as: :workloads
+    post   "workloads/:kind/:name/scale",   to: "workloads#scale",   as: :workload_scale
+    post   "workloads/:kind/:name/restart", to: "workloads#restart", as: :workload_restart
+    delete "workloads/:kind/:name",         to: "workloads#destroy", as: :workload
+
+    get    "pods",                to: "pods#index",    as: :pods
+    get    "pods/:name/logs",     to: "pods#logs",      as: :pod_logs
+    get    "pods/:name/terminal", to: "pods#terminal",  as: :pod_terminal
+    get    "pods/:name/ttyd-ws",  to: "pods#ttyd_ws",   as: :pod_ttyd_ws
+    delete "pods/:name",          to: "pods#destroy",   as: :pod
+
+    get    "services",       to: "services#index",   as: :services
+    delete "services/:name", to: "services#destroy",  as: :service
+
+    get    "configmaps",       to: "config_maps#index",  as: :config_maps
+    delete "configmaps/:name", to: "config_maps#destroy", as: :config_map
+
+    get    "secrets",       to: "secrets#index",   as: :secrets
+    delete "secrets/:name", to: "secrets#destroy",  as: :secret
+
+    get "nodes", to: "nodes#index", as: :nodes
+
+    get  "apply", to: "apply#new", as: :apply
+    post "apply", to: "apply#create"
+  end
+
   # ── Main app routes ──
   root "dashboard#index"
 
@@ -139,6 +169,8 @@ Rails.application.routes.draw do
     member do
       post  :add_member
       delete :remove_member
+      post  :add_environment_permission
+      delete :remove_environment_permission
     end
   end
   get "roles", to: "roles#index", as: :roles
@@ -178,6 +210,8 @@ Rails.application.routes.draw do
     get  "auth",      to: "auth#index",     as: :auth
     post "auth",      to: "auth#update"
     resources :credentials, except: [:show]
+    get  "kubeconfig_import", to: "kubeconfig_imports#new",    as: :kubeconfig_import
+    post "kubeconfig_import", to: "kubeconfig_imports#create"
     get  "edge",      to: "edge#index",     as: :edge
     post "edge",      to: "edge#update"
     post "edge/regenerate_key",     to: "edge#regenerate_key",     as: :edge_regenerate_key

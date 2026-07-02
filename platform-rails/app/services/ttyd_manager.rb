@@ -28,7 +28,7 @@ class TtydManager
   TTYD_BIN   = ENV.fetch("TTYD_BIN", "ttyd")
   START_WAIT = 3.0 # seconds to wait for ttyd to bind its port
 
-  Session = Struct.new(:token, :port, :pid)
+  Session = Struct.new(:token, :port, :pid, :cleanup_path)
 
   def initialize
     @mutex    = Mutex.new
@@ -41,7 +41,22 @@ class TtydManager
   def start(container_id, endpoint: nil, user: nil)
     @mutex.synchronize do
       token = SecureRandom.hex(8)
-      @sessions[token] = spawn_ttyd(token, container_id, endpoint, user)
+      @sessions[token] = spawn_ttyd(token, docker_exec_cmd(container_id, endpoint, user))
+    end
+  end
+
+  # Same ttyd/proxy machinery, pointed at `kubectl exec` instead of
+  # `docker exec` — the token never touches argv (kubeconfig file, same
+  # lesson as KubeClient#apply), and that temp file's cleanup_path is
+  # deleted in #stop alongside the ttyd process.
+  def start_kubernetes(pod_name, environment:, namespace:, container: nil)
+    @mutex.synchronize do
+      token = SecureRandom.hex(8)
+      kubeconfig = KubeClient.write_temp_kubeconfig(
+        api_url: environment.kube_api_url, token: environment.kube_token, ca_cert: environment.kube_ca_cert,
+        client_cert: environment.kube_client_cert, client_key: environment.kube_client_key
+      )
+      @sessions[token] = spawn_ttyd(token, kubectl_exec_cmd(pod_name, namespace, container, kubeconfig), cleanup_path: kubeconfig)
     end
   end
 
@@ -50,6 +65,7 @@ class TtydManager
     return if token.nil?
     sess = @mutex.synchronize { @sessions.delete(token) }
     return unless sess
+    File.delete(sess.cleanup_path) if sess.cleanup_path && File.exist?(sess.cleanup_path)
     Process.kill("TERM", sess.pid)
   rescue Errno::ESRCH
     # already gone (--once exit) — nothing to kill
@@ -57,16 +73,17 @@ class TtydManager
 
   private
 
-  def spawn_ttyd(token, container_id, endpoint, user)
+  def spawn_ttyd(token, exec_cmd, cleanup_path: nil)
     port = free_port
     cmd  = [TTYD_BIN, "--interface", BIND_ADDR, "--port", port.to_s,
-            "--once", "--writable", "--"] + docker_exec_cmd(container_id, endpoint, user)
-    # pgroup: true so the OS reaps the ttyd + its docker child if this process
-    # dies; in/out/err to /dev/null since the proxy only talks to it over TCP.
+            "--once", "--writable", "--"] + exec_cmd
+    # pgroup: true so the OS reaps the ttyd + its docker/kubectl child if this
+    # process dies; in/out/err to /dev/null since the proxy only talks to it
+    # over TCP.
     pid = Process.spawn(*cmd, in: "/dev/null", out: "/dev/null", err: "/dev/null", pgroup: true)
     Process.detach(pid)
     wait_for_port(port)
-    Session.new(token, port, pid)
+    Session.new(token, port, pid, cleanup_path)
   end
 
   def docker_exec_cmd(container_id, endpoint, user)
@@ -90,6 +107,18 @@ class TtydManager
     else
       cmd + shell
     end
+  end
+
+  # `env KUBECONFIG=... kubectl ...` rather than threading an env hash
+  # through Process.spawn — the token stays out of argv (via the
+  # kubeconfig file) without needing a second code path for spawning.
+  # kubectl exec has no user-switch flag (unlike `docker exec -u`), so
+  # there's no `user` parameter to plumb through here.
+  def kubectl_exec_cmd(pod_name, namespace, container, kubeconfig_path)
+    cmd = ["env", "KUBECONFIG=#{kubeconfig_path}", "kubectl", "exec", "-it", "-n", namespace]
+    cmd += ["-c", container] if container.present?
+    cmd += [pod_name, "--", "/bin/sh", "-c", "command -v bash >/dev/null 2>&1 && exec bash; exec sh"]
+    cmd
   end
 
   def dtach_enabled?

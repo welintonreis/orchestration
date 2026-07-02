@@ -110,36 +110,67 @@
 
             <%= sidebar_link "Dashboard",   root_path,        icon: :dashboard,   open: "sb" %>
             <%= sidebar_link "Segurança",   security_path,    icon: :auth_shield, open: "sb" %>
-            <%= sidebar_link "Stacks",      stacks_path,      icon: :stacks,     open: "sb" %>
-            <% if runtime_capabilities[:swarm] %>
-              <%= sidebar_link "Serviços",  swarm_services_path, icon: :services, open: "sb" %>
+            <% if Environment.where(endpoint_type: "kubernetes").exists? %>
+              <%# Cross-cluster view — shown regardless of which environment is
+                  currently active, since it spans all of them at once. %>
+              <%= sidebar_link "Fleet K8s", kube_fleet_path, icon: :nodes, open: "sb" %>
             <% end %>
-            <%= sidebar_link "Containers",  containers_path,  icon: :containers, open: "sb" %>
-            <%= sidebar_link "Imagens",     images_path,      icon: :images,     open: "sb" %>
-            <%= sidebar_link "Redes",       networks_path,    icon: :networks,   open: "sb" %>
-            <%= sidebar_link "Volumes",     volumes_path,     icon: :volumes,    open: "sb" %>
-            <% if runtime_capabilities[:swarm] %>
-              <%= sidebar_link "Configs",     configs_path,     icon: :configs,    open: "sb" %>
-              <%= sidebar_link "Secrets",     secrets_path,     icon: :secrets,    open: "sb" %>
 
-              <%# Swarm collapsible %>
+            <% if active_environment&.kubernetes? %>
+              <%# Kubernetes collapsible — replaces the Docker/Swarm nav entirely
+                  while a kubernetes environment is active (different API, chrome
+                  reused instead: same rows/turbo-frame/table styling). %>
               <button @click="swarm = !swarm"
                       class="w-full flex items-center gap-2.5 px-3 py-2 mt-1 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group">
                 <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                   <%= sidebar_icon(:swarm_hex).html_safe %>
                 </span>
-                <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Swarm</span>
+                <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Kubernetes</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', swarm ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
               </button>
               <div x-show="swarm" x-cloak x-collapse class="pl-4">
-                <%= sidebar_link "Detalhes",    swarm_path,            icon: :details,  open: "sb", exact: true %>
-                <%= sidebar_link "Topologia",   swarm_topology_path,   icon: :topology, open: "sb" %>
-                <%= sidebar_link "Nós",         swarm_nodes_path,      icon: :nodes,    open: "sb" %>
-                <%= sidebar_link "Registries",  swarm_registries_path, icon: :registry, open: "sb" %>
-                <%= sidebar_link "Políticas",   swarm_policies_path,   icon: :policies, open: "sb" %>
+                <%= sidebar_link "Workloads",  kube_workloads_path,  icon: :services,  open: "sb" %>
+                <%= sidebar_link "Pods",       kube_pods_path,       icon: :containers, open: "sb" %>
+                <%= sidebar_link "Services",   kube_services_path,   icon: :networks,  open: "sb" %>
+                <%= sidebar_link "ConfigMaps", kube_config_maps_path,icon: :configs,   open: "sb" %>
+                <%= sidebar_link "Secrets",    kube_secrets_path,    icon: :secrets,   open: "sb" %>
+                <%= sidebar_link "Nodes",      kube_nodes_path,      icon: :nodes,     open: "sb" %>
+                <%= sidebar_link "Apply",      kube_apply_path,      icon: :stacks,    open: "sb" %>
               </div>
+            <% else %>
+              <%= sidebar_link "Stacks",      stacks_path,      icon: :stacks,     open: "sb" %>
+              <% if runtime_capabilities[:swarm] %>
+                <%= sidebar_link "Serviços",  swarm_services_path, icon: :services, open: "sb" %>
+              <% end %>
+              <%= sidebar_link "Containers",  containers_path,  icon: :containers, open: "sb" %>
+              <%= sidebar_link "Imagens",     images_path,      icon: :images,     open: "sb" %>
+              <%= sidebar_link "Redes",       networks_path,    icon: :networks,   open: "sb" %>
+              <%= sidebar_link "Volumes",     volumes_path,     icon: :volumes,    open: "sb" %>
+              <% if runtime_capabilities[:swarm] %>
+                <%= sidebar_link "Configs",     configs_path,     icon: :configs,    open: "sb" %>
+                <%= sidebar_link "Secrets",     secrets_path,     icon: :secrets,    open: "sb" %>
+
+                <%# Swarm collapsible %>
+                <button @click="swarm = !swarm"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 mt-1 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group">
+                  <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                    <%= sidebar_icon(:swarm_hex).html_safe %>
+                  </span>
+                  <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Swarm</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', swarm ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+                <div x-show="swarm" x-cloak x-collapse class="pl-4">
+                  <%= sidebar_link "Detalhes",    swarm_path,            icon: :details,  open: "sb", exact: true %>
+                  <%= sidebar_link "Topologia",   swarm_topology_path,   icon: :topology, open: "sb" %>
+                  <%= sidebar_link "Nós",         swarm_nodes_path,      icon: :nodes,    open: "sb" %>
+                  <%= sidebar_link "Registries",  swarm_registries_path, icon: :registry, open: "sb" %>
+                  <%= sidebar_link "Políticas",   swarm_policies_path,   icon: :policies, open: "sb" %>
+                </div>
+              <% end %>
             <% end %>
 
             <%# Git Deploy — acessível via Stacks > Nova Stack %>

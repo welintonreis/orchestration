@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_200003) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_230000) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -132,6 +132,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_200003) do
     t.datetime "created_at", null: false
     t.string "endpoint", default: "unix:///var/run/docker.sock", null: false
     t.string "endpoint_type", default: "unix", null: false
+    t.string "kube_api_url"
+    t.text "kube_ca_cert"
+    t.text "kube_client_cert_ciphertext"
+    t.text "kube_client_key_ciphertext"
+    t.text "kube_token_ciphertext"
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_environments_on_name", unique: true
@@ -250,6 +255,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_200003) do
     t.string "username"
   end
 
+  create_table "team_environment_permissions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "environment_id", null: false
+    t.string "role", default: "readonly", null: false
+    t.integer "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["environment_id"], name: "index_team_environment_permissions_on_environment_id"
+    t.index ["team_id", "environment_id"], name: "index_team_env_perms_on_team_and_env", unique: true
+    t.index ["team_id"], name: "index_team_environment_permissions_on_team_id"
+  end
+
   create_table "team_memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "role"
@@ -290,6 +306,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_200003) do
   add_foreign_key "git_stacks", "environments"
   add_foreign_key "host_metrics", "edge_nodes"
   add_foreign_key "sessions", "users"
+  add_foreign_key "team_environment_permissions", "environments"
+  add_foreign_key "team_environment_permissions", "teams"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
 end

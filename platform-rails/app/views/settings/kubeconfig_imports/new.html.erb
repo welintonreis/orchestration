@@ -1,0 +1,48 @@
+<% page_title "Import Kubeconfig" %>
+<% page_subtitle "Importa todos os contexts de um kubeconfig — 1 Environment kubernetes por context" %>
+
+<div class="bg-surface-raised border border-border rounded-xl p-6">
+  <%= form_with url: settings_kubeconfig_import_path, method: :post, local: true, multipart: true do %>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-text-secondary mb-1.5">Arquivo kubeconfig</label>
+      <input type="file" name="kubeconfig"
+        class="block w-full text-sm text-text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-surface-inset file:text-text-secondary hover:file:bg-surface-active">
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-text-secondary mb-1.5">— ou cole o conteúdo —</label>
+      <textarea name="kubeconfig_content" rows="12" placeholder="apiVersion: v1&#10;kind: Config&#10;..."
+        class="w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted font-mono focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors"></textarea>
+    </div>
+    <button type="submit" class="btn-primary">Import</button>
+  <% end %>
+
+  <% if @result %>
+    <div class="mt-6 space-y-4">
+      <% if @result.created.any? %>
+        <div>
+          <h3 class="text-sm font-semibold text-text-primary mb-2">Criados</h3>
+          <ul class="text-sm space-y-1">
+            <% @result.created.each do |c| %>
+              <li class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full <%= c.reachable ? 'bg-green-400' : 'bg-amber-400' %>"></span>
+                <%= link_to c.environment.name, environments_path %>
+                <span class="text-xs text-text-muted">(<%= c.reachable ? "acessível" : "sem conectividade agora" %>)</span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <% if @result.skipped.any? %>
+        <div>
+          <h3 class="text-sm font-semibold text-text-primary mb-2">Ignorados</h3>
+          <ul class="text-sm space-y-1 text-text-muted">
+            <% @result.skipped.each do |s| %>
+              <li><%= s.context %>: <%= s.reason %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -1,7 +1,49 @@
 # Spec: Kubernetes — Fase 2 (k8s genérico, multi-cluster)
 
-> Criado: 2026-07-02 | Status: draft | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado (parcial), aguardando bump/deploy | Autor: Claude/Welinton
 > Depende de: `feature-kubernetes-k3s.md` (KubeClient, telas Kube::, ttyd+kubectl)
+
+> Implementado: mTLS no `KubeClient` (client-cert/key via Excon `client_cert_data`/
+> `client_key_data`, sem arquivo temp — só CA ainda usa tmpfile), migration
+> `kube_client_cert/key_ciphertext` (encrypted), `KubeconfigImporter` (multi-
+> context → 1 Environment por context, probe de conectividade best-effort —
+> não bloqueia o import inteiro se 1 cluster estiver fora do ar), tela
+> Settings→Import Kubeconfig, `Kube::FleetController`+view (matriz cluster ×
+> nodes/pods-falhando/deployments-degradados, probes em paralelo com timeout
+> 5s cada, thread por cluster), `TeamEnvironmentPermission` + `Authorization#
+> can?`/`#effective_role` (escopo por-time opt-in — time sem linha = acesso
+> global inalterado; primeira linha liga o escopo pro time inteiro), UI em
+> Times para gerenciar as permissões.
+>
+> **Bugs pré-existentes encontrados e corrigidos durante a implementação**
+> (não introduzidos por esta feature, expostos por ela):
+> - `Environment.active_env` era `scope :active_env, -> { where(active: true).first }`
+>   — scopes do Rails caem de volta pra `all` (Relation não filtrada) sempre
+>   que o body retorna algo falsy, e `.first` retorna nil quando nenhum
+>   environment está ativo. Isso entregava uma Relation em vez de nil/record
+>   pra qualquer chamador (`active_environment&.effective_endpoint` etc. —
+>   quebraria com `NoMethodError` em qualquer app sem environment ativo no
+>   momento). Virou class method comum, sem esse fallback.
+> - `Environment#activate!` fazia `update_all(active:false)` (bulk, ignora
+>   tracking em memória) **antes** de `update!(active:true)` — se o próprio
+>   record já estava `active:true` em memória, o `update!` via dirty-tracking
+>   não via mudança nenhuma e não gravava nada, deixando **nenhum** environment
+>   ativo no banco. Ativar o environment que já estava ativo apagava o estado
+>   inteiro. Ordem invertida (grava self primeiro, sempre efetivo).
+>
+> Cortes de escopo (não implementados):
+> - **Auth exec plugins (fase 2.1)** — `kube_exec_credential_cmd` explicitamente
+>   opcional no próprio spec; não implementado.
+> - **Drift k8s via `kubectl diff`** — GitDriftService continua Swarm-only;
+>   integrar drift k8s no mesmo state machine (sync_status/health/revisions)
+>   é trabalho substancial à parte, não uma extensão de uma tarde.
+> - **RBAC não esconde telas de leitura** — `can?`/`effective_role` estão
+>   plugados em `require_admin!`/`require_operator!` (toda ação de escrita
+>   no app já ganha o escopo "de graça", como o spec pede) mas NÃO em
+>   índices/`show` — um time restrito não vê dados de um cluster fora do
+>   seu escopo, só não consegue agir nele. Esconder leitura exigiria revisar
+>   dezenas de controllers; deixado de fora por ser mudança grande demais
+>   pra uma passada autônoma sem review.
 
 ## Objetivo
 

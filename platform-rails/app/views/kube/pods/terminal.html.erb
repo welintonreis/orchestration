@@ -1,0 +1,27 @@
+<% page_title "Terminal — #{@pod_name}" %>
+
+<% content_for :head do %>
+  <%= stylesheet_link_tag "xterm" %>
+<% end %>
+
+<div class="flex flex-col rounded-xl overflow-hidden border border-border bg-[#0d1117]"
+     style="height: calc(100vh - 128px)">
+
+  <div class="flex items-center gap-3 px-3 py-2 bg-surface-raised/90 border-b border-border flex-shrink-0">
+    <%= link_to kube_pods_path(ns: @namespace),
+          class: "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle transition-colors flex-shrink-0" do %>
+      ← Pods
+    <% end %>
+    <span class="w-px h-4 bg-surface-active flex-shrink-0"></span>
+    <span class="text-xs font-mono text-text-secondary"><%= @namespace %>/<%= @pod_name %></span>
+    <span class="flex-1"></span>
+    <span class="text-[10px] text-text-muted uppercase tracking-widest flex-shrink-0">kubectl exec</span>
+  </div>
+
+  <div data-controller="terminal"
+       data-terminal-container-id-value="<%= @pod_name %>"
+       data-terminal-ws-path-value="<%= kube_pod_ttyd_ws_path(@pod_name, ns: @namespace, container: params[:container]) %>"
+       class="flex-1 min-h-0">
+    <div data-terminal-target="container" class="w-full h-full p-1"></div>
+  </div>
+</div>

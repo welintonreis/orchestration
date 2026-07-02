@@ -9,6 +9,8 @@ class TeamsController < ApplicationController
   def show
     @members = @team.team_memberships.includes(:user)
     @other_users = User.where.not(id: @team.user_ids).order(:email_address)
+    @environment_permissions = @team.team_environment_permissions.includes(:environment)
+    @other_environments = Environment.where.not(id: @team.environment_ids).order(:name)
   end
 
   def new
@@ -52,6 +54,24 @@ class TeamsController < ApplicationController
     team = Team.find(params[:id])
     team.team_memberships.find_by(user_id: params[:user_id])&.destroy
     redirect_to team_path(team), notice: "Membro removido."
+  end
+
+  # Adding the FIRST row here is what flips Team#environment_scoped? on —
+  # from that point, every environment without a row for this team is
+  # denied to its members, not just capped at readonly.
+  def add_environment_permission
+    team = Team.find(params[:id])
+    environment = Environment.find(params[:environment_id])
+    team.team_environment_permissions.find_or_create_by!(environment: environment) { |p| p.role = params[:role] || "readonly" }
+    redirect_to team_path(team), notice: "Permissão para \"#{environment.name}\" adicionada."
+  rescue => e
+    redirect_to team_path(team), alert: "Erro: #{e.message}"
+  end
+
+  def remove_environment_permission
+    team = Team.find(params[:id])
+    team.team_environment_permissions.find_by(environment_id: params[:environment_id])&.destroy
+    redirect_to team_path(team), notice: "Permissão removida."
   end
 
   private

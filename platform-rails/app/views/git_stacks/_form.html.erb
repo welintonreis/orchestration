@@ -72,7 +72,7 @@
       <div>
         <%= f.label :deploy_mode, "Deploy Mode", class: "block text-sm font-medium text-text-secondary mb-1.5" %>
         <%= f.select :deploy_mode,
-              [["Docker Swarm Stack", "swarm_stack"], ["Docker Compose", "compose"]],
+              [["Docker Swarm Stack", "swarm_stack"], ["Docker Compose", "compose"], ["Kubernetes (kubectl apply)", "kubernetes"]],
               {},
               class: "w-full bg-surface-sunken border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-cyan-600 transition-colors" %>
       </div>

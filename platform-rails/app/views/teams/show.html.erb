@@ -81,4 +81,67 @@
       <% end %>
     <% end %>
   </div>
+
+  <%# Environment permissions %>
+  <div class="lg:col-span-2 bg-surface-raised border border-border rounded-xl overflow-hidden">
+    <div class="px-4 py-3 border-b border-border">
+      <h3 class="text-sm font-semibold text-text-primary">Permissões por Environment (<%= @environment_permissions.count %>)</h3>
+      <p class="text-xs text-text-muted mt-1">
+        Sem nenhuma linha aqui, o time tem acesso global (papel de cada usuário vale em todo lugar — comportamento padrão).
+        A partir da primeira linha, este time só acessa os environments listados abaixo.
+      </p>
+    </div>
+    <% if @environment_permissions.empty? %>
+      <p class="text-center py-8 text-text-muted text-sm">Acesso global — nenhuma restrição por environment</p>
+    <% else %>
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-text-muted uppercase border-b border-border">
+          <th class="px-4 py-2 text-left">Environment</th>
+          <th class="px-4 py-2 text-left">Papel</th>
+          <th class="px-4 py-2 text-right">Ações</th>
+        </tr></thead>
+        <tbody>
+          <% @environment_permissions.each do |perm| %>
+            <tr class="border-b border-border/50 hover:bg-surface-inset/30">
+              <td class="px-4 py-3 text-text-primary font-mono"><%= perm.environment.name %></td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-inset text-text-secondary border border-border-subtle">
+                  <%= perm.role %>
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <%= button_to remove_environment_permission_team_path(@team, environment_id: perm.environment_id), method: :delete,
+                    data: { turbo_confirm: "Remover permissão para #{perm.environment.name}?" },
+                    class: "text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" do %>Remover<% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+  <%# Add environment permission %>
+  <div class="bg-surface-raised border border-border rounded-xl p-4">
+    <h3 class="text-sm font-semibold text-text-primary mb-3">Adicionar Permissão</h3>
+    <% if @other_environments.empty? %>
+      <p class="text-xs text-text-muted">Todos os environments já têm permissão definida.</p>
+    <% else %>
+      <%= form_with url: add_environment_permission_team_path(@team), method: :post, local: true do |f| %>
+        <div class="mb-3">
+          <%= f.select :environment_id,
+              options_for_select(@other_environments.map { |e| [e.name, e.id] }),
+              {},
+              class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        </div>
+        <div class="mb-3">
+          <%= f.select :role,
+              options_for_select([["Readonly", "readonly"], ["Operator", "operator"], ["Admin", "admin"]], "readonly"),
+              {},
+              class: "w-full bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+        </div>
+        <%= f.submit "Adicionar", class: "w-full btn-primary text-sm py-2" %>
+      <% end %>
+    <% end %>
+  </div>
 </div>

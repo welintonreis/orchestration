@@ -79,6 +79,15 @@ RUN ARCH=$(dpkg --print-architecture) && \
          -o /usr/local/bin/ttyd && \
     chmod +x /usr/local/bin/ttyd
 
+# kubectl — KubeClient shells out to it for apply/exec (server-side merge
+# and SPDY/WebSocket-multiplexed exec, both not worth reimplementing over
+# the raw REST API). Pinned version, not the "latest" redirect, so a Swarm
+# redeploy never silently picks up a new kubectl behind everyone's back.
+RUN ARCH=$(dpkg --print-architecture) && \
+    curl -fsSL "https://dl.k8s.io/release/v1.31.4/bin/linux/${ARCH}/kubectl" \
+         -o /usr/local/bin/kubectl && \
+    chmod +x /usr/local/bin/kubectl
+
 COPY --from=deps  /usr/local/bundle /usr/local/bundle
 COPY --from=assets /rails/public/assets ./public/assets
 COPY . .

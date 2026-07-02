@@ -1,0 +1,11 @@
+<div class="mb-4">
+  <%= form_with url: url_for(controller: params[:controller], action: :index), method: :get, local: true, class: "inline-flex items-center gap-2" do %>
+    <label class="text-xs text-text-muted">Namespace</label>
+    <select name="ns" onchange="this.form.requestSubmit()"
+            class="bg-surface-inset border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
+      <% (@namespaces || [@namespace]).each do |ns| %>
+        <option value="<%= ns %>" <%= "selected" if ns == @namespace %>><%= ns %></option>
+      <% end %>
+    </select>
+  <% end %>
+</div>

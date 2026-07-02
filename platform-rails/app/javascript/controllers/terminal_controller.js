@@ -17,7 +17,7 @@ const CMD_OUTPUT = "0"
 // so the terminal now opens instantly.
 export default class extends Controller {
   static targets = ["container"]
-  static values  = { containerId: String, user: String, root: Boolean }
+  static values  = { containerId: String, user: String, root: Boolean, wsPath: String }
 
   connect() {
     this.#setupTerminal()
@@ -95,7 +95,12 @@ export default class extends Controller {
     // Forward ?debug=1 from the page URL so the proxy logs sent-vs-ran frames.
     if (new URLSearchParams(location.search).get("debug") === "1") params.set("debug", "1")
     const qs = params.toString()
-    return `${proto}//${location.host}/containers/${this.containerIdValue}/ttyd-ws${qs ? "?" + qs : ""}`
+    // wsPathValue lets non-container callers (e.g. Kube::PodsController's
+    // terminal, which already carries ?ns=/&container= in the path) point
+    // this same controller at a different ttyd-ws endpoint.
+    const path = this.wsPathValue || `/containers/${this.containerIdValue}/ttyd-ws`
+    const sep  = path.includes("?") ? "&" : "?"
+    return `${proto}//${location.host}${path}${qs ? sep + qs : ""}`
   }
 
   #openSocket() {

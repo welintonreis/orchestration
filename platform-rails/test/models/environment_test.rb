@@ -50,6 +50,31 @@ class EnvironmentTest < ActiveSupport::TestCase
     assert_equal environments(:tcp_env).endpoint, environments(:tcp_env).effective_endpoint
   end
 
+  test "valid kubernetes environment mirrors kube_api_url into endpoint" do
+    env = Environment.new(name: "k3s-local", endpoint_type: "kubernetes", kube_api_url: "https://127.0.0.1:6443")
+    assert env.valid?
+    assert env.kubernetes?
+    assert_equal "https://127.0.0.1:6443", env.endpoint
+  end
+
+  test "kubernetes environment requires kube_api_url" do
+    env = Environment.new(name: "k3s-local", endpoint_type: "kubernetes")
+    assert_not env.valid?
+    assert env.errors[:kube_api_url].any?
+  end
+
+  test "kube_token_ciphertext is encrypted at rest" do
+    env = Environment.create!(name: "k3s-encrypted", endpoint_type: "kubernetes", kube_api_url: "https://127.0.0.1:6443", kube_token_ciphertext: "super-secret-token")
+    raw = Environment.connection.select_value("SELECT kube_token_ciphertext FROM environments WHERE id = #{env.id}")
+    assert_not_includes raw.to_s, "super-secret-token"
+    assert_equal "super-secret-token", env.reload.kube_token
+  end
+
+  test "kube_client builds a KubeClient from the environment's kube fields" do
+    env = Environment.new(kube_api_url: "https://127.0.0.1:6443", kube_token_ciphertext: "tok", kube_ca_cert: "PEM")
+    assert_instance_of KubeClient, env.kube_client
+  end
+
   test "activate! sets this env active and deactivates others" do
     local = environments(:local_env)
     remote = environments(:tcp_env)
@@ -57,6 +82,14 @@ class EnvironmentTest < ActiveSupport::TestCase
     remote.activate!
     assert remote.reload.active?
     assert_not local.reload.active?
+  end
+
+  test "activate! on the already-active environment leaves it active (not none)" do
+    local = environments(:local_env)
+    assert local.active?
+    local.activate!
+    assert local.reload.active?
+    assert_equal local, Environment.active_env
   end
 
   test "active_env scope returns first active environment" do

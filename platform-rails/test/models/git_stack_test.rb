@@ -27,8 +27,13 @@ class GitStackTest < ActiveSupport::TestCase
   end
 
   test "rejects invalid deploy_mode" do
-    stack = build_git_stack(deploy_mode: "kubernetes")
+    stack = build_git_stack(deploy_mode: "nomad")
     assert_not stack.valid?
+  end
+
+  test "accepts kubernetes deploy_mode" do
+    stack = build_git_stack(deploy_mode: "kubernetes")
+    assert stack.valid?
   end
 
   test "rejects invalid status" do

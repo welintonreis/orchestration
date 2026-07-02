@@ -107,9 +107,26 @@ class GitDeployer
   # interpolation from the current working directory, not the compose
   # file's directory — chdir there so GitStack#env_content takes effect.
   def run_deploy
+    return run_kubernetes_deploy if @stack.deploy_mode == "kubernetes"
+
     out, err, status = Open3.capture3(*build_command, chdir: File.dirname(@compose))
     combined = [out, err].reject(&:empty?).join("\n")
     [combined, status.success?]
+  end
+
+  # kubectl apply, not docker — a separate path (not build_command) because
+  # its auth is a temp kubeconfig scoped to this one shellout
+  # (KubeClient.with_temp_kubeconfig auto-deletes it), not a -H flag.
+  def run_kubernetes_deploy
+    env = @stack.environment
+    KubeClient.with_temp_kubeconfig(api_url: env.kube_api_url, token: env.kube_token, ca_cert: env.kube_ca_cert, client_cert: env.kube_client_cert, client_key: env.kube_client_key) do |kubeconfig|
+      out, err, status = Open3.capture3(
+        { "KUBECONFIG" => kubeconfig }, "kubectl", "apply", "-f", @compose,
+        chdir: File.dirname(@compose)
+      )
+      combined = [out, err].reject(&:empty?).join("\n")
+      return [combined, status.success?]
+    end
   end
 
   # Pre/PostSync hooks: arbitrary admin-entered shell, run in the compose dir
