@@ -1,6 +1,6 @@
 # Spec: Edge Compute Avançado (agents multi-host)
 
-> Criado: 2026-07-02 | Status: implementado (fases 1-3), aguardando bump/deploy | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado (fases 1-3) — v0.9.16 | Autor: Claude/Welinton
 > Substitui o stub atual de Settings→Edge (edge_key/edge_enabled em AppSetting)
 
 > Implementado: `EdgeNode`/`EdgeCommand` models, `EdgeEnrollmentToken`

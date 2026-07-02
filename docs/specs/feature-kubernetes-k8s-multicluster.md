@@ -1,6 +1,6 @@
 # Spec: Kubernetes — Fase 2 (k8s genérico, multi-cluster)
 
-> Criado: 2026-07-02 | Status: implementado (parcial), aguardando bump/deploy | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado (parcial) — v0.9.17 | Autor: Claude/Welinton
 > Depende de: `feature-kubernetes-k3s.md` (KubeClient, telas Kube::, ttyd+kubectl)
 
 > Implementado: mTLS no `KubeClient` (client-cert/key via Excon `client_cert_data`/

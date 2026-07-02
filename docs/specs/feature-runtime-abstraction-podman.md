@@ -1,6 +1,15 @@
 # Spec: Runtime Abstraction + Podman
 
-> Criado: 2026-07-02 | Status: draft | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado — v0.9.16 | Autor: Claude/Welinton
+
+> Implementado: `DockerClient#runtime`/`#capabilities` (detecta Podman via
+> `/version` Components, cache 10min), `SwarmGuard` unificado a usar
+> `capabilities[:swarm]`, Configs/Secrets ganharam o mesmo guard (bug real:
+> mostravam erro cru em runtime sem swarm), nav (Serviços/Configs/Secrets/
+> Swarm) escondido quando `capabilities[:swarm]` é false. Sem migration —
+> detecção é só `Rails.cache`, sem coluna `runtime` nem override manual (fase
+> 2 se precisar). Sem mudança no Dockerfile/TtydManager — `docker` CLI já
+> fala com socket Podman via `-H`, conforme o próprio texto do spec.
 
 ## Objetivo
 

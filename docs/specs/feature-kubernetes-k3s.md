@@ -1,6 +1,6 @@
 # Spec: Kubernetes — Fase 1 (k3s single-node)
 
-> Criado: 2026-07-02 | Status: implementado, aguardando bump/deploy | Autor: Claude/Welinton
+> Criado: 2026-07-02 | Status: implementado — v0.9.17 | Autor: Claude/Welinton
 > Depende de: `feature-runtime-abstraction-podman.md` (conceito de capability por environment)
 
 > Implementado: `KubeClient` (Excon + kubectl shellout p/ apply/exec, mesma
