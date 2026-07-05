@@ -185,9 +185,9 @@
       <%# Actions %>
       <div class="flex items-center gap-3 pt-2">
         <%= f.submit git_stack.new_record? ? "Create Stack" : "Update Stack",
-              class: "inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium rounded-lg transition-colors cursor-pointer" %>
+              class: "btn-primary" %>
         <%= link_to "Cancel", git_stacks_path,
-              class: "inline-flex items-center px-4 py-2 bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary text-sm font-medium rounded-lg transition-colors" %>
+              class: "btn-secondary" %>
       </div>
     <% end %>
   </div>

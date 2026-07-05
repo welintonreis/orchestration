@@ -6,8 +6,8 @@
       <%= @unread_count > 0 ? "#{@unread_count} unread alert#{"s" if @unread_count != 1}" : "No unread alerts" %>
     </span>
     <% if @unread_count > 0 %>
-      <%= button_to "Mark all read", mark_all_read_alerts_path, method: :post,
-            class: "px-3 py-1.5 text-sm rounded-lg bg-red-100 dark:bg-red-900/40 hover:bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60 hover:border-red-700 transition-colors font-medium" %>
+      <%= render Ui::ButtonComponent.new(url: mark_all_read_alerts_path, method: :post,
+            variant: :solid_orange, size: :sm, label: "Mark all read") %>
     <% end %>
   </div>
 <% end %>
@@ -24,26 +24,24 @@
   <% else %>
     <table class="w-full text-sm">
       <thead>
-        <tr class="border-b border-border text-left">
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Level</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Resource</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Message</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Time</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+        <tr class="border-b border-border text-left bg-white/[0.02]">
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Level</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Resource</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Message</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Time</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Status</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-border/60">
         <% @alerts.each do |alert| %>
           <tr class="<%= alert.read? ? 'bg-surface-sunken opacity-70' : 'bg-surface-raised' %> hover:bg-surface-inset/40 transition-colors">
             <td class="px-4 py-3">
-              <% level_class = case alert.level
-                               when "critical" then "bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60"
-                               when "warning"  then "bg-yellow-100 dark:bg-yellow-900/60 text-yellow-700 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-800/60"
-                               else                 "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/60"
+              <% level_color = case alert.level
+                               when "critical" then :red
+                               when "warning"  then :yellow
+                               else                  :blue
                                end %>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold <%= level_class %>">
-                <%= alert.level.capitalize %>
-              </span>
+              <%= render Ui::BadgeComponent.new(color: level_color, dot: true) { alert.level.capitalize } %>
             </td>
             <td class="px-4 py-3">
               <span class="font-mono text-text-secondary text-xs uppercase tracking-wider"><%= alert.resource %></span>
@@ -56,15 +54,9 @@
             </td>
             <td class="px-4 py-3">
               <% if alert.read? %>
-                <span class="inline-flex items-center gap-1.5 text-xs text-green-500">
-                  <span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"></span>
-                  Read
-                </span>
+                <%= render Ui::BadgeComponent.new(color: :green, dot: true) { "Read" } %>
               <% else %>
-                <span class="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-                  <span class="w-1.5 h-1.5 rounded-full bg-gray-500 flex-shrink-0"></span>
-                  Unread
-                </span>
+                <%= render Ui::BadgeComponent.new(color: :gray, dot: true) { "Unread" } %>
               <% end %>
             </td>
           </tr>

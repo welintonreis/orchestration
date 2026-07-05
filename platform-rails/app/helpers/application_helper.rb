@@ -71,11 +71,13 @@ module ApplicationHelper
         tag.span("em breve", class: "text-[9px] bg-surface-inset text-text-muted px-1.5 py-0.5 rounded transition-all", "x-bind:class" => "#{open} ? 'opacity-100' : 'opacity-0'")
       end
     else
-      base   = "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
-      active_cls = "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-900/60"
+      base   = "relative flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
+      active_cls = "bg-orange-100 text-orange-700 border border-orange-300 dark:bg-transparent dark:text-text-primary dark:border-transparent"
       idle_cls   = "text-text-secondary hover:text-text-primary hover:bg-surface-inset/70"
+      accent_bar = active ? tag.span(class: "hidden dark:block absolute -left-1.5 top-1.5 bottom-1.5 w-[3px] rounded-full bg-gradient-to-b from-orange-400 to-brand shadow-[0_0_8px_rgba(232,69,24,0.5)]") : "".html_safe
 
       link_to path, class: "#{base} #{active ? active_cls : idle_cls}", title: name do
+        accent_bar +
         tag.span(icon_html.html_safe, class: "flex-shrink-0 w-5 h-5 flex items-center justify-center") +
         tag.span(name, class: "flex-1 truncate transition-all", "x-bind:class" => "#{open} ? 'opacity-100' : 'opacity-0 pointer-events-none'")
       end

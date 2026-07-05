@@ -167,20 +167,20 @@
             <tr class="hover:bg-surface-inset/30 transition-colors">
               <td class="px-4 py-3 font-mono text-text-primary font-medium"><%= hostname %></td>
               <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= is_manager ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800/40' : 'bg-surface-inset text-text-secondary border border-border-subtle' %>">
-                  <%= role %>
-                </span>
+                <%= render(Ui::BadgeComponent.new(color: is_manager ? :orange : :gray, dot: true, size: :xs)) { role } %>
               </td>
               <td class="px-4 py-3">
-                <span class="inline-flex items-center gap-1 text-xs <%= is_ready ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
-                  <span class="w-1.5 h-1.5 rounded-full <%= is_ready ? 'bg-green-400' : 'bg-red-400' %> inline-block"></span>
-                  <%= status %>
-                </span>
+                <%= render(Ui::BadgeComponent.new(color: is_ready ? :green : :red, dot: true, size: :xs)) { status } %>
               </td>
               <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= is_active ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-800/40' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-800/40' %>">
-                  <%= availability %>
-                </span>
+                <%
+                  avail_color = case availability
+                    when "active" then :green
+                    when "drain"  then :yellow
+                    else               :red
+                  end
+                %>
+                <%= render(Ui::BadgeComponent.new(color: avail_color, dot: true, size: :xs)) { availability } %>
               </td>
               <td class="px-4 py-3 font-mono text-text-secondary text-xs"><%= engine_ver %></td>
               <td class="px-4 py-3 text-text-secondary text-xs">

@@ -14,10 +14,10 @@
 </div>
 
 <div class="grid grid-cols-3 gap-4 mb-6">
-  <% [["viewer", "Viewer", "bg-surface-active", @users_by_role["viewer"].to_i], ["operator", "Operator", "bg-cyan-100 dark:bg-cyan-900/50 border-cyan-300 dark:border-cyan-800/50", @users_by_role["operator"].to_i], ["admin", "Admin", "bg-purple-100 dark:bg-purple-900/50 border-purple-300 dark:border-purple-800/50", @users_by_role["admin"].to_i]].each do |key, label, cls, count| %>
+  <% [["viewer", "Viewer", :gray, @users_by_role["viewer"].to_i], ["operator", "Operator", :cyan, @users_by_role["operator"].to_i], ["admin", "Admin", :purple, @users_by_role["admin"].to_i]].each do |key, label, color, count| %>
     <div class="bg-surface-raised border border-border rounded-xl p-4">
       <div class="flex items-center gap-2 mb-2">
-        <span class="inline-flex px-2 py-0.5 rounded text-xs font-semibold <%= cls %> border text-text-primary"><%= label %></span>
+        <%= render(Ui::BadgeComponent.new(color: color)) { label } %>
       </div>
       <p class="text-2xl font-bold text-text-primary"><%= count %></p>
       <p class="text-xs text-text-muted">usuário(s)</p>

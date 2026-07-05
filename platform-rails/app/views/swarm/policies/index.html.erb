@@ -54,9 +54,7 @@
           <tr class="border-b border-border/50 hover:bg-surface-inset/20">
             <td class="px-4 py-3 font-mono text-xs text-text-secondary"><%= rule[:service] %></td>
             <td class="px-4 py-3">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <%= rule[:type] == 'Constraint' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-800/50' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800/50' %>">
-                <%= rule[:type] %>
-              </span>
+              <%= render(Ui::BadgeComponent.new(color: rule[:type] == "Constraint" ? :orange : :blue, size: :xs)) { rule[:type] } %>
             </td>
             <td class="px-4 py-3 font-mono text-xs text-text-secondary"><%= rule[:rule] %></td>
           </tr>
@@ -73,9 +71,7 @@
   <% else %>
     <div class="flex flex-wrap gap-2">
       <% @node_labels.each do |label| %>
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-surface-inset text-text-secondary border border-border-subtle">
-          <%= label %>
-        </span>
+        <%= render(Ui::BadgeComponent.new(color: :gray, size: :sm)) { label } %>
       <% end %>
     </div>
   <% end %>

@@ -11,13 +11,17 @@
 
 <% content_for :title_actions do %>
   <%
+    # ponytail: dot colors mirror the Ui::BadgeComponent mapping used in
+    # rows.html.erb/show.html.erb (running=green, restarting=brand,
+    # paused=amber, exited=red, created=cyan, dead=gray) so the filter
+    # pills and the row badges agree — the old mapping had them swapped.
     status_colors = {
       "running"    => "bg-green-500",
       "exited"     => "bg-red-500",
-      "paused"     => "bg-blue-400",
-      "restarting" => "bg-yellow-400",
-      "created"    => "bg-gray-400",
-      "dead"       => "bg-red-900"
+      "paused"     => "bg-yellow-400",
+      "restarting" => "bg-brand",
+      "created"    => "bg-cyan-400",
+      "dead"       => "bg-gray-500"
     }
   %>
   <%= form_with url: containers_path, method: :get, data: { turbo: false }, class: "flex items-center gap-1.5" do |f| %>

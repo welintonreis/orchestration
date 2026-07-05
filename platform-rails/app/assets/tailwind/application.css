@@ -6,12 +6,14 @@
 
 /* ── Theme tokens ──
    Raw values live on :root (light, default values) and .dark (dark
-   overrides). `@theme inline` re-exposes them as `--color-*` so Tailwind
+   overrides — restyled 2026-07-04 to match Orchestration_RedHusky.dc.html
+   mock). `@theme inline` re-exposes them as `--color-*` so Tailwind
    generates the matching bg-/text-/border-* utilities, while the actual
    values keep resolving at runtime via var() — that's what lets a single
    build serve both themes and flip instantly on a `.dark` class toggle,
    instead of baking one palette in at JIT-compile time. */
 :root {
+  --brand: #E84518;            /* RedHusky brand orange — same hex as GitHusky */
   --surface: #ffffff;          /* page background */
   --surface-raised: #f9fafb;   /* card/panel background (gray-50) */
   --surface-inset: #f3f4f6;    /* gray-100 — buttons/badges/inputs/skeletons (was bg-gray-800) */
@@ -31,25 +33,27 @@
 }
 
 .dark {
-  --surface: #030712;          /* gray-950 — page background */
-  --surface-raised: #111827;   /* gray-900 — card/panel background */
-  --surface-inset: #1f2937;    /* gray-800 — buttons/badges/inputs/skeletons */
-  --surface-sunken: #030712;   /* gray-950 — code/pre blocks, some form inputs/wells */
-  --surface-active: #374151;   /* gray-700 — selected/active pill bg, skeleton shimmer */
-  --surface-active-hover: #4b5563; /* gray-600 — hover state for bg-surface-active */
-  --border: #1f2937;           /* gray-800 */
-  --border-subtle: #374151;    /* gray-700 */
-  --gauge-track: #374151;      /* gray-700 — unfilled gauge ticks */
-  --gauge-cpu: #39FF14;        /* neon green — original tone, reads fine against a dark card */
-  --gauge-ram: #22d3ee;        /* cyan-400 — original tone, reads fine against a dark card */
-  --gauge-disk: #e8f4f8;       /* original pale tone, reads fine against a dark card */
-  --gauge-swap: #f97316;       /* orange-500 — original tone, reads fine against a dark card */
-  --text-primary: #ffffff;
-  --text-secondary: #9ca3af;   /* gray-400 */
-  --text-muted: #6b7280;       /* gray-500 */
+  --brand: #E84518;            /* RedHusky brand orange */
+  --surface: #0A0D0F;          /* mock page background */
+  --surface-raised: #151A1F;   /* mock card/sidebar/header panel background */
+  --surface-inset: #1E252C;    /* mock button/badge/input neutral background */
+  --surface-sunken: #0A0D0F;   /* mock log/terminal background */
+  --surface-active: #272F37;   /* mock default border tone, doubles as selected-pill bg */
+  --surface-active-hover: #333D46; /* mock hover-border tone */
+  --border: #272F37;           /* mock border */
+  --border-subtle: #333D46;    /* mock hover border */
+  --gauge-track: #1E252C;      /* mock gauge track */
+  --gauge-cpu: #22C55E;        /* mock CPU bar (green-500) */
+  --gauge-ram: #FF7A4D;        /* mock RAM bar (brand light) */
+  --gauge-disk: #F59E0B;       /* mock DISK bar (amber-500) */
+  --gauge-swap: #FFE4D6;       /* mock SWAP bar (pale peach) */
+  --text-primary: #FAFAFA;     /* mock headings/values */
+  --text-secondary: #AEB9C2;   /* mock body text */
+  --text-muted: #7D8891;       /* mock captions/labels */
 }
 
 @theme inline {
+  --color-brand: var(--brand);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-surface-inset: var(--surface-inset);
@@ -62,6 +66,8 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 /* ── Siren (system-prune) animations ── */
@@ -204,11 +210,11 @@
 
 /* ── Button utilities ── */
 .btn-primary {
-  @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-red-700 hover:bg-red-600 text-white transition-colors cursor-pointer;
+  @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-brand hover:brightness-110 text-white transition-all cursor-pointer;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer;
+  @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary border border-border-subtle transition-colors cursor-pointer;
 }
 
 /* ── Thin scrollbar utility (for sidebar and other panels) ── */

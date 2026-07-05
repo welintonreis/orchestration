@@ -46,16 +46,14 @@
             <td class="px-5 py-3">
               <% labels = cfg.dig("Spec", "Labels") || {} %>
               <% labels.reject { |k,_| k.start_with?("com.docker") }.each do |k, v| %>
-                <span class="inline-block text-[10px] font-mono bg-surface-inset text-text-secondary px-1.5 py-0.5 rounded mr-1"><%= k %>=<%= v %></span>
+                <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-transparent", size: :xs, css_class: "font-mono mr-1")) { "#{k}=#{v}" } %>
               <% end %>
             </td>
             <td class="px-5 py-3 text-right">
               <% if Current.user&.admin? || Current.user&.operator? %>
-                <%= button_to remove_config_path(cfg["ID"]), method: :delete,
-                      class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-red-100 dark:bg-red-900/40 text-text-secondary hover:text-red-600 dark:hover:text-red-400 border border-border-subtle hover:border-red-300 dark:border-red-800 transition-colors",
-                      data: { turbo_confirm: "Remover config #{cfg.dig("Spec","Name")}?" } do %>
-                  Remover
-                <% end %>
+                <%= render Ui::ButtonComponent.new(url: remove_config_path(cfg["ID"]), method: :delete,
+                      variant: :red, size: "px-2 py-1 text-xs rounded", label: "Remover",
+                      confirm: "Remover config #{cfg.dig("Spec","Name")}?") %>
               <% end %>
             </td>
           </tr>

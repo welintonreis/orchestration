@@ -7,8 +7,7 @@
 <% end %>
 
 <% content_for :title_actions do %>
-  <%= link_to new_environment_path,
-        class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
+  <%= link_to new_environment_path, class: "btn-primary flex items-center gap-2" do %>
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
     </svg>
@@ -23,8 +22,7 @@
     </svg>
     <p class="text-text-secondary font-medium mb-1">Nenhum ambiente configurado</p>
     <p class="text-sm text-text-muted mb-6">Conecte um Docker host para começar a gerenciar</p>
-    <%= link_to "Adicionar ambiente", new_environment_path,
-          class: "inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-text-primary text-sm font-medium px-5 py-2.5 rounded-lg transition-colors" %>
+    <%= link_to "Adicionar ambiente", new_environment_path, class: "btn-primary" %>
   </div>
 <% else %>
   <%# auto-fill instead of a fixed column count: with only 1-2 environments,
@@ -62,12 +60,12 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <h2 class="font-semibold text-text-primary text-sm leading-tight"><%= env.name %></h2>
                 <% if is_active %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/50", size: :xs)) { "ativo" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :cyan, size: :xs)) { "ativo" } %>
                 <% end %>
                 <% if s[:up] && s[:swarm] %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/40", size: :xs)) { "Swarm #{s[:docker_ver]}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :cyan, size: :xs)) { "Swarm #{s[:docker_ver]}" } %>
                 <% elsif s[:up] %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs)) { "Standalone #{s[:docker_ver]}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :gray, size: :xs)) { "Standalone #{s[:docker_ver]}" } %>
                 <% end %>
               </div>
               <div class="flex items-center gap-2 mt-1 text-xs text-text-muted">
@@ -90,8 +88,7 @@
           <div class="flex items-center gap-1 flex-shrink-0 ml-2" x-data="{ menu: false }">
             <% unless is_active %>
               <%= render Ui::ButtonComponent.new(url: activate_environment_path(env), method: :post,
-                    variant: "bg-red-700 hover:bg-red-600 text-text-primary border-transparent",
-                    size: "px-3 py-1.5 text-xs font-medium rounded-lg", label: "Conectar",
+                    variant: :solid_orange, size: :sm, label: "Conectar",
                     title: "Definir como ativo") %>
             <% end %>
             <div class="relative">
@@ -132,24 +129,24 @@
                 <div class="text-xl font-bold text-text-primary"><%= stacks_total %></div>
                 <div class="text-[10px] text-text-muted mt-0.5">Stacks</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:stacks_running]} rodando" } %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:stacks_stopped]} parada#{s[:stacks_stopped] == 1 ? "" : "s"}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :green, size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:stacks_running]} rodando" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :gray, size: :xs, css_class: "whitespace-nowrap")) { "#{s[:stacks_stopped]} parada#{s[:stacks_stopped] == 1 ? "" : "s"}" } %>
                 </div>
               </div>
               <div class="text-center">
                 <div class="text-xl font-bold text-text-primary"><%= s[:services] || 0 %></div>
                 <div class="text-[10px] text-text-muted mt-0.5">Serviços</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:services_complete]} completos" } %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800/40", size: :xs, css_class: "whitespace-nowrap")) { "#{s[:services_degraded]} degradado#{s[:services_degraded] == 1 ? "" : "s"}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :green, size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:services_complete]} completos" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :orange, size: :xs, css_class: "whitespace-nowrap")) { "#{s[:services_degraded]} degradado#{s[:services_degraded] == 1 ? "" : "s"}" } %>
                 </div>
               </div>
               <div class="text-center">
                 <div class="text-xl font-bold text-text-primary"><%= s[:containers] || 0 %></div>
                 <div class="text-[10px] text-text-muted mt-0.5">Containers</div>
                 <div class="flex flex-col items-center gap-1 mt-1.5">
-                  <%= render(Ui::BadgeComponent.new(color: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800/40", size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:running]} rodando" } %>
-                  <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "whitespace-nowrap")) { "#{stopped} parado#{stopped == 1 ? "" : "s"}" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :green, size: :xs, dot: true, css_class: "whitespace-nowrap")) { "#{s[:running]} rodando" } %>
+                  <%= render(Ui::BadgeComponent.new(color: :gray, size: :xs, css_class: "whitespace-nowrap")) { "#{stopped} parado#{stopped == 1 ? "" : "s"}" } %>
                 </div>
               </div>
             </div>
@@ -226,6 +223,6 @@
     </svg>
     <p class="text-sm text-text-muted mb-3">Adicionar outro ambiente</p>
     <%= link_to "Conectar Docker host", new_environment_path,
-          class: "text-sm text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors" %>
+          class: "text-sm text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium transition-colors" %>
   </div>
 <% end %>

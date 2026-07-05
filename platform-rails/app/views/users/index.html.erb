@@ -1,8 +1,7 @@
 <% page_title "Users" %>
 
 <% content_for :title_actions do %>
-  <%= link_to "New User", new_user_path,
-        class: "px-3 py-1.5 text-sm bg-cyan-700 hover:bg-cyan-600 text-text-primary rounded-lg transition-colors" %>
+  <%= link_to "New User", new_user_path, class: "btn-primary" %>
 <% end %>
 
 <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
@@ -25,37 +24,29 @@
             <% end %>
           </td>
           <td class="px-4 py-3">
-            <% role_cls = case user.role
-               when "admin"    then "bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800/60"
-               when "operator" then "bg-cyan-100 dark:bg-cyan-900/60 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/60"
-               else                 "bg-surface-inset text-text-secondary border-border-subtle"
+            <% role_color = case user.role
+               when "admin"    then :purple
+               when "operator" then :cyan
+               else                 :gray
                end %>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border <%= role_cls %>">
-              <%= user.role %>
-            </span>
+            <%= render(Ui::BadgeComponent.new(color: role_color)) { user.role } %>
           </td>
           <td class="px-4 py-3">
             <% if user.active %>
-              <span class="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span> Active
-              </span>
+              <%= render(Ui::BadgeComponent.new(color: :green, dot: true)) { "Active" } %>
             <% else %>
-              <span class="inline-flex items-center gap-1 text-xs text-text-muted">
-                <span class="w-1.5 h-1.5 rounded-full bg-gray-600 inline-block"></span> Inactive
-              </span>
+              <%= render(Ui::BadgeComponent.new(color: :gray, dot: true)) { "Inactive" } %>
             <% end %>
           </td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-1">
-              <%= link_to "Edit", edit_user_path(user),
-                    class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary border border-border-subtle transition-colors" %>
+              <%= render Ui::ButtonComponent.new(url: edit_user_path(user), variant: :gray, size: :sm, label: "Edit") %>
               <% unless user == Current.user %>
-                <%= button_to user.active ? "Deactivate" : "Activate",
-                      toggle_active_user_path(user), method: :post,
-                      class: "px-2 py-1 text-xs rounded bg-surface-inset #{user.active ? 'hover:bg-yellow-100 dark:bg-yellow-900/40 hover:text-yellow-700 dark:hover:text-yellow-300 hover:border-yellow-300 dark:border-yellow-800' : 'hover:bg-green-100 dark:bg-green-900/40 hover:text-green-700 dark:hover:text-green-300 hover:border-green-300 dark:border-green-800'} text-text-secondary border border-border-subtle transition-colors" %>
-                <%= button_to "Delete", user_path(user), method: :delete,
-                      class: "px-2 py-1 text-xs rounded bg-surface-inset hover:bg-red-100 dark:bg-red-900/40 text-text-secondary hover:text-red-600 dark:hover:text-red-400 border border-border-subtle hover:border-red-300 dark:border-red-800 transition-colors",
-                      data: { turbo_confirm: "Delete user #{user.email_address}? This cannot be undone." } %>
+                <%= render Ui::ButtonComponent.new(url: toggle_active_user_path(user), method: :post,
+                      variant: user.active ? :yellow : :green, size: :sm,
+                      label: user.active ? "Deactivate" : "Activate") %>
+                <%= render Ui::ButtonComponent.new(url: user_path(user), method: :delete, variant: :red, size: :sm, label: "Delete",
+                      confirm: "Delete user #{user.email_address}? This cannot be undone.") %>
               <% end %>
             </div>
           </td>

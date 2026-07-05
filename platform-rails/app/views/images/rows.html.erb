@@ -1,4 +1,8 @@
 <turbo-frame id="images-content">
+<%# prune/batch_remove redirect back into this frame — the layout's flash
+    partial lives outside the frame and never re-renders on a frame-only
+    response, so the "done" banner needs its own copy in here. %>
+<%= render "shared/flash" %>
 <%
   grouped = @images.group_by do |img|
     raw = img["RepoTags"]&.first || "<none>:<none>"

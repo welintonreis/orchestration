@@ -1,12 +1,9 @@
 <% page_title "Container" %>
 
 <% content_for :title_actions do %>
-  <%= link_to "← Containers", containers_path,
-        class: "px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle rounded-lg transition-colors" %>
-  <%= link_to "Logs", container_logs_path(@container["Id"]),
-        class: "px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle rounded-lg transition-colors" %>
-  <%= link_to "Files", container_files_path(@container["Id"]),
-        class: "px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle rounded-lg transition-colors" %>
+  <%= render Ui::ButtonComponent.new(url: containers_path, variant: :gray, size: :md, label: "← Containers") %>
+  <%= render Ui::ButtonComponent.new(url: container_logs_path(@container["Id"]), variant: :gray, size: :md, label: "Logs") %>
+  <%= render Ui::ButtonComponent.new(url: container_files_path(@container["Id"]), variant: :gray, size: :md, label: "Files") %>
 <% end %>
 
 <div class="space-y-4">
@@ -20,9 +17,15 @@
         </h2>
         <div class="text-xs text-text-muted font-mono mt-0.5"><%= @container["Id"] %></div>
       </div>
-      <span class="<%= status_badge(@container["State"]["Status"]) %> flex-shrink-0">
-        <%= @container["State"]["Status"] %>
-      </span>
+      <%
+        # ponytail: same state->color mapping as rows.html.erb (running=green,
+        # restarting=brand, paused=amber, exited=red, created=cyan, dead=gray).
+        show_badge_color = {
+          "running" => :green, "restarting" => :orange, "paused" => :yellow,
+          "exited" => :red, "created" => :cyan, "dead" => :gray
+        }.fetch(@container["State"]["Status"].to_s.downcase, :gray)
+      %>
+      <%= render(Ui::BadgeComponent.new(color: show_badge_color, size: :md, dot: true, css_class: "flex-shrink-0")) { @container["State"]["Status"] } %>
     </div>
 
     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
@@ -38,7 +41,7 @@
 
       <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
         <dt class="text-sm text-text-muted">Restart Policy</dt>
-        <dd class="text-sm text-text-primary"><%= @container.dig("HostConfig", "RestartPolicy", "Name") || "—" %></dd>
+        <dd class="text-sm font-mono text-text-primary"><%= @container.dig("HostConfig", "RestartPolicy", "Name") || "—" %></dd>
       </div>
 
       <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
@@ -48,7 +51,7 @@
 
       <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
         <dt class="text-sm text-text-muted">Created</dt>
-        <dd class="text-sm text-text-primary">
+        <dd class="text-sm font-mono text-text-primary">
           <% created = @container["Created"] %>
           <%= created.present? ? human_age(Time.parse(created)) : "—" %>
         </dd>
@@ -56,7 +59,7 @@
 
       <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
         <dt class="text-sm text-text-muted">Started</dt>
-        <dd class="text-sm text-text-primary">
+        <dd class="text-sm font-mono text-text-primary">
           <% started = @container.dig("State", "StartedAt") %>
           <%= started.present? && started != "0001-01-01T00:00:00Z" ? human_age(Time.parse(started)) : "—" %>
         </dd>
@@ -64,7 +67,7 @@
 
       <div class="flex items-baseline justify-between border-b border-border/60 pb-2">
         <dt class="text-sm text-text-muted">Finished</dt>
-        <dd class="text-sm text-text-primary">
+        <dd class="text-sm font-mono text-text-primary">
           <% finished = @container.dig("State", "FinishedAt") %>
           <%= finished.present? && finished != "0001-01-01T00:00:00Z" ? human_age(Time.parse(finished)) : "—" %>
         </dd>

@@ -11,7 +11,7 @@
   <div class="w-full max-w-md">
     <!-- Logo / Brand -->
     <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red-600 mb-4">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand mb-4">
         <svg class="w-8 h-8 text-text-primary" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
         </svg>
@@ -24,7 +24,7 @@
     <div class="bg-surface-raised border border-border rounded-2xl px-8 py-8 shadow-xl">
 
       <% if @user.errors.any? %>
-        <div class="mb-6 rounded-lg bg-red-100 dark:bg-red-900/40 border border-red-700 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+        <div class="mb-6 rounded-lg bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
           <ul class="list-disc list-inside space-y-1">
             <% @user.errors.full_messages.each do |msg| %>
               <li><%= msg %></li>
@@ -43,7 +43,7 @@
                 autofocus: true,
                 autocomplete: "email",
                 placeholder: "admin@example.com",
-                class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+                class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
         </div>
 
         <div>
@@ -54,7 +54,7 @@
                 autocomplete: "new-password",
                 placeholder: "Min 12 characters recommended",
                 maxlength: 72,
-                class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+                class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
         </div>
 
         <div>
@@ -65,12 +65,11 @@
                 autocomplete: "new-password",
                 placeholder: "Repeat your password",
                 maxlength: 72,
-                class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+                class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
         </div>
 
         <div class="pt-2">
-          <%= submit_tag "Create account & continue",
-                class: "w-full rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 text-text-primary font-semibold text-sm px-4 py-2.5 transition cursor-pointer" %>
+          <%= submit_tag "Create account & continue", class: "btn-primary w-full justify-center" %>
         </div>
 
       <% end %>

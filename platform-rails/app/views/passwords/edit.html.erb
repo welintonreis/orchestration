@@ -14,7 +14,7 @@
             autocomplete: "new-password",
             placeholder: "Enter new password",
             maxlength: 72,
-            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
     </div>
 
     <div>
@@ -24,12 +24,11 @@
             autocomplete: "new-password",
             placeholder: "Repeat new password",
             maxlength: 72,
-            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
     </div>
 
     <div>
-      <%= form.submit "Save password",
-            class: "w-full rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 text-text-primary font-semibold text-sm px-5 py-2.5 transition cursor-pointer" %>
+      <%= form.submit "Save password", class: "btn-primary w-full justify-center" %>
     </div>
   <% end %>
 </div>

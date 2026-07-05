@@ -8,9 +8,9 @@
 
 <%
   sev = {
-    critical: { badge: "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 border-red-300 dark:border-red-900/60", dot: "bg-red-500",   label: "Crítico" },
-    warning:  { badge: "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-900/60", dot: "bg-amber-500", label: "Aviso" },
-    ok:       { badge: "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-900/60", dot: "bg-emerald-500", label: "OK" }
+    critical: { color: :red,    label: "Crítico" },
+    warning:  { color: :yellow, label: "Aviso" },
+    ok:       { color: :green,  label: "OK" }
   }
   score_color = @score >= 85 ? "text-emerald-600 dark:text-emerald-400" : @score >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"
 %>
@@ -52,9 +52,7 @@
         <% @findings.each do |f| s = sev[f.severity]; info = @port_map[f.port] %>
           <tr class="hover:bg-surface-inset/40">
             <td class="px-5 py-3">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-xs font-medium <%= s[:badge] %>">
-                <span class="w-1.5 h-1.5 rounded-full <%= s[:dot] %>"></span><%= s[:label] %>
-              </span>
+              <%= render Ui::BadgeComponent.new(color: s[:color], dot: true) { s[:label] } %>
             </td>
             <td class="px-5 py-3 font-mono font-semibold text-text-primary"><%= f.port %></td>
             <td class="px-5 py-3 font-mono text-text-muted"><%= f.proto %></td>
@@ -149,7 +147,7 @@
             <% if (jail[:banned_ips] || []).any? %>
               <div class="mt-1.5 flex flex-wrap gap-1.5">
                 <% jail[:banned_ips].each do |ip| %>
-                  <span class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-[11px] font-mono"><%= ip %></span>
+                  <%= render Ui::BadgeComponent.new(color: :red, size: :xs) { ip } %>
                 <% end %>
               </div>
             <% end %>
@@ -235,9 +233,9 @@
             </div>
             <div class="mt-1.5 flex flex-wrap gap-1.5">
               <% c[:critical].each do |f| %>
-                <span class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 text-[11px] font-mono">
+                <%= render Ui::BadgeComponent.new(color: :red, size: :xs) do %>
                   <%= f[:type] == "A" ? "novo" : "alterado" %><%= " executável" if f[:executable] %>: <%= f[:path] %><% if f[:size_bytes] %> (<%= number_to_human_size(f[:size_bytes]) %>)<% end %>
-                </span>
+                <% end %>
               <% end %>
             </div>
           </div>

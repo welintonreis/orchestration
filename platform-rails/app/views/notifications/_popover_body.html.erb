@@ -22,14 +22,14 @@
         <%
           level_dot = case alert.level
                       when "critical" then "bg-red-500"
-                      when "warning"  then "bg-yellow-500"
+                      when "warning"  then "bg-amber-500"
                       else                 "bg-blue-500"
                       end
-          level_text = case alert.level
-                       when "critical" then "text-red-600 dark:text-red-400"
-                       when "warning"  then "text-yellow-600 dark:text-yellow-400"
-                       else                 "text-blue-600 dark:text-blue-400"
-                       end
+          level_color = case alert.level
+                        when "critical" then :red
+                        when "warning"  then :yellow
+                        else                 :blue
+                        end
         %>
         <%= button_to mark_read_notification_path(alert),
               method: :post,
@@ -38,7 +38,7 @@
           <span class="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 <%= alert.read? ? 'bg-transparent' : level_dot %>"></span>
           <span class="flex-1 min-w-0">
             <span class="flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-wider <%= level_text %>"><%= alert.level %></span>
+              <%= render Ui::BadgeComponent.new(color: level_color, size: :xs) { alert.level } %>
               <% if alert.resource.present? %>
                 <span class="text-[10px] text-text-muted font-mono truncate"><%= alert.resource %></span>
               <% end %>

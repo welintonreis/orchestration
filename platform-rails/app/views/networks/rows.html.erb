@@ -158,17 +158,16 @@
               <td class="px-3 py-3 text-text-secondary text-xs whitespace-nowrap"><%= @node_name %></td>
               <td class="px-3 py-3 whitespace-nowrap">
                 <%
-                  ownership_color = n["_ownership"] == "public" ? "bg-surface-inset text-text-secondary border-border-subtle" : "bg-indigo-900/40 text-indigo-300 border-indigo-800/40"
+                  ownership_color = n["_ownership"] == "public" ? "bg-surface-inset text-text-secondary border-border-subtle" : "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800/40"
                 %>
                 <%= render(Ui::BadgeComponent.new(color: ownership_color, size: :xs)) { n["_ownership"] } %>
               </td>
               <td class="px-3 py-3 text-right whitespace-nowrap">
                 <% if n["_protected"] %>
-                  <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-surface-inset/60 text-text-muted border border-border cursor-not-allowed">Protected</span>
+                  <%= render(Ui::BadgeComponent.new(color: :gray, css_class: "cursor-not-allowed")) { "Protected" } %>
                 <% else %>
                   <%= render Ui::ButtonComponent.new(url: remove_network_path(net_id), method: :delete,
-                        variant: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-300 dark:border-red-800/50 hover:bg-red-100 dark:bg-red-900/60 hover:text-red-700 dark:hover:text-red-300",
-                        size: :sm, icon: :remove, label: "Remover",
+                        variant: :solid_red, size: :sm, icon: :remove, label: "Remover",
                         confirm: "Remover rede \"#{n["Name"]}\"?") %>
                 <% end %>
               </td>

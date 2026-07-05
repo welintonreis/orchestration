@@ -81,9 +81,12 @@
         </button>
         <span data-bulk-select-target="count" class="hidden text-xs text-text-secondary whitespace-nowrap"></span>
         <% if Current.user&.admin? || Current.user&.operator? %>
-          <%= button_to prune_containers_path(list_params), method: :delete,
-                class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-800/50 text-orange-700 dark:text-orange-300 border border-orange-700/40 rounded-lg transition-colors",
-                data: { turbo_confirm: "Remover todos os containers parados? Esta ação não pode ser desfeita." } do %>
+          <%# Prune is a real destructive bulk action (removes stopped
+              containers permanently), not a brand accent — kept semantic
+              red like the mock's "Prune parados" button, not orange. %>
+          <%= render Ui::ButtonComponent.new(url: prune_containers_path(list_params), method: :delete,
+                variant: :solid_red, size: :sm,
+                confirm: "Remover todos os containers parados? Esta ação não pode ser desfeita.") do %>
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
             </svg>
@@ -123,14 +126,14 @@
           <th class="px-4 py-3 w-8">
             <%= render Ui::CheckboxComponent.new(data: { bulk_select_target: "selectAll", action: "change->bulk-select#toggleAll" }) %>
           </th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("name", "Name / ID / Image") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("status", "Status") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("health", "Health") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider text-center" title="Limites de memória e CPU configurados"><%= sort_link.call("infra", "Infra") %></th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Stats</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Rede / IP</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">Ports</th>
-          <th class="px-4 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider text-right">Actions</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("name", "Name / ID / Image") %></th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("status", "Status") %></th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider"><%= sort_link.call("health", "Health") %></th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider text-center" title="Limites de memória e CPU configurados"><%= sort_link.call("infra", "Infra") %></th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Stats</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Rede / IP</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Ports</th>
+          <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-border/60">
@@ -183,8 +186,17 @@
                 </div>
               </div>
             </td>
+            <%
+              # ponytail: state->color mapping mirrors the mock's status pill
+              # colors (running=green, restarting=brand, paused=amber,
+              # exited=red, created=cyan, dead=gray).
+              status_badge_color = {
+                "running" => :green, "restarting" => :orange, "paused" => :yellow,
+                "exited" => :red, "created" => :cyan, "dead" => :gray
+              }.fetch(state, :gray)
+            %>
             <td class="px-4 py-3">
-              <span class="<%= status_badge(c["State"]) %>"><%= c["Status"].to_s.sub(/\s*\(.*?\)\s*$/, "") %></span>
+              <%= render(Ui::BadgeComponent.new(color: status_badge_color, dot: true)) { c["Status"].to_s.sub(/\s*\(.*?\)\s*$/, "") } %>
             </td>
             <td class="px-4 py-3">
               <%
@@ -200,13 +212,13 @@
                              end
               %>
               <% if health_sym %>
-                <span class="inline-flex items-center gap-1.5 text-sm"
-                      title="<%= health_sym %>">
-                  <%= heartbeat_icon(health_sym, css_class: "w-5 h-5") %>
-                  <span class="<%= health_sym == :healthy ? 'text-green-600 dark:text-green-400' : health_sym == :unhealthy ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400' %> capitalize font-medium"><%= health_sym %></span>
-                </span>
+                <% health_color = { healthy: :green, unhealthy: :red, unknown: :yellow }.fetch(health_sym, :yellow) %>
+                <%= render(Ui::BadgeComponent.new(color: health_color, size: :md)) do %>
+                  <%= heartbeat_icon(health_sym, css_class: "w-3.5 h-3.5") %>
+                  <span class="capitalize" title="<%= health_sym %>"><%= health_sym %></span>
+                <% end %>
               <% elsif state == "running" %>
-                <%= render(Ui::BadgeComponent.new(color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 border-yellow-300 dark:border-yellow-800/40", size: :md)) do %>
+                <%= render(Ui::BadgeComponent.new(color: :yellow, size: :md)) do %>
                   <span title="Container sem healthcheck configurado">Sem HC</span>
                 <% end %>
               <% else %>
@@ -322,18 +334,18 @@
         <span class="text-xs text-text-muted">Por página:</span>
         <% [10, 20, 30, 50, 100].each do |n| %>
           <%= link_to n, containers_path(statuses: @selected_statuses, q: @query, per_page: n, infra: @infra_filter, sort: @sort, dir: @sort_dir, page: 1),
-                class: "px-2 py-0.5 text-xs rounded transition-colors #{(@per_page || 10) == n ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-inset'}" %>
+                class: "px-2 py-0.5 text-xs font-mono rounded transition-colors #{(@per_page || 10) == n ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-inset'}" %>
         <% end %>
         <%= link_to "Todos", containers_path(statuses: @selected_statuses, q: @query, per_page: 0, infra: @infra_filter, sort: @sort, dir: @sort_dir, page: 1),
               class: "px-2 py-0.5 text-xs rounded transition-colors #{@per_page.nil? ? 'bg-surface-active text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-surface-inset'}" %>
       </div>
       <div class="flex items-center gap-1 text-xs text-text-muted">
-        <span><%= @total %> container<%= @total == 1 ? "" : "s" %><%= @selected_statuses.any? ? " (#{@selected_statuses.join(", ")})" : " total" %></span>
+        <span class="font-mono"><%= @total %> container<%= @total == 1 ? "" : "s" %><%= @selected_statuses.any? ? " (#{@selected_statuses.join(", ")})" : " total" %></span>
         <% if @per_page && @total_pages > 1 %>
           <span class="mx-1 text-text-muted">·</span>
           <%= link_to "‹", containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: @infra_filter, sort: @sort, dir: @sort_dir, page: @page - 1),
                 class: "px-2 py-0.5 rounded #{@page <= 1 ? 'text-text-muted cursor-not-allowed pointer-events-none' : 'text-text-secondary hover:text-text-primary hover:bg-surface-inset'}" %>
-          <span class="text-text-secondary"><%= @page %> / <%= @total_pages %></span>
+          <span class="text-text-secondary font-mono"><%= @page %> / <%= @total_pages %></span>
           <%= link_to "›", containers_path(statuses: @selected_statuses, q: @query, per_page: params[:per_page], infra: @infra_filter, sort: @sort, dir: @sort_dir, page: @page + 1),
                 class: "px-2 py-0.5 rounded #{@page >= @total_pages ? 'text-text-muted cursor-not-allowed pointer-events-none' : 'text-text-secondary hover:text-text-primary hover:bg-surface-inset'}" %>
         <% end %>

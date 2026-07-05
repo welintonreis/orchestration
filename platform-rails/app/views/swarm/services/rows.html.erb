@@ -64,7 +64,7 @@
             </template>
             <button type="button"
                     @click="$refs.scaleUpForm.submit()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-800/40 hover:bg-green-700/50 text-green-700 dark:text-green-300 border border-green-700/40 rounded-lg transition-colors">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-green-100 dark:bg-green-500/12 hover:bg-green-200 dark:hover:bg-green-500/20 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-500/28">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
               Scale +1
             </button>
@@ -78,7 +78,7 @@
             </template>
             <button type="button"
                     @click="$refs.scaleDownForm.submit()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/40 hover:bg-orange-800/50 text-orange-700 dark:text-orange-300 border border-orange-700/40 rounded-lg transition-colors">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-orange-100 dark:bg-brand/[0.08] hover:bg-orange-200 dark:hover:bg-brand/[0.16] text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-brand/35">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
               Scale -1
             </button>
@@ -171,43 +171,28 @@
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-1">
                     <% unless global_mode %>
-                      <form action="<%= bulk_scale_swarm_services_path %>" method="post">
-                        <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-                        <input type="hidden" name="delta" value="-1">
-                        <input type="hidden" name="ids[]" value="<%= s["ID"] %>">
-                        <% filter_params.each do |k, v| %><input type="hidden" name="<%= k %>" value="<%= v %>"><% end %>
-                        <button type="submit"
-                                class="p-1.5 rounded text-text-muted hover:text-orange-500 dark:hover:text-orange-400 hover:bg-surface-active transition-colors"
-                                title="Scale -1">
-                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/>
-                          </svg>
-                        </button>
-                      </form>
-                      <form action="<%= bulk_scale_swarm_services_path %>" method="post">
-                        <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-                        <input type="hidden" name="delta" value="1">
-                        <input type="hidden" name="ids[]" value="<%= s["ID"] %>">
-                        <% filter_params.each do |k, v| %><input type="hidden" name="<%= k %>" value="<%= v %>"><% end %>
-                        <button type="submit"
-                                class="p-1.5 rounded text-text-muted hover:text-green-500 dark:hover:text-green-400 hover:bg-surface-active transition-colors"
-                                title="Scale +1">
-                          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                          </svg>
-                        </button>
-                      </form>
+                      <%= render Ui::ButtonComponent.new(
+                            url: bulk_scale_swarm_services_path(filter_params.merge(delta: -1, ids: [s["ID"]])),
+                            method: :post, variant: :gray, size: :icon, title: "Scale -1") do %>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/>
+                        </svg>
+                      <% end %>
+                      <%= render Ui::ButtonComponent.new(
+                            url: bulk_scale_swarm_services_path(filter_params.merge(delta: 1, ids: [s["ID"]])),
+                            method: :post, variant: :gray, size: :icon, title: "Scale +1") do %>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                      <% end %>
                     <% end %>
-                    <form action="<%= force_update_swarm_service_path(s["ID"]) %>" method="post"
-                          data-turbo-confirm="Forçar atualização de <%= j service_name %>? Swarm vai re-pull a imagem e recriar as tasks.">
-                      <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-                      <% filter_params.each do |k, v| %><input type="hidden" name="<%= k %>" value="<%= v %>"><% end %>
-                      <button type="submit"
-                              class="p-1.5 rounded text-text-muted hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-surface-active transition-colors"
-                              title="Forçar atualização (pull + redeploy)">
-                        <%= action_icon(:restart, css_class: "w-3.5 h-3.5") %>
-                      </button>
-                    </form>
+                    <%= render Ui::ButtonComponent.new(
+                          url: force_update_swarm_service_path(s["ID"], filter_params),
+                          method: :post, variant: :solid_orange, size: :sm,
+                          confirm: "Forçar atualização de #{service_name}? Swarm vai re-pull a imagem e recriar as tasks.") do %>
+                      <%= action_icon(:restart, css_class: "w-3.5 h-3.5") %>
+                      Forçar
+                    <% end %>
                   </div>
                 </td>
               </tr>

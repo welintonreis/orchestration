@@ -2,7 +2,7 @@
 
 <!-- Logo / Brand -->
 <div class="text-center mb-8">
-  <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red-600 mb-4">
+  <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand mb-4">
     <svg class="w-8 h-8 text-text-primary" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
     </svg>
@@ -24,7 +24,7 @@
             autocomplete: "username",
             placeholder: "you@example.com",
             value: params[:email_address],
-            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
     </div>
 
     <div>
@@ -34,12 +34,11 @@
             autocomplete: "current-password",
             placeholder: "Your password",
             maxlength: 72,
-            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
     </div>
 
     <div class="flex items-center justify-between pt-1">
-      <%= form.submit "Sign in",
-            class: "rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 text-text-primary font-semibold text-sm px-5 py-2.5 transition cursor-pointer" %>
+      <%= form.submit "Sign in", class: "btn-primary" %>
       <%= link_to "Forgot password?", new_password_path,
             class: "text-sm text-text-secondary hover:text-text-primary transition" %>
     </div>

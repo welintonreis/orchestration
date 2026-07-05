@@ -15,12 +15,11 @@
             autocomplete: "username",
             placeholder: "you@example.com",
             value: params[:email_address],
-            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition" %>
+            class: "block w-full rounded-lg bg-surface-inset border border-border-subtle text-text-primary placeholder-text-muted px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition" %>
     </div>
 
     <div class="flex items-center justify-between">
-      <%= form.submit "Send reset instructions",
-            class: "rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 text-text-primary font-semibold text-sm px-5 py-2.5 transition cursor-pointer" %>
+      <%= form.submit "Send reset instructions", class: "btn-primary" %>
       <%= link_to "Back to sign in", new_session_path,
             class: "text-sm text-text-secondary hover:text-text-primary transition" %>
     </div>
