@@ -1,0 +1,31 @@
+<%= form_with model: app_template, url: url, data: { turbo: false }, class: "space-y-4" do |f| %>
+  <% if app_template.errors.any? %>
+    <div class="px-4 py-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800/40 rounded-lg text-sm text-red-600 dark:text-red-400">
+      <%= app_template.errors.full_messages.join(", ") %>
+    </div>
+  <% end %>
+
+  <div>
+    <label class="block text-xs font-medium text-text-secondary mb-1">Nome</label>
+    <%= f.text_field :name, required: true,
+          class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-text-secondary mb-1">Descrição</label>
+    <%= f.text_field :description,
+          class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-text-secondary mb-1">
+      Compose YAML — use <code class="font-mono">{{VAR}}</code> para placeholders
+    </label>
+    <%= f.text_area :compose_yaml, rows: 18, required: true,
+          class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs font-mono text-text-primary focus:outline-none focus:border-cyan-600" %>
+  </div>
+
+  <button type="submit" class="px-4 py-2 text-sm font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors">
+    Salvar
+  </button>
+<% end %>

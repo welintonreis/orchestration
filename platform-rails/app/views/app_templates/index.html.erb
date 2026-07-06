@@ -1,0 +1,38 @@
+<% page_title "App Templates" %>
+<% page_subtitle "Deploy 1-clique a partir de um compose pronto" %>
+
+<% content_for :page_icon do %>
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+  </svg>
+<% end %>
+
+<% if Current.user&.admin? %>
+  <div class="mb-4 flex justify-end">
+    <%= link_to "Novo template", new_app_template_path,
+          class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-surface-active hover:bg-surface-active-hover text-text-primary rounded-lg border border-border-subtle transition-colors" %>
+  </div>
+<% end %>
+
+<% if @app_templates.empty? %>
+  <div class="flex flex-col items-center justify-center py-24 text-center bg-surface-raised border border-border rounded-xl">
+    <p class="text-text-secondary font-medium">Nenhum template ainda.</p>
+  </div>
+<% else %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% @app_templates.each do |t| %>
+      <%= link_to app_template_path(t), class: "block bg-surface-raised border border-border rounded-xl p-5 hover:border-cyan-600/50 transition-colors" do %>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg bg-surface-active flex items-center justify-center text-cyan-500">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+          <h3 class="text-sm font-semibold text-text-primary"><%= t.name %></h3>
+          <% if t.built_in? %>
+            <span class="ml-auto text-[10px] font-medium uppercase tracking-wider text-text-muted px-1.5 py-0.5 rounded bg-surface-active">padrão</span>
+          <% end %>
+        </div>
+        <p class="text-xs text-text-muted leading-relaxed"><%= t.description %></p>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

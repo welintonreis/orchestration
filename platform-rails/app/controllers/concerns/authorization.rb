@@ -44,6 +44,18 @@ module Authorization
     "ambiente/groups"             => :admin,
     "ambiente/tags"               => :admin,
 
+    # app_templates: gallery (index/show) is open for browsing; editing the
+    # template itself is admin (it's an admin-editable compose YAML — see
+    # AppTemplate::ALLOWED_HOST_PATH_PREFIXES). `deploy` is NOT listed here —
+    # it's a POST with no override, so it falls through to the fail-closed
+    # default (operator+), matching the spec's "1-click deploy used by
+    # operator, template editing is admin" split.
+    "app_templates#new"           => :admin,
+    "app_templates#create"        => :admin,
+    "app_templates#edit"          => :admin,
+    "app_templates#update"        => :admin,
+    "app_templates#destroy"       => :admin,
+
     # environments: listing + switching the active env is open; managing the
     # env registry (create/destroy) is admin.
     "environments#new"            => :admin,
@@ -57,7 +69,7 @@ module Authorization
     "passwords#update"            => :readonly,
     "notifications#mark_all_read" => :readonly,
     "notifications#mark_read"     => :readonly,
-    "alerts#mark_all_read"        => :readonly,
+    "alerts#mark_all_read"        => :readonly
 
     # Everything else follows the fail-closed default: reads open, writes need
     # operator+ (containers/images/volumes/networks/secrets/configs/stacks,

@@ -1,7 +1,11 @@
 # Spec — App templates (deploy 1-clique)
 
-**Status:** 📋 futura. Lacuna vs Portainer na matriz
-`githusky/docs/comparativo-plataformas.md`.
+**Status:** ✅ implementado (2026-07-06) — `AppTemplate` model + galeria +
+deploy via `docker stack deploy` (mesmo shellout do GitDeployer), guard
+de segurança contra socket/host-path fora do allowlist, 4 templates da
+casa seedados (Rails RedHusky, Postgres/Redis efêmero, Static site).
+Versionamento de template (git do painel) não entrou — fora de escopo
+declarado na spec original.
 
 ## Gatilhos
 

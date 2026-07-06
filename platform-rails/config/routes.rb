@@ -135,6 +135,9 @@ Rails.application.routes.draw do
     end
     collection { post :files }
   end
+  resources :app_templates do
+    member { post :deploy }
+  end
   namespace :webhooks do
     post ":token/deploy", to: "deploys#create", as: :deploy
   end

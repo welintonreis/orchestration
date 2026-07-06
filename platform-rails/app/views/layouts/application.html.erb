@@ -146,6 +146,7 @@
               </div>
             <% else %>
               <%= sidebar_link "Stacks",      stacks_path,      icon: :stacks,     open: "sb" %>
+              <%= sidebar_link "App Templates", app_templates_path, icon: :stacks, open: "sb" %>
               <% if runtime_capabilities[:swarm] %>
                 <%= sidebar_link "Serviços",  swarm_services_path, icon: :services, open: "sb" %>
               <% end %>

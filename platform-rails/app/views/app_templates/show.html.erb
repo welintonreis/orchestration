@@ -1,0 +1,49 @@
+<% page_title @app_template.name %>
+<% page_subtitle @app_template.description %>
+
+<div class="mb-4">
+  <%= link_to app_templates_path, class: "flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary" do %>
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    App Templates
+  <% end %>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
+    <h3 class="text-sm font-semibold text-text-primary mb-4">Deploy</h3>
+    <%= form_with url: deploy_app_template_path(@app_template), method: :post, data: { turbo: false }, class: "space-y-4" do %>
+      <div>
+        <label class="block text-xs font-medium text-text-secondary mb-1">Nome do stack</label>
+        <input type="text" name="stack_name" placeholder="meu-stack" pattern="[a-z0-9][a-z0-9_-]*" required
+               class="w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary font-mono placeholder-text-muted focus:outline-none focus:border-cyan-600">
+      </div>
+
+      <% @app_template.placeholders.each do |var| %>
+        <div>
+          <label class="block text-xs font-medium text-text-secondary mb-1"><%= var %></label>
+          <input type="text" name="values[<%= var %>]" placeholder="<%= @app_template.variables[var] %>"
+                 class="w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary font-mono placeholder-text-muted focus:outline-none focus:border-cyan-600">
+        </div>
+      <% end %>
+
+      <button type="submit" class="w-full px-4 py-2 text-sm font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors">
+        Deploy
+      </button>
+    <% end %>
+  </div>
+
+  <div class="bg-surface-raised border border-border rounded-xl p-5 overflow-hidden">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-text-primary">Compose</h3>
+      <% if Current.user&.admin? %>
+        <div class="flex items-center gap-2">
+          <%= link_to "Editar", edit_app_template_path(@app_template), class: "text-xs text-cyan-500 hover:text-cyan-400" %>
+          <%= render Ui::ButtonComponent.new(url: app_template_path(@app_template), method: :delete,
+                variant: :red, size: "px-2 py-1 text-xs rounded", title: "Remover",
+                confirm: "Remover o template \"#{@app_template.name}\"?") do %>Remover<% end %>
+        </div>
+      <% end %>
+    </div>
+    <pre class="text-xs font-mono text-text-secondary bg-surface-inset rounded-lg p-4 overflow-x-auto whitespace-pre"><%= @app_template.compose_yaml %></pre>
+  </div>
+</div>

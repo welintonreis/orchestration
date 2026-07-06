@@ -1,0 +1,12 @@
+<% page_title "Novo template" %>
+
+<div class="mb-4">
+  <%= link_to app_templates_path, class: "flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary" do %>
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    App Templates
+  <% end %>
+</div>
+
+<div class="bg-surface-raised border border-border rounded-xl p-5 max-w-2xl">
+  <%= render "form", app_template: @app_template, url: app_templates_path %>
+</div>

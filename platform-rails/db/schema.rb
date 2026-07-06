@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_06_120000) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -38,6 +38,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_230000) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.index ["key"], name: "index_app_settings_on_key", unique: true
+  end
+
+  create_table "app_templates", force: :cascade do |t|
+    t.boolean "built_in", default: false, null: false
+    t.text "compose_yaml", null: false
+    t.datetime "created_at", null: false
+    t.string "description"
+    t.string "icon", default: "box"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.json "variables", default: {}, null: false
+    t.index ["name"], name: "index_app_templates_on_name", unique: true
   end
 
   create_table "audit_logs", force: :cascade do |t|
