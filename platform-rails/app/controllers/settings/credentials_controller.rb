@@ -1,6 +1,5 @@
 module Settings
   class CredentialsController < ApplicationController
-    before_action :require_admin!
     before_action :set_credential, only: %i[edit update destroy]
 
     def index

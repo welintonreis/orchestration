@@ -1,5 +1,4 @@
 class ImagesController < ApplicationController
-  before_action :require_operator!, only: %i[remove batch_remove prune_orphans pull]
 
   # remove/batch_remove/prune_orphans redirect back here from inside the
   # lazy turbo-frame (images-content) — same self-referential nested-frame

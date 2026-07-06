@@ -1,5 +1,4 @@
 class SecurityController < ApplicationController
-  before_action :require_admin!
 
   def index
     @audit          = SecurityAudit.new

@@ -1,6 +1,4 @@
 class ContainersController < ApplicationController
-  before_action :require_operator!, only: %i[start stop restart kill pause unpause remove bulk_action prune]
-
   # Filter/per_page/pagination links inside rows.html.erb point back here
   # (not directly at rows_containers_path) so the URL bar reflects the
   # current filter state. When that request arrives as a turbo-frame
@@ -51,10 +49,10 @@ class ContainersController < ApplicationController
 
     @total          = all_containers.size
     @per_page       = params[:per_page] == "0" ? nil : (params[:per_page]&.to_i || 10)
-    @page           = [params[:page]&.to_i || 1, 1].max
+    @page           = [ params[:page]&.to_i || 1, 1 ].max
     if @per_page
-      @total_pages = [(@total.to_f / @per_page).ceil, 1].max
-      @page        = [@page, @total_pages].min
+      @total_pages = [ (@total.to_f / @per_page).ceil, 1 ].max
+      @page        = [ @page, @total_pages ].min
       @containers  = all_containers.drop((@page - 1) * @per_page).first(@per_page)
     else
       @total_pages = 1
@@ -106,7 +104,7 @@ class ContainersController < ApplicationController
     @container      = current_docker_client.container(@container_id)
     @container_name = @container.dig("Name")&.sub(/^\//, "") || @container_id[0..11]
     @path = sanitize_container_path(params[:path] || "/")
-    output = current_docker_client.exec_run_output(@container_id, ["ls", "-la", @path])
+    output = current_docker_client.exec_run_output(@container_id, [ "ls", "-la", @path ])
     @entries = parse_ls_output(output)
   rescue DockerClient::NotFoundError
     redirect_to containers_path(list_filter_params), alert: "Container not found."
@@ -125,6 +123,75 @@ class ContainersController < ApplicationController
     redirect_to container_files_path(params[:id]), alert: "Container not found."
   rescue => e
     redirect_to container_files_path(params[:id], path: File.dirname(params[:path].to_s)), alert: "Erro: #{e.message}"
+  end
+
+  # githusky-style file-browser-write (feature-file-browser-write.md):
+  # upload via the Docker archive API (native, no exec); delete/mkdir/rename
+  # via exec since the archive API has no equivalent. Every mutation is
+  # audited — a container's filesystem write is RCE-adjacent (arbitrary file
+  # content lands wherever the running process reads it), so who/what/when
+  # matters even though Authorization already gates this to operator+.
+  def files_upload
+    container_id = params[:id]
+    dest_path    = sanitize_container_path(params[:path] || "/")
+    file         = params[:file]
+    return redirect_to(container_files_path(container_id, path: dest_path), alert: "Nenhum arquivo selecionado.") unless file
+
+    tar_data = build_tar(file.original_filename, file.read)
+    current_docker_client.container_archive_put(container_id, dest_path, tar_data)
+    audit_file_action("upload_container_file", container_id, File.join(dest_path, file.original_filename))
+    redirect_to container_files_path(container_id, path: dest_path), notice: "\"#{file.original_filename}\" enviado."
+  rescue DockerClient::NotFoundError
+    redirect_to container_files_path(container_id, path: dest_path), alert: "Container not found."
+  rescue => e
+    redirect_to container_files_path(container_id, path: dest_path), alert: "Erro: #{e.message}"
+  end
+
+  def files_delete
+    container_id = params[:id]
+    file_path    = sanitize_container_path(params[:path])
+    return redirect_to(container_files_path(container_id), alert: "Caminho inválido.") if file_path == "/"
+
+    current_docker_client.exec_run_output(container_id, [ "rm", "-rf", "--", file_path ])
+    audit_file_action("delete_container_file", container_id, file_path)
+    redirect_to container_files_path(container_id, path: File.dirname(file_path)), notice: "\"#{File.basename(file_path)}\" removido."
+  rescue DockerClient::NotFoundError
+    redirect_to container_files_path(container_id), alert: "Container not found."
+  rescue => e
+    redirect_to container_files_path(container_id), alert: "Erro: #{e.message}"
+  end
+
+  def files_mkdir
+    container_id = params[:id]
+    parent       = sanitize_container_path(params[:path] || "/")
+    dir_name     = params[:dir_name].to_s.gsub(%r{[/\0]}, "").strip
+    return redirect_to(container_files_path(container_id, path: parent), alert: "Nome inválido.") if dir_name.blank?
+
+    full_path = File.join(parent, dir_name)
+    current_docker_client.exec_run_output(container_id, [ "mkdir", "-p", "--", full_path ])
+    audit_file_action("mkdir_container_file", container_id, full_path)
+    redirect_to container_files_path(container_id, path: parent), notice: "Diretório \"#{dir_name}\" criado."
+  rescue DockerClient::NotFoundError
+    redirect_to container_files_path(container_id), alert: "Container not found."
+  rescue => e
+    redirect_to container_files_path(container_id, path: params[:path].to_s), alert: "Erro: #{e.message}"
+  end
+
+  def files_rename
+    container_id = params[:id]
+    old_path     = sanitize_container_path(params[:path])
+    new_name     = params[:new_name].to_s.gsub(%r{[/\0]}, "").strip
+    parent       = File.dirname(old_path)
+    return redirect_to(container_files_path(container_id, path: parent), alert: "Nome inválido.") if new_name.blank?
+
+    new_path = File.join(parent, new_name)
+    current_docker_client.exec_run_output(container_id, [ "mv", "--", old_path, new_path ])
+    audit_file_action("rename_container_file", container_id, "#{old_path} -> #{new_path}")
+    redirect_to container_files_path(container_id, path: parent), notice: "Renomeado para \"#{new_name}\"."
+  rescue DockerClient::NotFoundError
+    redirect_to container_files_path(container_id), alert: "Container not found."
+  rescue => e
+    redirect_to container_files_path(container_id, path: File.dirname(params[:path].to_s)), alert: "Erro: #{e.message}"
   end
 
   # Raw WebSocket proxy: hijacks the Rack socket and pipes bytes straight to a
@@ -334,6 +401,20 @@ class ContainersController < ApplicationController
     File.expand_path(path.to_s, "/").then { |p| p.start_with?("/") ? p : "/" }
   end
 
+  def build_tar(filename, data)
+    require "rubygems/package"
+    io = StringIO.new("".b)
+    Gem::Package::TarWriter.new(io) do |tar|
+      tar.add_file_simple(filename, 0o644, data.bytesize) { |f| f.write(data) }
+    end
+    io.string
+  end
+
+  def audit_file_action(action, container_id, path)
+    AuditLog.record(user: Current.user, action: action, target_type: "Container", target_id: container_id,
+                     metadata: { path: path }, ip_address: request.remote_ip)
+  end
+
   def parse_ls_output(output)
     entries = []
     output.each_line do |line|
@@ -345,13 +426,13 @@ class ContainersController < ApplicationController
       next if name.nil? || name =~ /\A\.\.?\z/
       display_name = name.split(" -> ").first.strip
       type = case perms[0]
-             when "d" then :directory
-             when "l" then :symlink
-             else :file
-             end
+      when "d" then :directory
+      when "l" then :symlink
+      else :file
+      end
       entries << { name: display_name, type: type, size: size.to_i, modified: date.strip, permissions: perms }
     end
-    entries.sort_by { |e| [e[:type] == :directory ? 0 : 1, e[:name].downcase] }
+    entries.sort_by { |e| [ e[:type] == :directory ? 0 : 1, e[:name].downcase ] }
   end
 
   def enable_nodelay(io)
@@ -413,17 +494,17 @@ class ContainersController < ApplicationController
 
   def sort_containers(containers, sort, dir, resources_cache)
     sorted = case sort
-             when "name"
+    when "name"
                containers.sort_by { |c| (c["Names"]&.first&.sub(/^\//, "") || c["Id"]).downcase }
-             when "status"
+    when "status"
                containers.sort_by { |c| c["State"].to_s.downcase }
-             when "health"
+    when "health"
                containers.sort_by { |c| health_rank(c) }
-             when "infra"
+    when "infra"
                containers.sort_by { |c| infra_status_for(resources_cache[c["Id"]]) }
-             else
+    else
                containers
-             end
+    end
     dir == "desc" ? sorted.reverse : sorted
   end
 

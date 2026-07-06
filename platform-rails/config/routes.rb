@@ -63,8 +63,12 @@ Rails.application.routes.draw do
   get "containers/:id/logs",          to: "containers#logs",          as: :container_logs
   get "containers/:id/terminal",      to: "containers#terminal",      as: :container_terminal
   get "containers/:id/ttyd-ws",       to: "containers#ttyd_ws",       as: :container_ttyd_ws
-  get "containers/:id/files",         to: "containers#files",         as: :container_files
-  get "containers/:id/files/download",to: "containers#files_download",as: :container_files_download
+  get    "containers/:id/files",         to: "containers#files",         as: :container_files
+  get    "containers/:id/files/download", to: "containers#files_download", as: :container_files_download
+  post   "containers/:id/files/upload",  to: "containers#files_upload",  as: :container_files_upload
+  delete "containers/:id/files",         to: "containers#files_delete",  as: :container_files_delete
+  post   "containers/:id/files/mkdir",   to: "containers#files_mkdir",   as: :container_files_mkdir
+  patch  "containers/:id/files/rename",  to: "containers#files_rename",  as: :container_files_rename
   resources :images, only: %i[index show] do
     member { delete :remove }
     collection do
@@ -86,7 +90,7 @@ Rails.application.routes.draw do
       post   :file_rename
     end
     collection do
-      get  :rows
+      get :rows
       delete :batch_remove
     end
   end
@@ -167,9 +171,9 @@ Rails.application.routes.draw do
   # ── Teams & Roles ──
   resources :teams do
     member do
-      post  :add_member
+      post :add_member
       delete :remove_member
-      post  :add_environment_permission
+      post :add_environment_permission
       delete :remove_environment_permission
     end
   end
@@ -182,19 +186,19 @@ Rails.application.routes.draw do
   get  "swarm/registries/:id/edit", to: "swarm/registries#edit", as: :edit_swarm_registry
   patch "swarm/registries/:id",     to: "swarm/registries#update", as: :swarm_registry
   delete "swarm/registries/:id",    to: "swarm/registries#destroy"
-  get  "swarm/policies",        to: "swarm/policies#index",     as: :swarm_policies
+  get "swarm/policies",        to: "swarm/policies#index",     as: :swarm_policies
 
   # ── Ambiente extras ──
   namespace :ambiente do
-    resources :groups, except: [:show] do
+    resources :groups, except: [ :show ] do
       member do
         post   :add_environment
         delete :remove_environment
       end
     end
     resources :policies, only: %i[index edit update]
-    resources :tags,     except: [:show]
-    resources :registries, except: [:show]
+    resources :tags,     except: [ :show ]
+    resources :registries, except: [ :show ]
     get "licenses", to: "licenses#index", as: :licenses
   end
 
@@ -209,7 +213,7 @@ Rails.application.routes.draw do
     post "general",   to: "general#update"
     get  "auth",      to: "auth#index",     as: :auth
     post "auth",      to: "auth#update"
-    resources :credentials, except: [:show]
+    resources :credentials, except: [ :show ]
     get  "kubeconfig_import", to: "kubeconfig_imports#new",    as: :kubeconfig_import
     post "kubeconfig_import", to: "kubeconfig_imports#create"
     get  "edge",      to: "edge#index",     as: :edge

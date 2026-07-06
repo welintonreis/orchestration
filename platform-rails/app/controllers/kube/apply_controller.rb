@@ -1,7 +1,6 @@
 module Kube
   class ApplyController < ApplicationController
     include RequireKubernetes
-    before_action :require_operator!, only: %i[create]
 
     def new
     end

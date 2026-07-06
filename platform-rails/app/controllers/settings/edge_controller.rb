@@ -1,6 +1,5 @@
 module Settings
   class EdgeController < ApplicationController
-    before_action :require_admin!
 
     def index
       @edge_key     = EdgeEnrollmentToken.edge_key

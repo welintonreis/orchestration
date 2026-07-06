@@ -1,7 +1,6 @@
 module Kube
   class WorkloadsController < ApplicationController
     include RequireKubernetes
-    before_action :require_operator!, only: %i[scale restart destroy]
 
     def index
       load_namespaces

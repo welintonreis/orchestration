@@ -1,8 +1,9 @@
 # Spec — RBAC enforcement (v1.1)
 
-**Status:** 📋 futura — pendência declarada no ROADMAP ("RBAC roles não
-enforced nos controllers"). Desenhada 2026-07-06 junto com a matriz
-`githusky/docs/comparativo-plataformas.md`.
+**Status:** ✅ implementado — `Authorization` concern (fail-closed por
+verbo, POLICY map único, scoping por time+environment) já shippado antes
+desta verificação (2026-07-06); esta spec só documentava uma pendência
+do ROADMAP que já não existia mais no código.
 
 ## Gatilhos
 

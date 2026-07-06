@@ -1,5 +1,4 @@
 class EnvironmentsController < ApplicationController
-  before_action :require_admin!, except: %i[index activate]
   before_action :set_environment, only: %i[destroy activate]
 
   def index

@@ -1,7 +1,9 @@
 # Spec — File browser: upload/edit/delete (v1.0)
 
-**Status:** 📋 futura — pendência declarada no ROADMAP ("file browser
-somente leitura; upload/delete como v1.0 feature").
+**Status:** ✅ implementado (2026-07-06) — upload via Docker archive API,
+delete/mkdir/rename via exec, tudo operator+ e auditado em `audit_logs`.
+Editor inline de texto (v1.0 original pedia) não entrou — baixo uso real
+frente ao custo, upload de arquivo editado localmente cobre o caso.
 
 ## Gatilhos
 

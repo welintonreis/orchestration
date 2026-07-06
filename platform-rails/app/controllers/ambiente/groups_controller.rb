@@ -1,6 +1,5 @@
 module Ambiente
   class GroupsController < ApplicationController
-    before_action :require_admin!
     before_action :set_group, only: %i[edit update destroy add_environment remove_environment]
 
     def index

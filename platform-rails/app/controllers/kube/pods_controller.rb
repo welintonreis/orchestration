@@ -1,7 +1,6 @@
 module Kube
   class PodsController < ApplicationController
     include RequireKubernetes
-    before_action :require_operator!, only: %i[destroy]
 
     def index
       load_namespaces

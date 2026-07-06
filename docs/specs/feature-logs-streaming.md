@@ -1,6 +1,6 @@
 # Spec — Logs de container em tempo real (Fase 14)
 
-**Status:** 📋 futura — é a "Fase 14" do ROADMAP, formalizada como spec.
+**Status:** ✅ implementado — `LogsChannel` (ActionCable) + `log_stream_controller.js`, já shippado antes desta verificação.
 
 ## Gatilhos
 

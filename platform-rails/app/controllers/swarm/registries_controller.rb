@@ -1,6 +1,5 @@
 module Swarm
   class RegistriesController < ApplicationController
-    before_action :require_admin!
     before_action :set_registry, only: %i[edit update destroy]
 
     def index

@@ -1,5 +1,4 @@
 class AuditLogsController < ApplicationController
-  before_action :require_admin!
 
   ACTIONS_PER_PAGE = 50
 

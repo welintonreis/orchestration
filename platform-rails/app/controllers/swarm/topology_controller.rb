@@ -7,7 +7,6 @@ module Swarm
   # /swarm/nodes, /swarm/services and each service's task list by hand.
   class TopologyController < ApplicationController
     include SwarmGuard
-    before_action :require_operator!, only: %i[prune_services system_prune]
 
     def index
       client   = current_docker_client

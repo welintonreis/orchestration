@@ -1,7 +1,6 @@
 class NetworksController < ApplicationController
   PROTECTED_NETWORKS = %w[bridge host none].freeze
   SYSTEM_NETWORKS    = %w[bridge host none docker_gwbridge ingress].freeze
-  before_action :require_operator!, only: %i[remove create]
 
   # create/remove redirect back here from inside the lazy turbo-frame
   # (networks-content) — same self-referential nested-frame bug fixed for

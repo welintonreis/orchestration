@@ -1,6 +1,5 @@
 module Settings
   class GeneralController < ApplicationController
-    before_action :require_admin!
 
     def index
       @info = current_docker_client.info rescue {}

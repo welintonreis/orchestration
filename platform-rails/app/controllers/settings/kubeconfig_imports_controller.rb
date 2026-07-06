@@ -1,6 +1,5 @@
 module Settings
   class KubeconfigImportsController < ApplicationController
-    before_action :require_admin!
 
     def new
     end

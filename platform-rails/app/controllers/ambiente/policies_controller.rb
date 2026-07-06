@@ -1,6 +1,5 @@
 module Ambiente
   class PoliciesController < ApplicationController
-    before_action :require_admin!
 
     def index
       @environments = Environment.all.order(:name)

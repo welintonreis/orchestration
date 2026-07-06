@@ -1,6 +1,5 @@
 class VolumesController < ApplicationController
   include DockerCache
-  before_action :require_operator!, only: %i[remove batch_remove upload file_delete file_mkdir file_rename]
 
   # Image used for ephemeral containers when no running container has the volume mounted.
   HELPER_IMAGE = "busybox:latest".freeze

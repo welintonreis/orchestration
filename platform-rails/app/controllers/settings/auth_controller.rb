@@ -1,6 +1,5 @@
 module Settings
   class AuthController < ApplicationController
-    before_action :require_admin!
 
     def index
       @settings = {

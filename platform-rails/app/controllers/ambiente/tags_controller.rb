@@ -1,6 +1,5 @@
 module Ambiente
   class TagsController < ApplicationController
-    before_action :require_admin!
     before_action :set_tag, only: %i[edit update destroy]
 
     def index

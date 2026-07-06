@@ -1,5 +1,4 @@
 class RolesController < ApplicationController
-  before_action :require_admin!
 
   PERMISSIONS = [
     { resource: "Containers", view: true,  operator: true,  admin: true  },

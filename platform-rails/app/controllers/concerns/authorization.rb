@@ -3,22 +3,109 @@ module Authorization
 
   ROLE_RANK = { "readonly" => 0, "operator" => 1, "admin" => 2 }.freeze
 
+  # ---------------------------------------------------------------------------
+  # SINGLE SOURCE OF TRUTH for the whole app's authorization policy.
+  #
+  # A maintainer reads THIS map to know who can do what — enforcement is one
+  # `before_action` (authorize_action!) in ApplicationController, not scattered
+  # `require_*!` calls copy-pasted across ~25 controllers.
+  #
+  # Resolution order (most specific wins):
+  #   1. "controller_path#action" => role   (per-action override)
+  #   2. "controller_path"         => role   (whole controller, GETs included —
+  #                                            used for admin-only areas whose
+  #                                            listings are themselves sensitive)
+  #   3. fail-closed default: any WRITE (POST/PUT/PATCH/DELETE) needs :operator,
+  #      so a viewer can never mutate anything — including controllers/actions
+  #      added later that nobody remembered to gate. Reads (GET/HEAD) are open
+  #      to any authenticated user (viewer+).
+  #
+  # Machine endpoints (Api::EdgeController, Webhooks::DeploysController) are
+  # ActionController::Base, not ApplicationController — this concern never runs
+  # for them; their token auth is their whole story.
+  # ---------------------------------------------------------------------------
+  POLICY = {
+    # --- admin-only areas (settings, user/team/role admin, credentials) ------
+    "users"                       => :admin,
+    "teams"                       => :admin,
+    "roles"                       => :admin,
+    "git_credentials"             => :admin,
+    "audit_logs"                  => :admin,
+    "security"                    => :admin,
+    "swarm/registries"            => :admin,
+    "settings/general"            => :admin,
+    "settings/auth"               => :admin,
+    "settings/edge"               => :admin,
+    "settings/credentials"        => :admin,
+    "settings/kubeconfig_imports" => :admin,
+    "ambiente/licenses"           => :admin,
+    "ambiente/registries"         => :admin,
+    "ambiente/policies"           => :admin,
+    "ambiente/groups"             => :admin,
+    "ambiente/tags"               => :admin,
+
+    # environments: listing + switching the active env is open; managing the
+    # env registry (create/destroy) is admin.
+    "environments#new"            => :admin,
+    "environments#create"        => :admin,
+    "environments#destroy"        => :admin,
+    "environments#activate"       => :readonly, # switches the active-env cookie
+
+    # --- viewer-safe writes (self-service / navigation, not infra mutation) --
+    "sessions#destroy"            => :readonly, # logout
+    "passwords#create"            => :readonly, # forgot-password (usually anon)
+    "passwords#update"            => :readonly,
+    "notifications#mark_all_read" => :readonly,
+    "notifications#mark_read"     => :readonly,
+    "alerts#mark_all_read"        => :readonly,
+
+    # Everything else follows the fail-closed default: reads open, writes need
+    # operator+ (containers/images/volumes/networks/secrets/configs/stacks,
+    # swarm services & topology, git_stacks deploy/sync/rollback, kube/*, ...).
+  }.freeze
+
   included do
     helper_method :can?
+    before_action :authorize_action!
+  end
+
+  # Minimum role for a request, or nil when open (authenticated read). Pure
+  # function of controller/action/verb — exposed so the policy can be swept in
+  # tests without booting every controller.
+  def self.min_role_for(controller_path, action, verb)
+    key = "#{controller_path}##{action}"
+    return POLICY[key] if POLICY.key?(key)
+    return POLICY[controller_path] if POLICY.key?(controller_path)
+    return :operator unless %w[GET HEAD].include?(verb.to_s.upcase) # fail-closed
+    nil
   end
 
   private
 
-  def require_admin!
-    unless can?(:admin)
-      redirect_to root_path, alert: "Admin access required."
+  def authorize_action!
+    return unless Current.user # anonymous flows / machine callers: not our job
+    min = Authorization.min_role_for(controller_path, action_name, request.request_method)
+    return if min.nil? || can?(min)
+
+    deny_access!
+  end
+
+  def deny_access!
+    if request.format.json?
+      head :forbidden
+    else
+      redirect_to root_path, alert: "You don't have permission to do that."
     end
   end
 
+  # Kept for the handful of views/controllers that assert a role inline; the
+  # blanket enforcement above is what actually gates every request.
+  def require_admin!
+    deny_access! unless can?(:admin)
+  end
+
   def require_operator!
-    unless can?(:operator)
-      redirect_to root_path, alert: "Operator access required."
-    end
+    deny_access! unless can?(:operator)
   end
 
   # environment: defaults to the request's active environment, but callers
