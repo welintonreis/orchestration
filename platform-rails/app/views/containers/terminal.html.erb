@@ -28,7 +28,7 @@
     <span class="w-px h-4 bg-surface-active flex-shrink-0"></span>
 
     <%# Container identity %>
-    <%= helpers.action_icon(:terminal, css_class: "w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0") %>
+    <%= action_icon(:terminal, css_class: "w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0") %>
     <span class="text-xs font-mono text-text-secondary flex-shrink-0"><%= @container_name %></span>
     <span class="text-xs text-text-muted font-mono flex-shrink-0 hidden sm:inline"><%= @container_id[0..11] %></span>
 
@@ -49,7 +49,7 @@
         <span class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all select-none
                      peer-checked:bg-red-100 dark:peer-checked:bg-red-500/12 peer-checked:text-red-700 dark:peer-checked:text-red-300 peer-checked:border-red-300 dark:peer-checked:border-red-500/28
                      bg-surface-raised text-text-muted border-border-subtle hover:text-text-secondary hover:border-border-subtle">
-          <%= helpers.action_icon(:shield, css_class: "w-3.5 h-3.5") %>
+          <%= action_icon(:shield, css_class: "w-3.5 h-3.5") %>
           root
         </span>
       </label>
