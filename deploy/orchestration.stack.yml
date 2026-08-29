@@ -24,6 +24,8 @@ services:
       # resolve to a real location once the host's own daemon picks up
       # the "docker stack deploy" this container issues over the socket.
       GIT_WORKSPACE_HOST_PATH: ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}
+      CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-nokhQvc8lTQ7Miqlw_vtOQtyK3XuJPeWKu6UdIkQ}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-2abf8a465c7243bdce700ca27de558a5}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro

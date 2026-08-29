@@ -210,6 +210,13 @@ Rails.application.routes.draw do
   post "notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_read_notifications
   post "notifications/:id/read",      to: "notifications#mark_read",     as: :mark_read_notification
 
+  # ── Cloudflare DNS & Redirects ──
+  get    "cloudflare/dns",             to: "cloudflare_dns#index",          as: :cloudflare_dns
+  post   "cloudflare/dns",             to: "cloudflare_dns#create"
+  patch  "cloudflare/dns/:id",         to: "cloudflare_dns#update",         as: :update_cloudflare_dns_record
+  delete "cloudflare/dns/:id",         to: "cloudflare_dns#destroy",        as: :delete_cloudflare_dns_record
+  post   "cloudflare/dns/forward",     to: "cloudflare_dns#create_forward", as: :create_cloudflare_dns_forward
+
   # ── Settings ──
   namespace :settings do
     get  "general",   to: "general#index",  as: :general
