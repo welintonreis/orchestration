@@ -116,6 +116,139 @@ class CloudflareService
     )
   end
 
+  # ── EMAIL ROUTING (REGRAS DE EMAIL / ENCAMINHAMENTO) ──
+  def email_routing_settings(zone: nil)
+    target_zone = zone || default_zone_id
+    res = request(:get, "/zones/#{target_zone}/email/routing")
+    res["result"] || {}
+  rescue Error => e
+    { "status" => "disabled", "error" => e.message }
+  end
+
+  def list_email_routing_rules(zone: nil, page: 1, per_page: 50)
+    target_zone = zone || default_zone_id
+    res = request(:get, "/zones/#{target_zone}/email/routing/rules?page=#{page}&per_page=#{per_page}")
+    res["result"] || []
+  rescue Error => e
+    Rails.logger.warn("Cloudflare Email Routing rules error: #{e.message}")
+    []
+  end
+
+  def list_destination_addresses(account_id: nil)
+    # Lista endereços de destino verificados na conta
+    acc_id = account_id.presence || ENV["CF_ACCOUNT_ID"].presence || "85c7ebc56fe4c6aca4939b68af878c04"
+    res = request(:get, "/accounts/#{acc_id}/email/routing/addresses")
+    res["result"] || []
+  rescue Error => e
+    Rails.logger.warn("Cloudflare destination addresses error: #{e.message}")
+    []
+  end
+
+  def create_email_routing_rule(name:, custom_address:, forward_to:, enabled: true, zone: nil)
+    target_zone = zone || default_zone_id
+    payload = {
+      name: name,
+      enabled: enabled == true || enabled == "true" || enabled == "1",
+      matchers: [
+        {
+          type: "literal",
+          field: "to",
+          value: custom_address
+        }
+      ],
+      actions: [
+        {
+          type: "forward",
+          value: [forward_to]
+        }
+      ],
+      priority: 0
+    }
+    res = request(:post, "/zones/#{target_zone}/email/routing/rules", payload)
+    res["result"]
+  end
+
+  def update_email_routing_rule(rule_id, name:, custom_address:, forward_to:, enabled: true, zone: nil)
+    target_zone = zone || default_zone_id
+    payload = {
+      name: name,
+      enabled: enabled == true || enabled == "true" || enabled == "1",
+      matchers: [
+        {
+          type: "literal",
+          field: "to",
+          value: custom_address
+        }
+      ],
+      actions: [
+        {
+          type: "forward",
+          value: [forward_to]
+        }
+      ],
+      priority: 0
+    }
+    res = request(:put, "/zones/#{target_zone}/email/routing/rules/#{rule_id}", payload)
+    res["result"]
+  end
+
+  def delete_email_routing_rule(rule_id, zone: nil)
+    target_zone = zone || default_zone_id
+    request(:delete, "/zones/#{target_zone}/email/routing/rules/#{rule_id}")
+    true
+  end
+
+  # ── TURNSTILE (SMART CAPTCHA / WIDGETS) ──
+  def list_turnstile_widgets(account_id: nil)
+    acc_id = account_id.presence || ENV["CF_ACCOUNT_ID"].presence || "85c7ebc56fe4c6aca4939b68af878c04"
+    res = request(:get, "/accounts/#{acc_id}/challenges/widgets")
+    res["result"] || []
+  rescue Error => e
+    Rails.logger.warn("Cloudflare Turnstile list error: #{e.message}")
+    []
+  end
+
+  def create_turnstile_widget(name:, domains:, mode: "managed", bot_fight_mode: false, account_id: nil)
+    acc_id = account_id.presence || ENV["CF_ACCOUNT_ID"].presence || "85c7ebc56fe4c6aca4939b68af878c04"
+    domains_list = domains.is_a?(Array) ? domains : domains.to_s.split(/[,\s\n]+/).map(&:strip).reject(&:blank?)
+    payload = {
+      name: name,
+      domains: domains_list,
+      mode: mode.presence || "managed",
+      bot_fight_mode: bot_fight_mode == true || bot_fight_mode == "true" || bot_fight_mode == "1"
+    }
+    res = request(:post, "/accounts/#{acc_id}/challenges/widgets", payload)
+    res["result"]
+  end
+
+  def update_turnstile_widget(widget_id, name:, domains:, mode: "managed", bot_fight_mode: false, account_id: nil)
+    acc_id = account_id.presence || ENV["CF_ACCOUNT_ID"].presence || "85c7ebc56fe4c6aca4939b68af878c04"
+    domains_list = domains.is_a?(Array) ? domains : domains.to_s.split(/[,\s\n]+/).map(&:strip).reject(&:blank?)
+    payload = {
+      name: name,
+      domains: domains_list,
+      mode: mode.presence || "managed",
+      bot_fight_mode: bot_fight_mode == true || bot_fight_mode == "true" || bot_fight_mode == "1"
+    }
+    res = request(:put, "/accounts/#{acc_id}/challenges/widgets/#{widget_id}", payload)
+    res["result"]
+  end
+
+  def rotate_turnstile_secret(widget_id, invalidate_immediately: false, account_id: nil)
+    acc_id = account_id.presence || ENV["CF_ACCOUNT_ID"].presence || "85c7ebc56fe4c6aca4939b68af878c04"
+    payload = {
+      invalidate_immediately: invalidate_immediately == true || invalidate_immediately == "true"
+    }
+    res = request(:post, "/accounts/#{acc_id}/challenges/widgets/#{widget_id}/rotate_secret", payload)
+    res["result"]
+  end
+
+  def delete_turnstile_widget(widget_id, account_id: nil)
+    acc_id = account_id.presence || ENV["CF_ACCOUNT_ID"].presence || "85c7ebc56fe4c6aca4939b68af878c04"
+    request(:delete, "/accounts/#{acc_id}/challenges/widgets/#{widget_id}")
+    true
+  end
+
   private
 
   def request(method, path, body = nil)

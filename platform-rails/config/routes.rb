@@ -210,12 +210,24 @@ Rails.application.routes.draw do
   post "notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_read_notifications
   post "notifications/:id/read",      to: "notifications#mark_read",     as: :mark_read_notification
 
-  # ── Cloudflare DNS & Redirects ──
-  get    "cloudflare/dns",             to: "cloudflare_dns#index",          as: :cloudflare_dns
-  post   "cloudflare/dns",             to: "cloudflare_dns#create"
-  patch  "cloudflare/dns/:id",         to: "cloudflare_dns#update",         as: :update_cloudflare_dns_record
-  delete "cloudflare/dns/:id",         to: "cloudflare_dns#destroy",        as: :delete_cloudflare_dns_record
-  post   "cloudflare/dns/forward",     to: "cloudflare_dns#create_forward", as: :create_cloudflare_dns_forward
+  # ── SeaweedFS S3 Storage ──
+  get    "seaweedfs",                     to: "seaweedfs#index",              as: :seaweedfs
+  post   "seaweedfs/identities",          to: "seaweedfs#create_identity",    as: :create_seaweedfs_identity
+  delete "seaweedfs/identities/:name",    to: "seaweedfs#destroy_identity",   as: :delete_seaweedfs_identity
+
+  # ── Cloudflare DNS, Email Routing & Turnstile ──
+  get    "cloudflare/dns",                    to: "cloudflare_dns#index",                as: :cloudflare_dns
+  post   "cloudflare/dns",                    to: "cloudflare_dns#create"
+  patch  "cloudflare/dns/:id",                to: "cloudflare_dns#update",               as: :update_cloudflare_dns_record
+  delete "cloudflare/dns/:id",                to: "cloudflare_dns#destroy",              as: :delete_cloudflare_dns_record
+  post   "cloudflare/dns/forward",            to: "cloudflare_dns#create_forward",       as: :create_cloudflare_dns_forward
+  post   "cloudflare/dns/email_rules",        to: "cloudflare_dns#create_email_rule",    as: :create_cloudflare_email_rule
+  patch  "cloudflare/dns/email_rules/:id",    to: "cloudflare_dns#update_email_rule",    as: :update_cloudflare_email_rule
+  delete "cloudflare/dns/email_rules/:id",    to: "cloudflare_dns#destroy_email_rule",   as: :delete_cloudflare_email_rule
+  post   "cloudflare/dns/turnstile",          to: "cloudflare_dns#create_turnstile",     as: :create_cloudflare_turnstile
+  patch  "cloudflare/dns/turnstile/:id",      to: "cloudflare_dns#update_turnstile",     as: :update_cloudflare_turnstile
+  delete "cloudflare/dns/turnstile/:id",      to: "cloudflare_dns#destroy_turnstile",    as: :delete_cloudflare_turnstile
+  post   "cloudflare/dns/turnstile/:id/rotate", to: "cloudflare_dns#rotate_turnstile_secret", as: :rotate_cloudflare_turnstile_secret
 
   # ── Settings ──
   namespace :settings do

@@ -1,0 +1,312 @@
+<% page_title "SeaweedFS S3 Storage" %>
+<% page_subtitle "Gerenciamento de Object Storage S3 compatível, identidades, credenciais e parametrização" %>
+
+<div class="space-y-6" x-data="{ tab: '<%= @tab %>' }">
+
+  <%# ── Header & Tabs ── %>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
+    <div>
+      <h1 class="text-xl font-bold text-text-primary flex items-center gap-2.5">
+        <span class="p-2 rounded-lg bg-surface-raised border border-border text-brand">
+          <%= sidebar_icon(:s3_storage).html_safe %>
+        </span>
+        SeaweedFS S3 Storage
+      </h1>
+      <p class="text-sm text-text-muted mt-1">
+        Cluster de armazenamento de objetos compatível com AWS S3 / MinIO API
+      </p>
+    </div>
+
+    <%# Tabs Nav %>
+    <div class="flex items-center gap-1.5 p-1 bg-surface-raised rounded-lg border border-border">
+      <button @click="tab = 'identities'"
+              :class="tab === 'identities' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+        Identidades & Keys
+      </button>
+      <button @click="tab = 'buckets'"
+              :class="tab === 'buckets' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+        Buckets (<%= @buckets.size %>)
+      </button>
+      <button @click="tab = 'docs'"
+              :class="tab === 'docs' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+        Documentação & Parâmetros
+      </button>
+    </div>
+  </div>
+
+  <%# ── TAB 1: IDENTIDADES & CHAVES ── %>
+  <div x-show="tab === 'identities'" x-cloak class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <%# Coluna Esquerda: Lista de Identidades %>
+      <div class="lg:col-span-2 space-y-4">
+        <div class="rounded-xl border border-border bg-surface-raised overflow-hidden">
+          <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-text-primary">Identidades e Credenciais S3 Ativas</h2>
+            <span class="text-xs text-text-muted font-mono"><%= @config["identities"]&.size.to_i %> cadastrada(s)</span>
+          </div>
+
+          <div class="divide-y divide-border">
+            <% if @config["identities"].blank? %>
+              <div class="p-8 text-center text-text-muted text-sm">
+                Nenhuma identidade configurada no <code class="text-xs bg-surface-inset px-1.5 py-0.5 rounded">s3.json</code>.
+              </div>
+            <% else %>
+              <% @config["identities"].each do |ident| %>
+                <div class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-inset/30 transition-colors">
+                  <div class="space-y-1.5">
+                    <div class="flex items-center gap-2.5">
+                      <span class="font-bold text-text-primary text-sm"><%= ident["name"] %></span>
+                      <% if ident["actions"]&.include?("Admin") %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">Admin</span>
+                      <% else %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">Read/Write</span>
+                      <% end %>
+                    </div>
+
+                    <% ident["credentials"]&.each do |cred| %>
+                      <div class="text-xs text-text-muted font-mono flex flex-wrap items-center gap-3">
+                        <span>Access Key: <strong class="text-text-secondary"><%= cred["accessKey"] %></strong></span>
+                        <span>Secret Key: <strong class="text-text-secondary">••••••••••••</strong></span>
+                      </div>
+                    <% end %>
+
+                    <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                      <% (ident["actions"] || []).each do |act| %>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 bg-surface-inset rounded text-text-muted"><%= act %></span>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <div>
+                    <%= button_to delete_seaweedfs_identity_path(ident["name"]), method: :delete,
+                          data: { turbo_confirm: "Tem certeza que deseja revogar a identidade '#{ident["name"]}'?" },
+                          class: "px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg border border-red-500/20 transition-colors" do %>
+                      Revogar
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <%# Coluna Direita: Formulário de Nova Identidade %>
+      <div class="space-y-4">
+        <div class="rounded-xl border border-border bg-surface-raised p-5">
+          <h2 class="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+            <%= sidebar_icon(:credentials).html_safe %>
+            Nova Identidade / Access Key
+          </h2>
+
+          <%= form_with url: create_seaweedfs_identity_path, method: :post, class: "space-y-4" do |f| %>
+            <div>
+              <label class="block text-xs font-medium text-text-secondary mb-1">Nome / Aplicação</label>
+              <%= f.text_field :name, placeholder: "ex: huskyos-prod, backups, n8n", required: true,
+                    class: "w-full text-xs rounded-lg border border-border bg-surface-inset px-3 py-2 text-text-primary focus:outline-none focus:border-brand" %>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-text-secondary mb-1">Access Key</label>
+              <%= f.text_field :access_key, placeholder: "ex: AKIA...", required: true,
+                    class: "w-full text-xs font-mono rounded-lg border border-border bg-surface-inset px-3 py-2 text-text-primary focus:outline-none focus:border-brand" %>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-text-secondary mb-1">Secret Key</label>
+              <%= f.password_field :secret_key, placeholder: "Chave secreta forte", required: true,
+                    class: "w-full text-xs font-mono rounded-lg border border-border bg-surface-inset px-3 py-2 text-text-primary focus:outline-none focus:border-brand" %>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-text-secondary mb-1.5">Permissões (Ações)</label>
+              <div class="grid grid-cols-2 gap-2 text-xs text-text-muted">
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="actions[]" value="Read" checked class="rounded border-border text-brand focus:ring-0">
+                  <span>Read</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="actions[]" value="Write" checked class="rounded border-border text-brand focus:ring-0">
+                  <span>Write</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="actions[]" value="List" checked class="rounded border-border text-brand focus:ring-0">
+                  <span>List</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="actions[]" value="Tagging" checked class="rounded border-border text-brand focus:ring-0">
+                  <span>Tagging</span>
+                </label>
+                <label class="flex items-center gap-2 col-span-2">
+                  <input type="checkbox" name="actions[]" value="Admin" class="rounded border-border text-red-500 focus:ring-0">
+                  <span class="text-red-400 font-semibold">Admin (Acesso Total)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <%= f.submit "Criar Identidade & Aplicar",
+                    class: "w-full py-2 px-4 rounded-lg bg-brand hover:bg-brand/90 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <%# ── TAB 2: BUCKETS ── %>
+  <div x-show="tab === 'buckets'" x-cloak class="space-y-6">
+    <div class="rounded-xl border border-border bg-surface-raised overflow-hidden">
+      <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-text-primary">Buckets S3 Criados</h2>
+        <span class="text-xs text-text-muted">Total: <%= @buckets.size %></span>
+      </div>
+
+      <div class="divide-y divide-border">
+        <% if @buckets.empty? %>
+          <div class="p-8 text-center text-text-muted text-sm">
+            Nenhum bucket criado ainda. Buckets são criados automaticamente via S3 API (Cyberduck, AWS CLI, Rails ActiveStorage).
+          </div>
+        <% else %>
+          <% @buckets.each do |b| %>
+            <div class="p-4 flex items-center justify-between hover:bg-surface-inset/30">
+              <div class="flex items-center gap-3">
+                <span class="text-text-muted"><%= sidebar_icon(:volumes).html_safe %></span>
+                <span class="font-mono text-sm font-medium text-text-primary"><%= b %></span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-400 font-mono">s3://<%= b %></span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# ── TAB 3: DOCUMENTAÇÃO COMPLETA DE PARAMETRIZAÇÃO ── %>
+  <div x-show="tab === 'docs'" x-cloak class="space-y-6">
+
+    <%# Card Endpoints %>
+    <div class="rounded-xl border border-border bg-surface-raised p-6 space-y-4">
+      <h2 class="text-base font-bold text-text-primary flex items-center gap-2">
+        <span class="text-brand">🌐</span> Endpoints e Conectividade
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg bg-surface-inset border border-border space-y-1.5">
+          <div class="text-xs font-semibold text-text-muted uppercase">Endpoint Público (HTTPS)</div>
+          <div class="font-mono text-sm text-text-primary select-all">https://s3.redhusky.com.br</div>
+          <div class="text-xs text-text-muted">Roteado via Traefik com TLS Let's Encrypt automático.</div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-surface-inset border border-border space-y-1.5">
+          <div class="text-xs font-semibold text-text-muted uppercase">Endpoint Interno (Swarm Network)</div>
+          <div class="font-mono text-sm text-text-primary select-all">http://seaweedfs_seaweedfs:8333</div>
+          <div class="text-xs text-text-muted">Comunicação direta sem sair da rede overlay do Docker.</div>
+        </div>
+      </div>
+    </div>
+
+    <%# Card Configuração nos Apps %>
+    <div class="rounded-xl border border-border bg-surface-raised p-6 space-y-4">
+      <h2 class="text-base font-bold text-text-primary flex items-center gap-2">
+        <span class="text-brand">🚀</span> Exemplos de Configuração nos Clientes
+      </h2>
+
+      <div class="space-y-4">
+        <%# Rails ActiveStorage %>
+        <div class="space-y-2">
+          <h3 class="text-sm font-semibold text-text-secondary">1. Ruby on Rails (ActiveStorage — <code>config/storage.yml</code>)</h3>
+          <pre class="p-4 rounded-lg bg-surface-inset border border-border font-mono text-xs text-text-primary overflow-x-auto">
+seaweedfs:
+  service: S3
+  access_key_id: redhusky-s3-admin
+  secret_access_key: meq9naPRSeaweed2026!
+  region: us-east-1
+  bucket: huskyos-storage
+  endpoint: https://s3.redhusky.com.br
+  force_path_style: true</pre>
+        </div>
+
+        <%# Evolution API %>
+        <div class="space-y-2">
+          <h3 class="text-sm font-semibold text-text-secondary">2. Evolution API (Armazenamento de Mídia WhatsApp — <code>.env</code>)</h3>
+          <pre class="p-4 rounded-lg bg-surface-inset border border-border font-mono text-xs text-text-primary overflow-x-auto">
+S3_ENABLED=true
+S3_ACCESS_KEY=redhusky-s3-admin
+S3_SECRET_KEY=meq9naPRSeaweed2026!
+S3_BUCKET=evolution-media
+S3_PORT=8333
+S3_ENDPOINT=seaweedfs_seaweedfs
+S3_USE_SSL=false</pre>
+        </div>
+
+        <%# AWS CLI %>
+        <div class="space-y-2">
+          <h3 class="text-sm font-semibold text-text-secondary">3. AWS CLI / Scripts</h3>
+          <pre class="p-4 rounded-lg bg-surface-inset border border-border font-mono text-xs text-text-primary overflow-x-auto">
+aws --endpoint-url=https://s3.redhusky.com.br s3 mb s3://meu-novo-bucket
+aws --endpoint-url=https://s3.redhusky.com.br s3 ls
+aws --endpoint-url=https://s3.redhusky.com.br s3 cp arquivo.pdf s3://meu-novo-bucket/</pre>
+        </div>
+      </div>
+    </div>
+
+    <%# Card Flags e Parâmetros SeaweedFS %>
+    <div class="rounded-xl border border-border bg-surface-raised p-6 space-y-4">
+      <h2 class="text-base font-bold text-text-primary flex items-center gap-2">
+        <span class="text-brand">⚙️</span> Referência Completa de Parâmetros (SeaweedFS Server CLI)
+      </h2>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="border-b border-border text-text-muted uppercase">
+            <tr>
+              <th class="py-2.5 px-3">Parâmetro</th>
+              <th class="py-2.5 px-3">Padrão</th>
+              <th class="py-2.5 px-3">Descrição</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border text-text-secondary font-mono">
+            <tr>
+              <td class="py-2.5 px-3 text-brand">-s3</td>
+              <td class="py-2.5 px-3">false</td>
+              <td class="py-2.5 px-3 font-sans">Habilita a API compatível com Amazon S3.</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-brand">-s3.port</td>
+              <td class="py-2.5 px-3">8333</td>
+              <td class="py-2.5 px-3 font-sans">Porta de escuta do gateway S3.</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-brand">-s3.config</td>
+              <td class="py-2.5 px-3">/etc/seaweedfs/s3.json</td>
+              <td class="py-2.5 px-3 font-sans">Caminho do arquivo de identidades, keys e políticas.</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-brand">-dir</td>
+              <td class="py-2.5 px-3">/data</td>
+              <td class="py-2.5 px-3 font-sans">Diretório de persistência dos blocos de dados.</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-brand">-volume.max</td>
+              <td class="py-2.5 px-3">7</td>
+              <td class="py-2.5 px-3 font-sans">Limite máximo de volumes de 30GB por drive/pasta.</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-brand">-ip.bind</td>
+              <td class="py-2.5 px-3">0.0.0.0</td>
+              <td class="py-2.5 px-3 font-sans">Interface de rede para escuta dos serviços.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
