@@ -1,9 +1,13 @@
 require "test_helper"
 
-# The branch order in shell_command is the whole fix for "can't select/copy in
-# the VPS terminal": tmux with `mouse on` eats the drag. Asserted by actually
-# running the generated snippet through /bin/sh with fake tmux/dtach on PATH,
-# so a reorder or a broken `has-session` guard fails here instead of on a host.
+# The branch order in shell_command decides whether reattaching a terminal
+# session gives you your screen back. tmux MUST come first: it is the only
+# wrapper here that keeps a screen buffer and repaints it whole on reattach.
+# dtach keeps the process but not the picture (SIGWINCH only), which is what
+# made v0.9.60 land users on a blank screen. Asserted by running the generated
+# snippet through a real /bin/sh with fake tmux/dtach on PATH, so a reorder
+# fails here instead of on a host. See
+# docs/specs/incident-terminal-vps-selecao.md for the full history.
 class VpsSshServiceShellCommandTest < ActiveSupport::TestCase
   def setup
     @dir = Dir.mktmpdir
@@ -23,28 +27,33 @@ class VpsSshServiceShellCommandTest < ActiveSupport::TestCase
     FileUtils.chmod(0o755, path)
   end
 
+  # PATH is @dir alone: the real tmux/dtach on this machine must not leak in
+  # and decide the branch for us (that bug made an early version of this test
+  # pass for the wrong reason).
   def run_snippet
     cmd = VpsSshService.new(@session).send(:shell_command)
     # `exec` would replace the shell; neutralize it so we can see the choice.
-    out = IO.popen({ "PATH" => @dir }, ["/bin/sh", "-c", cmd.gsub("exec ", "")], &:read)
-    out.strip
+    IO.popen({ "PATH" => @dir }, ["/bin/sh", "-c", cmd.gsub("exec ", "")], &:read).strip
   end
 
-  test "prefers dtach over tmux when no tmux session exists yet" do
-    stub_bin("tmux",  'case "$1" in has-session) exit 1;; esac; echo TMUX')
+  test "tmux wins whenever the host has it — screen survives reattach" do
+    stub_bin("tmux",  'echo TMUX')
+    stub_bin("dtach", 'echo DTACH')
+    assert_equal "TMUX", run_snippet
+  end
+
+  test "tmux is started with mouse on so the wheel scrolls the pane" do
+    assert_includes VpsSshService.new(@session).send(:shell_command), "set -g mouse on"
+  end
+
+  test "dtach is the fallback on a host without tmux" do
     stub_bin("dtach", 'echo DTACH')
     assert_equal "DTACH", run_snippet
   end
 
-  test "an existing tmux session for this slot still wins" do
-    stub_bin("tmux",  'case "$1" in has-session) exit 0;; esac; echo TMUX')
-    stub_bin("dtach", 'echo DTACH')
-    assert_equal "TMUX", run_snippet
-  end
-
-  test "falls back to tmux on a host without dtach" do
-    stub_bin("tmux", 'case "$1" in has-session) exit 1;; esac; echo TMUX')
-    assert_equal "TMUX", run_snippet
+  test "abduco is the fallback on a host with neither" do
+    stub_bin("abduco", 'echo ABDUCO')
+    assert_equal "ABDUCO", run_snippet
   end
 
   test "slot isolates the session name and dtach socket" do

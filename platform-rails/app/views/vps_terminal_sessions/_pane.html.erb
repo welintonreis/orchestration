@@ -21,6 +21,16 @@
 
     <div class="flex-1"></div>
 
+    <%# The shell runs under tmux with `mouse on` (screen survives reattach, wheel
+        scrolls the pane). That eats a plain drag-select, so selecting needs Shift.
+        Saying it here is the whole fix for "não dá pra copiar" — the behavior was
+        always available, just invisible. %>
+    <span class="hidden md:flex items-center gap-1.5 text-[11px] text-text-muted shrink-0"
+          title="O shell roda em tmux com mouse ligado (a roda rola o painel e a tela volta inteira ao reconectar). Segure Shift e arraste para selecionar — ao soltar, o texto já vai pra área de transferência.">
+      <kbd class="px-1.5 py-0.5 rounded border border-border-subtle bg-surface-inset font-sans text-[10px] leading-none">Shift</kbd>
+      <span>+ arrastar para copiar</span>
+    </span>
+
     <%= link_to vps_host_files_path(session.vps_host), class: "px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-active border border-border-subtle transition-colors" do %>
       Arquivos
     <% end %>

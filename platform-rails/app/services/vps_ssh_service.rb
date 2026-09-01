@@ -204,21 +204,32 @@ class VpsSshService
 
   # Persistent shell that survives WebSocket drops. Slot isolates concurrent tabs.
   #
-  # Preference: dtach > abduco > tmux. dtach is a transparent pty — it never
-  # enables xterm mouse tracking, so drag-select works. tmux with `mouse on`
-  # answers every mouse move with a report and redraws, wiping the xterm
-  # selection mid-drag (you can only copy holding Shift). tmux is kept for
-  # hosts that have nothing else, and always wins when a session under our
-  # name already exists there — installing dtach must not orphan the tmux
-  # workspace the user already lives in.
+  # Preference: tmux > dtach > abduco. tmux is FIRST on purpose: reattaching has
+  # to be reliable, and `tmux new-session -A -s NAME` is atomic against the tmux
+  # server — concurrent invocations for the same name attach to the one session.
+  #
+  # `dtach -A SOCKET` is not: it creates the socket if absent, so two SSH execs
+  # racing on the same slot each try to own the same path. The loser's master is
+  # orphaned and the client lands on a pty unrelated to its shell — blinking
+  # cursor, no reattach, session effectively lost (observed in v0.9.60). This
+  # terminal races by construction: `#terminal` mounts every active pane at once
+  # and each opens its own channel, and `doReconnect()` opens another on top.
+  #
+  # The cost is selection: tmux `mouse on` answers every mouse move with a
+  # report and redraws, wiping the xterm selection mid-drag. Hold SHIFT while
+  # dragging — xterm then bypasses the app's mouse mode and does native
+  # selection, and the mouseup auto-copy still fires. The toolbar says so.
+  #
+  # DO NOT reorder this to put dtach first. It was tried (v0.9.60) precisely to
+  # get selection without Shift, and cost reattach itself. `mouse off` under
+  # tmux is the other dead end — see docs/specs/incident-terminal-vps-selecao.md.
   def shell_command
     login_shell = "$(command -v zsh || command -v bash) -l"
     tmux_cmd = "exec tmux new-session -A -s #{session_name} \\; set -g mouse on \\; set -g status off"
     <<~SH.strip
-      if command -v tmux >/dev/null 2>&1 && tmux has-session -t #{session_name} 2>/dev/null; then #{tmux_cmd};
+      if command -v tmux >/dev/null 2>&1; then #{tmux_cmd};
       elif command -v dtach >/dev/null 2>&1; then exec dtach -A #{dtach_socket} -z -r winch #{login_shell};
       elif command -v abduco >/dev/null 2>&1; then exec abduco -A #{session_name} #{login_shell};
-      elif command -v tmux >/dev/null 2>&1; then #{tmux_cmd};
       else exec #{login_shell}; fi
     SH
   end
