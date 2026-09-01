@@ -1,4 +1,6 @@
-<%= form_with model: host, url: host.persisted? ? vps_host_path(host) : vps_hosts_path, class: "space-y-5 max-w-xl" do |f| %>
+<%= form_with model: host, url: host.persisted? ? vps_host_path(host) : vps_hosts_path,
+             class: "space-y-5 max-w-xl",
+             data: { controller: "vps-host-form" } do |f| %>
   <% if host.errors.any? %>
     <div class="bg-red-100 dark:bg-red-500/10 border border-red-300 dark:border-red-500/30 rounded-lg p-4 text-sm text-red-700 dark:text-red-300">
       <% host.errors.full_messages.each do |msg| %><div><%= msg %></div><% end %>
@@ -7,41 +9,82 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div class="sm:col-span-2">
-      <%= f.label :name, class: "block text-xs font-medium text-text-secondary mb-1" %>
-      <%= f.text_field :name, placeholder: "Meu VPS", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
+      <%= f.label :name, "Nome do Host", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :name, placeholder: "redhusky-lab-01", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
     </div>
     <div>
       <%= f.label :hostname, "Hostname / IP", class: "block text-xs font-medium text-text-secondary mb-1" %>
-      <%= f.text_field :hostname, placeholder: "192.168.1.1", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
+      <%= f.text_field :hostname, placeholder: "167.86.110.111 ou 127.0.0.1", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
     </div>
     <div>
-      <%= f.label :port, class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.label :port, "Porta SSH", class: "block text-xs font-medium text-text-secondary mb-1" %>
       <%= f.number_field :port, value: host.port || 22, class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
     </div>
     <div>
-      <%= f.label :username, class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.label :username, "Usuário SSH", class: "block text-xs font-medium text-text-secondary mb-1" %>
       <%= f.text_field :username, placeholder: "root", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
     </div>
     <div>
-      <%= f.label :auth_method, "Autenticação", class: "block text-xs font-medium text-text-secondary mb-1" %>
-      <%= f.select :auth_method, VpsHost::AUTH_METHODS.map { |m| [m.humanize, m] }, {},
+      <%= f.label :auth_method, "Método de Autenticação", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.select :auth_method,
+            [["Chave SSH (Recomendado)", "key"], ["Senha", "password"], ["Chave SSH + Passphrase", "key_with_passphrase"]],
+            {},
+            class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600",
+            data: { "vps-host-form-target": "authMethod", action: "change->vps-host-form#toggle" } %>
+    </div>
+  </div>
+
+  <%# Credential source picker: Direct input vs Saved SharedCredential %>
+  <% saved_creds = SharedCredential.where(credential_type: %w[ssh_key password]).order(:name) %>
+  <div class="border border-border-subtle rounded-xl p-4 bg-surface-raised/40 space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-semibold text-text-primary uppercase tracking-wider">Credencial de Acesso</span>
+      <div class="flex items-center gap-4 text-xs">
+        <label class="flex items-center gap-1.5 cursor-pointer text-text-secondary hover:text-text-primary">
+          <input type="radio" name="credential_source" value="direct" checked
+                 data-action="change->vps-host-form#setSource"
+                 class="text-cyan-600 focus:ring-cyan-500">
+          <span>Inserir direto</span>
+        </label>
+        <% if saved_creds.any? %>
+          <label class="flex items-center gap-1.5 cursor-pointer text-text-secondary hover:text-text-primary">
+            <input type="radio" name="credential_source" value="saved"
+                   <%= host.shared_credential_id.present? ? "checked" : "" %>
+                   data-action="change->vps-host-form#setSource"
+                   class="text-cyan-600 focus:ring-cyan-500">
+            <span>Usar salva</span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Direct input section (textarea for private key or text input for password) %>
+    <div data-vps-host-form-target="directSecretSection" class="<%= host.shared_credential_id.present? && saved_creds.any? ? 'hidden' : '' %> space-y-2">
+      <label data-vps-host-form-target="directSecretLabel" class="block text-xs font-medium text-text-secondary">
+        Chave Privada SSH (OpenSSH / PEM)
+      </label>
+      <textarea name="direct_secret" rows="5"
+                data-vps-host-form-target="directSecretInput"
+                placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
+                class="w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600 resize-y"></textarea>
+      <p data-vps-host-form-target="directSecretHint" class="text-[11px] text-text-muted">
+        Cole o conteúdo da sua chave privada (ex: ~/.ssh/id_ed25519 ou id_rsa). Ela será criptografada com segurança.
+      </p>
+    </div>
+
+    <%# Saved credential select %>
+    <div data-vps-host-form-target="savedCredSection" class="<%= host.shared_credential_id.present? ? '' : 'hidden' %> space-y-2">
+      <%= f.label :shared_credential_id, "Selecionar Credencial Salva", class: "block text-xs font-medium text-text-secondary" %>
+      <%= f.collection_select :shared_credential_id, saved_creds, :id,
+            ->(c) { "#{c.name} (#{c.credential_type == 'ssh_key' ? 'Chave SSH' : 'Senha'}) — #{c.username}" },
+            { include_blank: "Selecione uma credencial…" },
             class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
     </div>
   </div>
 
   <div>
-    <%= f.label :shared_credential_id, "Credencial", class: "block text-xs font-medium text-text-secondary mb-1" %>
-    <%= f.collection_select :shared_credential_id, SharedCredential.where(credential_type: %w[ssh_key password]).order(:name), :id,
-          ->(c) { "#{c.name} (#{c.credential_type.humanize})" }, { include_blank: "Selecione…" },
-          class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
-    <p class="text-xs text-text-muted mt-1">
-      Senha ou chave privada SSH guardadas em <%= link_to "Credenciais compartilhadas", new_settings_credential_path, class: "text-cyan-600 dark:text-cyan-400 hover:underline", target: "_blank" %>.
-    </p>
-  </div>
-
-  <div>
-    <%= f.label :description, "Notas", class: "block text-xs font-medium text-text-secondary mb-1" %>
-    <%= f.text_area :description, rows: 2, placeholder: "Opcional…", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600 resize-none" %>
+    <%= f.label :description, "Notas / Descrição", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_area :description, rows: 2, placeholder: "Ex: Servidor principal de produção, Hetzner…", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600 resize-none" %>
   </div>
 
   <div class="flex items-center gap-3 pt-2">
