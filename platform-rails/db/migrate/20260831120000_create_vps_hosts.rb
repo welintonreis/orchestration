@@ -1,6 +1,6 @@
 class CreateVpsHosts < ActiveRecord::Migration[8.1]
   def change
-    create_table :vps_hosts do |t|
+    create_table :vps_hosts, id: :uuid do |t|
       t.string   :name, null: false
       t.string   :hostname, null: false
       t.integer  :port, null: false, default: 22

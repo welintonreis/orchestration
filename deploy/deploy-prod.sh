@@ -27,11 +27,16 @@ mkdir -p "${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}"
 
 MASTER_KEY="$(cat "$ROOT/platform-rails/config/master.key" 2>/dev/null || echo "${RAILS_MASTER_KEY:-}")"
 
+# App -> HAProxy -> PgBouncer -> Postgres (primary/réplicas), ver
+# ~/docker/postgres/README.md. Senha em .db_password (gitignored).
+DB_PASSWORD="$(cat "$ROOT/.db_password")"
+DATABASE_URL="postgresql://orchestration_app:${DB_PASSWORD}@haproxy:6432/orchestration"
+
 echo "==> Deploying stack ${STACK}"
 # Note: db:prepare runs inside the entrypoint on first start (bin/docker-entrypoint.sh).
-# SQLite volume (orchestration-storage) not accessible pre-deploy.
 IMAGE="${IMAGE}" \
 RAILS_MASTER_KEY="${MASTER_KEY}" \
+DATABASE_URL="${DATABASE_URL}" \
 docker stack deploy \
   --compose-file "$ROOT/deploy/orchestration.stack.yml" \
   --resolve-image never \

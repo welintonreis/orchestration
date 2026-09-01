@@ -13,15 +13,3 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
-
-  metrics_collection:
-    class: MetricsJob
-    schedule: every 30 seconds
-    queue: default
-
-  # The AI providers keep no quota history — this table is the only source of
-  # a trend. 15min matches the Claude fetcher's 5min cache without hammering it.
-  ai_quota_snapshot:
-    class: AiQuotaSnapshotJob
-    schedule: every 15 minutes
-    queue: default

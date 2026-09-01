@@ -430,6 +430,15 @@ branch main    → prod    (orchestration.redhusky.com.br)
 
 ---
 
+## Migração Postgres — v0.9.55 (2026-09-01)
+
+**[SPEC-POSTGRES-MIGRATION.md](SPEC-POSTGRES-MIGRATION.md)** — SQLite →
+Postgres via App → HAProxy → PgBouncer → Postgres (primary/réplicas). Dados
+de produção preservados (14 tabelas, ~8.5k linhas), `sessions`/`vps_hosts`/
+`vps_terminal_sessions` agora UUID-PK. Correção de bug real na infra
+Postgres compartilhada (`~/docker/postgres/README.md`) junto — a topologia
+estava invertida (PgBouncer na frente do HAProxy).
+
 ## Referências rápidas
 
 **Iniciar dev:**

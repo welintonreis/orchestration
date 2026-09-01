@@ -10,7 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_100100) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+  enable_extension "vector"
+
   create_table "ai_accounts", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "auth_type", default: "oauth", null: false
@@ -273,12 +277,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
     t.index ["edge_node_id"], name: "index_host_metrics_on_edge_node_id"
   end
 
-  create_table "sessions", force: :cascade do |t|
+  create_table "sessions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
     t.datetime "updated_at", null: false
     t.string "user_agent"
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
@@ -333,6 +337,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
 
   create_table "users", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.string "avatar_content_type"
+    t.binary "avatar_data"
     t.datetime "created_at", null: false
     t.string "email_address", null: false
     t.string "password_digest", null: false
@@ -341,7 +347,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
-  create_table "vps_hosts", force: :cascade do |t|
+  create_table "vps_hosts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "auth_method", default: "password", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -350,14 +356,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
     t.datetime "last_connected_at"
     t.string "name", null: false
     t.integer "port", default: 22, null: false
-    t.integer "shared_credential_id"
+    t.bigint "shared_credential_id"
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["name"], name: "index_vps_hosts_on_name", unique: true
     t.index ["shared_credential_id"], name: "index_vps_hosts_on_shared_credential_id"
   end
 
-  create_table "vps_terminal_sessions", force: :cascade do |t|
+  create_table "vps_terminal_sessions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "ended_at"
     t.text "error_message"
@@ -368,8 +374,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
     t.integer "terminal_rows"
     t.string "token", null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.integer "vps_host_id", null: false
+    t.bigint "user_id", null: false
+    t.uuid "vps_host_id", null: false
     t.index ["token"], name: "index_vps_terminal_sessions_on_token", unique: true
     t.index ["user_id"], name: "index_vps_terminal_sessions_on_user_id"
     t.index ["vps_host_id"], name: "index_vps_terminal_sessions_on_vps_host_id"

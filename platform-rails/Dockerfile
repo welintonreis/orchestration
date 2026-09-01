@@ -10,10 +10,11 @@ RUN apt-get update -qq && \
       build-essential \
       curl \
       git \
-      libsqlite3-dev \
+      libpq-dev \
       libvips \
       libyaml-dev \
       pkg-config \
+      sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV RAILS_ENV=production \
@@ -44,7 +45,7 @@ RUN apt-get update -qq && \
       curl \
       dtach \
       gosu \
-      libsqlite3-0 \
+      libpq5 \
       libvips \
       git \
     && rm -rf /var/lib/apt/lists/*

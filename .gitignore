@@ -24,3 +24,4 @@ deploy/.env.prod
 .DS_Store
 Thumbs.db
 graphify-out/
+.db_password

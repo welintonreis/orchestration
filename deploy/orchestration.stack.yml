@@ -5,6 +5,9 @@ services:
     image: ${IMAGE:-registry.gitlab.redhusky.com.br/redhusk/orchestration:latest}
     environment:
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      # App -> HAProxy -> PgBouncer -> Postgres (primary/réplicas), ver
+      # ~/docker/postgres/README.md. Role dedicada orchestration_app.
+      DATABASE_URL: ${DATABASE_URL}
       PROC_PATH: /host/proc
       CPU_THRESHOLD: ${CPU_THRESHOLD:-85}
       RAM_THRESHOLD: ${RAM_THRESHOLD:-90}
@@ -31,7 +34,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
       - /srv/redhusky/security:/host/security:ro
-      - orchestration-storage:/rails/storage
       # Credenciais dos CLIs de IA, para a tela de Quotas. Precisa ser rw: os
       # provedores rotacionam o refresh token, entao quem renova tem que gravar
       # de volta no arquivo, senao o CLI fica com um token morto. Monta o
@@ -44,6 +46,7 @@ services:
       - ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}:${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}
     networks:
       - traefik
+      - postgres-cluster
     deploy:
       replicas: 1
       update_config:
@@ -64,10 +67,8 @@ services:
         - "traefik.http.routers.orchestration-prod.tls.certresolver=letsencrypt"
         - "traefik.http.services.orchestration-prod.loadbalancer.server.port=80"
 
-volumes:
-  orchestration-storage:
-    external: false
-
 networks:
   traefik:
+    external: true
+  postgres-cluster:
     external: true
