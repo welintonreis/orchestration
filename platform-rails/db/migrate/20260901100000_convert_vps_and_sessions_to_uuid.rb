@@ -1,36 +1,32 @@
 class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
   def up
+    enable_extension "pgcrypto"
+
     # Clean up any partial state from previously failed run
     drop_table :vps_hosts_new if table_exists?(:vps_hosts_new)
     drop_table :vps_terminal_sessions_new if table_exists?(:vps_terminal_sessions_new)
     drop_table :sessions_new if table_exists?(:sessions_new)
 
-    # 1. vps_hosts: ensure uuid_id column exists & populated
-    add_column :vps_hosts, :uuid_id, :string unless column_exists?(:vps_hosts, :uuid_id)
-    execute "UPDATE vps_hosts SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6))) WHERE uuid_id IS NULL"
+    # 1. vps_hosts: add UUID column & populate
+    add_column :vps_hosts, :uuid_id, :uuid, default: -> { "gen_random_uuid()" }, null: false unless column_exists?(:vps_hosts, :uuid_id)
 
-    # 2. vps_terminal_sessions: ensure uuid columns exist & populated
-    add_column :vps_terminal_sessions, :uuid_id, :string unless column_exists?(:vps_terminal_sessions, :uuid_id)
-    add_column :vps_terminal_sessions, :vps_host_uuid, :string unless column_exists?(:vps_terminal_sessions, :vps_host_uuid)
-
-    execute <<-SQL
-      UPDATE vps_terminal_sessions
-      SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6)))
-      WHERE uuid_id IS NULL
-    SQL
+    # 2. vps_terminal_sessions: add UUID columns & populate
+    add_column :vps_terminal_sessions, :uuid_id, :uuid, default: -> { "gen_random_uuid()" }, null: false unless column_exists?(:vps_terminal_sessions, :uuid_id)
+    add_column :vps_terminal_sessions, :vps_host_uuid, :uuid unless column_exists?(:vps_terminal_sessions, :vps_host_uuid)
 
     execute <<-SQL
       UPDATE vps_terminal_sessions
-      SET vps_host_uuid = (SELECT uuid_id FROM vps_hosts WHERE vps_hosts.id = vps_terminal_sessions.vps_host_id)
-      WHERE vps_host_uuid IS NULL
+      SET vps_host_uuid = vps_hosts.uuid_id
+      FROM vps_hosts
+      WHERE vps_terminal_sessions.vps_host_id = vps_hosts.id
+        AND vps_host_uuid IS NULL
     SQL
 
-    # 3. sessions: ensure uuid_id exists & populated
-    add_column :sessions, :uuid_id, :string unless column_exists?(:sessions, :uuid_id)
-    execute "UPDATE sessions SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6))) WHERE uuid_id IS NULL"
+    # 3. sessions: add UUID column & populate
+    add_column :sessions, :uuid_id, :uuid, default: -> { "gen_random_uuid()" }, null: false unless column_exists?(:sessions, :uuid_id)
 
-    # --- Recreate vps_hosts without indexes initially to avoid global name collisions ---
-    create_table :vps_hosts_new, id: :string, primary_key: :id, force: :cascade do |t|
+    # --- Recreate vps_hosts ---
+    create_table :vps_hosts_new, id: :uuid, primary_key: :id, force: :cascade do |t|
       t.string "auth_method", default: "password", null: false
       t.datetime "created_at", null: false
       t.text "description"
@@ -39,7 +35,7 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
       t.datetime "last_connected_at"
       t.string "name", null: false
       t.integer "port", default: 22, null: false
-      t.integer "shared_credential_id"
+      t.bigint "shared_credential_id"
       t.datetime "updated_at", null: false
       t.string "username", null: false
     end
@@ -55,7 +51,7 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
     add_index :vps_hosts, :shared_credential_id
 
     # --- Recreate vps_terminal_sessions ---
-    create_table :vps_terminal_sessions_new, id: :string, primary_key: :id, force: :cascade do |t|
+    create_table :vps_terminal_sessions_new, id: :uuid, primary_key: :id, force: :cascade do |t|
       t.datetime "created_at", null: false
       t.datetime "ended_at"
       t.text "error_message"
@@ -66,8 +62,8 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
       t.integer "terminal_rows"
       t.string "token", null: false
       t.datetime "updated_at", null: false
-      t.integer "user_id", null: false
-      t.string "vps_host_id", null: false
+      t.bigint "user_id", null: false
+      t.uuid "vps_host_id", null: false
     end
 
     execute <<-SQL
@@ -82,17 +78,17 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
     add_index :vps_terminal_sessions, :vps_host_id
 
     # --- Recreate sessions ---
-    create_table :sessions_new, id: :string, primary_key: :id, force: :cascade do |t|
+    create_table :sessions_new, id: :uuid, primary_key: :id, force: :cascade do |t|
       t.datetime "created_at", null: false
       t.string "ip_address"
       t.datetime "updated_at", null: false
       t.string "user_agent"
-      t.integer "user_id", null: false
+      t.bigint "user_id", null: false
     end
 
     execute <<-SQL
-      INSERT INTO sessions_new (id, created_at, ip_address, updated_at, user_agent, user_id)
-      SELECT uuid_id, created_at, ip_address, updated_at, user_agent, user_id
+      INSERT INTO sessions_new (id, created_at, updated_at, user_agent, user_id)
+      SELECT uuid_id, created_at, updated_at, user_agent, user_id
       FROM sessions
     SQL
     drop_table :sessions
