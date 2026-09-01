@@ -122,12 +122,27 @@ module ApplicationHelper
     when "cloudflare_dns"   then home + [["Cloudflare", nil], ["DNS & Encaminhamentos", cloudflare_dns_path]]
     when "configs"          then home + [["Docker", nil], ["Configs", configs_path]]
     when "secrets"          then home + [["Docker", nil], ["Secrets", secrets_path]]
+    when "vps_hosts"            then home + [["VPS", nil], ["Hosts", vps_hosts_path]]
+    when "vps_terminal_sessions" then home + [["VPS", vps_hosts_path], ["Terminal", nil]]
+    when "vps_files"            then home + [["VPS", vps_hosts_path], ["Arquivos", nil]]
+    when "ai_quota"             then home + [["Quotas de IA", nil]]
+    when "seaweedfs"            then home + [["Storage", nil], ["SeaweedFS", seaweedfs_path]]
+    when "audit_logs"           then home + [["Logs", nil], ["Atividade", audit_logs_path]]
+    when "alerts"               then home + [["Logs", nil], ["Alertas", alerts_path]]
     when "settings/general"     then home + [["Configurações", nil], ["Geral", settings_general_path]]
     when "settings/auth"        then home + [["Configurações", nil], ["Autenticação", settings_auth_path]]
     when "settings/credentials" then home + [["Configurações", nil], ["Credenciais", settings_credentials_path]]
     when "settings/edge"        then home + [["Configurações", nil], ["Edge Compute", settings_edge_path]]
     when "settings/help"        then home + [["Configurações", nil], ["Ajuda", settings_help_path]]
-    else []
+    else
+      # Dynamic fallback: build breadcrumb from controller path
+      parts = controller_path.split("/")
+      accum = ""
+      trail = parts.map do |part|
+        accum += "/#{part}"
+        [part.titleize, nil]
+      end
+      home + trail
     end
   rescue
     []
@@ -286,6 +301,7 @@ module ApplicationHelper
     credentials: %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" fill-rule="evenodd" d="M2 7a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v1H2zm0 3v7a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-7zm5 2a1 1 0 1 0 0 2h5a1 1 0 1 0 0-2z" clip-rule="evenodd"/></svg>),
     edge:        %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 32 32"><path d="M0 0h32v32H0z" fill="none"/><path fill="currentColor" d="M22 6h4v4h-4z"/><circle cx="7" cy="7" r="1" fill="currentColor"/><circle cx="25" cy="25" r="1" fill="currentColor"/><circle cx="25" cy="21" r="1" fill="currentColor"/><circle cx="25" cy="17" r="1" fill="currentColor"/><path fill="currentColor" d="M22 17v-2h-2v-1a2 2 0 0 0-2-2h-1v-2h-2v2h-2v-2h-2v2h-1a2 2 0 0 0-2 2v1H6v2h2v2H6v2h2v1a2 2 0 0 0 2 2h1v2h2v-2h2v2h2v-2h1a2 2 0 0 0 2-2v-1h2v-2h-2v-2Zm-4 5h-8v-8h8Z"/><path fill="currentColor" d="M28 30H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h24a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2M4 4v24h24V4Z"/></svg>),
     chat_help:   %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path fill="currentColor" d="M9 20H5q-.825 0-1.412-.587T3 18V4q0-.825.588-1.412T5 2h14q.825 0 1.413.588T21 4v14q0 .825-.587 1.413T19 20h-4l-2.3 2.3q-.3.3-.7.3t-.7-.3zm-4-2h4.8l2.2 2.2l2.2-2.2H19V4H5zm6.9-1q.525 0 .888-.363t.362-.887t-.363-.888t-.887-.362t-.888.363t-.362.887t.363.888t.887.362m1.75-9q0 .425-.275.913t-.925 1.062q-.425.375-.687.713t-.438.687q-.1.2-.15.4t-.1.45q-.05.375.2.65t.65.275q.35 0 .625-.25t.375-.675q.075-.35.288-.65t.687-.775q.875-.875 1.238-1.475T15.5 8q0-1.35-.912-2.175T12.1 5q-1.125 0-1.95.475T8.825 6.8q-.175.3-.012.625t.512.45q.325.125.65 0t.525-.4q.275-.35.675-.562T12.1 6.7q.65 0 1.1.362t.45.938"/></svg>),
+    quota:       %(<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M0 0h24v24H0z" fill="none" stroke="none"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 12l4-4M12 7v.01"/></svg>),
   }.freeze
 
   # Untitled UI action icons (used in table rows, buttons, etc.)

@@ -151,11 +151,10 @@ class VpsSshService
         end
       end
 
-      # Poll every 10ms (not nil/blocking): input is enqueued from the
+      # Poll every 5ms (not nil/blocking): input is enqueued from the
       # ActionCable worker thread via send_data, but the actual socket flush
-      # only happens inside this event loop. A nil wait blocks until the
-      # server sends data first — multi-second echo lag.
-      ssh.loop(0.01) { THREADS.key?(@tkey) }
+      # only happens inside this event loop.
+      ssh.loop(0.005) { THREADS.key?(@tkey) }
     end
   rescue Net::SSH::Exception => e
     if e.message == "host key verification failed"
@@ -189,18 +188,21 @@ class VpsSshService
 
   # Persistent, transparent shell so it survives WebSocket drops and resumes
   # on reconnect. Preference: dtach/abduco (transparent, no altscreen) > tmux
-  # (mouse-scroll enabled) > plain bash. Slot isolates concurrent tabs.
+  # (mouse-scroll enabled) > plain shell. Slot isolates concurrent tabs.
+  # Login shell prefers zsh (user wants zsh w/ Nerd Font glyphs), falls back
+  # to bash — whichever is actually installed on the target host.
   def shell_command
     slot   = @session.slot.to_i
     suffix = slot.positive? ? "_s#{slot}" : ""
     name   = "vps_#{@host.id}#{suffix}"
     sock   = "/tmp/.vps-#{@host.id}#{suffix}.dtach"
+    login_shell = "$(command -v zsh || command -v bash) -l"
     <<~SH.strip
       if command -v tmux >/dev/null 2>&1 && tmux has-session -t #{name} 2>/dev/null; then exec tmux new-session -A -s #{name} \\; set -g mouse on;
-      elif command -v dtach >/dev/null 2>&1; then exec dtach -A #{sock} -z -r winch bash --login;
-      elif command -v abduco >/dev/null 2>&1; then exec abduco -A #{name} bash --login;
+      elif command -v dtach >/dev/null 2>&1; then exec dtach -A #{sock} -z -r winch #{login_shell};
+      elif command -v abduco >/dev/null 2>&1; then exec abduco -A #{name} #{login_shell};
       elif command -v tmux >/dev/null 2>&1; then exec tmux new-session -A -s #{name} \\; set -g mouse on;
-      else exec bash --login; fi
+      else exec #{login_shell}; fi
     SH
   end
 end

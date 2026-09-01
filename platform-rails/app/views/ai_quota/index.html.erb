@@ -1,0 +1,11 @@
+<% page_title "Quotas de IA" %>
+<% page_subtitle "9router — status de uso e limites das contas conectadas" %>
+
+<% content_for :title_actions do %>
+  <%= link_to "Abrir em nova aba", @router_url, target: "_blank", rel: "noopener",
+        class: "px-3 py-1.5 text-xs font-medium bg-surface-active hover:bg-surface-active-hover text-text-primary rounded-lg border border-border-subtle transition-colors" %>
+<% end %>
+
+<div class="bg-surface-raised border border-border rounded-xl overflow-hidden" style="height: calc(100vh - 220px);">
+  <iframe src="<%= @router_url %>" class="w-full h-full border-0" title="9router — Quotas de IA"></iframe>
+</div>

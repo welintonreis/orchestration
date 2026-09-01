@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* VPS/container terminal font — Nerd Font patched build so zsh prompts
+   (powerlevel10k/starship glyphs, git/folder icons) render instead of tofu. */
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  src: url("JetBrainsMonoNerdFontMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Class-driven dark mode — toggled by adding/removing `dark` on <html>,
    not OS prefers-color-scheme. Required for a manual light/dark switch. */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -32,7 +42,89 @@
   --text-muted: #6b7280;       /* gray-500 */
 }
 
-.dark {
+/* ── Ice Themes (Azul) ── */
+[data-theme="ice-light"], .theme-ice:not(.dark) {
+  --brand: #1D7FE8;
+  --surface: #ffffff;
+  --surface-raised: #f8fafc;
+  --surface-inset: #f1f5f9;
+  --surface-sunken: #e2e8f0;
+  --surface-active: #cbd5e1;
+  --surface-active-hover: #94a3b8;
+  --border: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --gauge-track: #cbd5e1;
+  --gauge-cpu: #15803d;
+  --gauge-ram: #1D7FE8;
+  --gauge-disk: #64748b;
+  --gauge-swap: #0284c7;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
+[data-theme="ice-dark"], .theme-ice.dark {
+  --brand: #3B9EFF;
+  --surface: #0a0e14;
+  --surface-raised: #121820;
+  --surface-inset: #1a232e;
+  --surface-sunken: #0a0e14;
+  --surface-active: #243140;
+  --surface-active-hover: #314254;
+  --border: #243140;
+  --border-subtle: #314254;
+  --gauge-track: #1a232e;
+  --gauge-cpu: #22c55e;
+  --gauge-ram: #3B9EFF;
+  --gauge-disk: #38bdf8;
+  --gauge-swap: #93c5fd;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+}
+
+/* ── RedHusky Themes (Orange / Husky-Core) ── */
+[data-theme="redhusky-light"], [data-theme="orange-light"], .theme-redhusky:not(.dark) {
+  --brand: #E84518;
+  --surface: #FAFAFA;          /* husky-snow */
+  --surface-raised: #FFFFFF;   /* husky-night invert / card */
+  --surface-inset: #F3F2EF;    /* husky-bg */
+  --surface-sunken: #E9EDF1;   /* husky-surface */
+  --surface-active: #D8DEE4;   /* husky-border */
+  --surface-active-hover: #C2CBD3; /* husky-line */
+  --border: #D8DEE4;
+  --border-subtle: #C2CBD3;
+  --gauge-track: #E9EDF1;
+  --gauge-cpu: #059669;        /* husky-ok */
+  --gauge-ram: #E84518;        /* husky-orange */
+  --gauge-disk: #D97706;       /* husky-warn */
+  --gauge-swap: #C2410C;       /* husky-ember */
+  --text-primary: #0F1419;     /* husky-night */
+  --text-secondary: #2C2C2C;   /* husky-charcoal */
+  --text-muted: #6E7681;       /* husky-smoke */
+}
+
+[data-theme="redhusky-dark"], [data-theme="orange-dark"], .theme-redhusky.dark {
+  --brand: #E84518;            /* RedHusky brand orange */
+  --surface: #0F1419;          /* husky-night */
+  --surface-raised: #161D26;   /* husky-card-dk / husky-sidebar (#111820) */
+  --surface-inset: #2C2C2C;    /* husky-charcoal */
+  --surface-sunken: #0D1117;   /* husky-shell */
+  --surface-active: #333D46;   /* border-active */
+  --surface-active-hover: #484F58;
+  --border: #272F37;           /* husky-border */
+  --border-subtle: #333D46;    /* husky-line */
+  --gauge-track: #1E252C;
+  --gauge-cpu: #22C55E;        /* green-500 */
+  --gauge-ram: #FF7A4D;        /* husky-sunset */
+  --gauge-disk: #F59E0B;       /* amber-500 */
+  --gauge-swap: #FFE4D6;       /* husky-peach */
+  --text-primary: #FAFAFA;     /* husky-snow */
+  --text-secondary: #AEB9C2;   /* mock body text */
+  --text-muted: #7D8891;       /* husky-smoke */
+}
+
+.dark:not([data-theme]), html.dark:not([data-theme]) {
   --brand: #E84518;            /* RedHusky brand orange */
   --surface: #0A0D0F;          /* mock page background */
   --surface-raised: #151A1F;   /* mock card/sidebar/header panel background */

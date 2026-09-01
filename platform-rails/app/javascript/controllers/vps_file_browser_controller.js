@@ -12,16 +12,19 @@ export default class extends Controller {
   static targets = [
     "breadcrumb", "filter", "list", "progress", "hiddenBtn",
     "viewBtnList", "viewBtnGrid", "viewBtnDetails",
+    "thumbBtnSm", "thumbBtnMd", "thumbBtnLg",
     "pasteBar", "clipName", "bulkBar", "bulkCount",
     "previewModal", "previewTitle", "previewBody", "previewDownloadBtn",
   ]
   static values = { hostId: String }
 
   connect() {
-    this.path = "/"
+    this.path = ""
     this.entries = []
     this.filterText = ""
     this.showHidden = false
+    this.showThumbnails = localStorage.getItem("tb:vpsfiles:thumbs") === "true"
+    this.thumbSize = localStorage.getItem("tb:vpsfiles:thumb_size") || "sm" // sm (1x), md (2x), lg (5x)
     this.selection = new Set()
     this.cursor = -1
     this.clipboard = null // { mode: "copy"|"cut", path, name }
@@ -32,11 +35,13 @@ export default class extends Controller {
   // ── navigation ──────────────────────────────────────────────────────────
 
   async load(path = this.path) {
-    this.path = path
     this.selection.clear()
+    this.cursor = -1
     this._progress("Carregando…")
     try {
-      const res = await this._get("", { path })
+      const params = path ? { path } : {}
+      const res = await this._get("", params)
+      this.path = res.path || path || "/"
       this.entries = res.entries || []
       this._renderBreadcrumb()
       this._render()
@@ -63,6 +68,18 @@ export default class extends Controller {
   toggleHidden() {
     this.showHidden = !this.showHidden
     this.hiddenBtnTarget.classList.toggle("text-cyan-500", this.showHidden)
+    this._render()
+  }
+
+  toggleThumbnails() {
+    this.showThumbnails = !this.showThumbnails
+    localStorage.setItem("tb:vpsfiles:thumbs", this.showThumbnails)
+    this._render()
+  }
+
+  setThumbSize(event) {
+    this.thumbSize = event.params.size
+    localStorage.setItem("tb:vpsfiles:thumb_size", this.thumbSize)
     this._render()
   }
 
@@ -100,16 +117,30 @@ export default class extends Controller {
   rowClick(event) {
     const path = event.currentTarget.dataset.path
     const idx  = this.entries.findIndex(e => e.path === path)
+    const entry = this.entries[idx]
+    if (!entry) return
+
     if (event.shiftKey && this.cursor >= 0) {
       const [a, b] = [this.cursor, idx].sort((x, y) => x - y)
       this.selection = new Set(this.entries.slice(a, b + 1).map(e => e.path))
-    } else if (event.ctrlKey || event.metaKey) {
+      this.cursor = idx
+      this._render()
+      return
+    }
+    if (event.ctrlKey || event.metaKey) {
       this.selection.has(path) ? this.selection.delete(path) : this.selection.add(path)
+      this.cursor = idx
+      this._render()
+      return
+    }
+
+    if (entry.type === "directory") {
+      this.load(entry.path)
     } else {
       this.selection = new Set([path])
+      this.cursor = idx
+      this._render()
     }
-    this.cursor = idx
-    this._render()
   }
 
   clearSelection() { this.selection.clear(); this._render() }
@@ -249,10 +280,18 @@ export default class extends Controller {
     ;[["viewBtnList", "list"], ["viewBtnGrid", "grid"], ["viewBtnDetails", "details"]].forEach(([t, m]) => {
       this[`${t}Target`]?.classList.toggle("bg-surface-active", this.viewMode === m)
     })
+    ;[["thumbBtnSm", "sm"], ["thumbBtnMd", "md"], ["thumbBtnLg", "lg"]].forEach(([t, s]) => {
+      this[`${t}Target`]?.classList.toggle("bg-surface-active", this.thumbSize === s)
+      this[`${t}Target`]?.classList.toggle("text-cyan-500", this.showThumbnails && this.thumbSize === s)
+    })
+    const thumbBtn = this.element.querySelector("[data-action*='toggleThumbnails']")
+    thumbBtn?.classList.toggle("text-cyan-500", this.showThumbnails)
+    thumbBtn?.classList.toggle("bg-surface-active", this.showThumbnails)
+
     if (!list.length) {
       this.listTarget.innerHTML = `<div class="py-10 text-center text-sm text-text-muted">Pasta vazia</div>`
     } else if (this.viewMode === "grid") {
-      this.listTarget.innerHTML = `<div class="flex flex-wrap gap-1 p-2">${list.map(e => this._gridTile(e)).join("")}</div>`
+      this.listTarget.innerHTML = `<div class="flex flex-wrap gap-2.5 p-3">${list.map(e => this._gridTile(e)).join("")}</div>`
     } else if (this.viewMode === "details") {
       this.listTarget.innerHTML = this._detailsTable(list)
     } else {
@@ -261,11 +300,36 @@ export default class extends Controller {
     this._renderBulkBar()
   }
 
-  _icon(entry) {
+  _icon(entry, large = false) {
     if (entry.type === "directory") {
-      return `<svg class="w-4 h-4 text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z"/></svg>`
+      let sz = "w-4 h-4"
+      if (large) {
+        if (this.thumbSize === "lg") sz = "w-24 h-24"
+        else if (this.thumbSize === "md") sz = "w-16 h-16"
+        else sz = "w-10 h-10"
+      }
+      return `<svg class="${sz} text-cyan-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z"/></svg>`
     }
-    return `<svg class="w-4 h-4 text-text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5"/></svg>`
+    const ext = entry.name.split(".").pop().toLowerCase()
+    if (this.showThumbnails && IMAGE_EXT.includes(ext)) {
+      let cls = "w-6 h-6 object-cover rounded shrink-0 border border-border-subtle"
+      if (large) {
+        if (this.thumbSize === "lg") cls = "w-48 h-48 object-cover rounded shadow-md border border-border-subtle"
+        else if (this.thumbSize === "md") cls = "w-28 h-28 object-cover rounded shadow border border-border-subtle"
+        else cls = "w-16 h-16 object-cover rounded shadow-sm border border-border-subtle"
+      } else {
+        if (this.thumbSize === "lg") cls = "w-14 h-14 object-cover rounded shrink-0 border border-border-subtle"
+        else if (this.thumbSize === "md") cls = "w-10 h-10 object-cover rounded shrink-0 border border-border-subtle"
+      }
+      return `<img src="${this._url("raw")}?path=${encodeURIComponent(entry.path)}" class="${cls}" loading="lazy">`
+    }
+    let sz = "w-4 h-4"
+    if (large) {
+      if (this.thumbSize === "lg") sz = "w-24 h-24"
+      else if (this.thumbSize === "md") sz = "w-16 h-16"
+      else sz = "w-10 h-10"
+    }
+    return `<svg class="${sz} text-text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5"/></svg>`
   }
 
   _actions(e) {
@@ -308,11 +372,20 @@ export default class extends Controller {
 
   _gridTile(e) {
     const sel = this.selection.has(e.path)
+    let boxSz = "w-28 p-2.5"
+    let iconHolder = "h-16 w-16"
+    if (this.showThumbnails && this.thumbSize === "lg") {
+      boxSz = "w-56 p-3"
+      iconHolder = "h-48 w-48"
+    } else if (this.showThumbnails && this.thumbSize === "md") {
+      boxSz = "w-36 p-3"
+      iconHolder = "h-28 w-28"
+    }
     return `
-      <div class="group flex flex-col items-center gap-1 w-24 p-2 rounded-lg cursor-pointer ${sel ? "bg-cyan-500/10" : "hover:bg-surface-active/50"}"
+      <div class="group flex flex-col items-center justify-center gap-1.5 ${boxSz} rounded-lg border border-transparent cursor-pointer ${sel ? "bg-cyan-500/10 border-cyan-500/30" : "hover:bg-surface-active/50 hover:border-border-subtle"}"
            data-path="${e.path}" data-action="click->vps-file-browser#rowClick dblclick->vps-file-browser#openFromRow">
-        <div class="scale-[2]">${this._icon(e)}</div>
-        <span class="text-xs text-text-primary text-center truncate w-full mt-2" title="${this._esc(e.name)}">${this._esc(e.name)}</span>
+        <div class="flex items-center justify-center ${iconHolder}">${this._icon(e, true)}</div>
+        <span class="text-xs text-text-primary text-center truncate w-full" title="${this._esc(e.name)}">${this._esc(e.name)}</span>
       </div>`
   }
 

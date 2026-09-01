@@ -12,17 +12,14 @@ const consumer = () => (sharedConsumer ||= createConsumer())
 
 // Real SSH terminal to a VpsHost — ported from redhusky-remote-ssh's
 // terminal_controller.js (ActionCable + `transmit`, not ttyd/broadcast, see
-// SPEC-TERMINAL-TTYD.md). Chrome trimmed to what this port needs: no color
-// scheme picker / search panel / settings drawer.
-// ponytail: add those back only if asked — core parity (low-latency shell,
-// resize, reconnect) is what "igualzinho" actually requires.
+// SPEC-TERMINAL-TTYD.md).
 export default class extends Controller {
   static targets = ["container", "status"]
   static values  = { sessionToken: String, sessionId: String, hostId: String }
 
   connect() {
     this.term = new Terminal({
-      fontFamily: '"JetBrains Mono","Fira Code",Menlo,Monaco,Consolas,monospace',
+      fontFamily: '"JetBrainsMono Nerd Font","JetBrains Mono","Fira Code",Menlo,Monaco,Consolas,monospace',
       fontSize: 13,
       lineHeight: 1.25,
       scrollback: 10000,
@@ -39,8 +36,7 @@ export default class extends Controller {
         brightCyan: "#56d4dd", brightWhite: "#f0f6fc",
       }
     })
-    // NO WebglAddon: its glyph atlas leaves rows overlapping on reflow (same
-    // bug documented for the container terminal) — DOM renderer is plenty.
+
     this.fitAddon = new FitAddon()
     this.term.loadAddon(this.fitAddon)
     this.term.loadAddon(new WebLinksAddon())
@@ -64,6 +60,10 @@ export default class extends Controller {
     this.#setupCopyPaste()
     this.#setupActionCable()
 
+    // Ensure layout fits after initial mount
+    requestAnimationFrame(() => this.#fitIfVisible())
+    setTimeout(() => this.#fitIfVisible(), 100)
+
     if (document.fonts?.ready) {
       document.fonts.ready.then(() => { this.#fitIfVisible(); this.term?.refresh(0, (this.term.rows || 1) - 1) })
     }
@@ -81,6 +81,7 @@ export default class extends Controller {
       {
         connected: () => {
           this.#setStatus("connected")
+          this.#fitIfVisible()
           this.term.focus()
           this.subscription.send({ action: "resize", cols: this.term.cols, rows: this.term.rows })
         },
@@ -117,7 +118,9 @@ export default class extends Controller {
 
   #fitIfVisible() {
     if (!this.containerTarget.offsetParent) return
-    try { this.fitAddon.fit() } catch {}
+    try {
+      this.fitAddon.fit()
+    } catch {}
   }
 
   #setupCopyPaste() {

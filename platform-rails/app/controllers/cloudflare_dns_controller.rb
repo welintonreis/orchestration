@@ -37,11 +37,6 @@ class CloudflareDnsController < ApplicationController
     elsif params[:tab] == "turnstile" && @service.configured?
       @turnstile_widgets = @service.list_turnstile_widgets
     end
-
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
   end
 
   def create

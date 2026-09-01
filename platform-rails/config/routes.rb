@@ -240,6 +240,9 @@ Rails.application.routes.draw do
   post "notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_read_notifications
   post "notifications/:id/read",      to: "notifications#mark_read",     as: :mark_read_notification
 
+  # ── 9router AI quota status ──
+  get "ai_quota", to: "ai_quota#index", as: :ai_quota
+
   # ── SeaweedFS S3 Storage ──
   get    "seaweedfs",                     to: "seaweedfs#index",              as: :seaweedfs
   post   "seaweedfs/buckets",             to: "seaweedfs#create_bucket",      as: :create_seaweedfs_bucket

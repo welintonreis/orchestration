@@ -9,13 +9,15 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <script>
-      // Must run synchronously, before any stylesheet/content renders, to
-      // avoid a flash of the wrong theme. Default is dark (this app has
-      // never been anything but dark) — light mode is opt-in via
-      // localStorage.theme, set by the toggle button in the sidebar.
       (function () {
-        var theme = localStorage.getItem('theme');
-        if (theme !== 'light') document.documentElement.classList.add('dark');
+        var theme = localStorage.getItem('theme') || 'orange-dark';
+        var mode = localStorage.getItem('theme_mode') || (theme.endsWith('-light') || theme === 'light' ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+        if (mode === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       })();
     </script>
     <%= yield :head %>
@@ -159,6 +161,7 @@
                 <%= sidebar_link "VPS Hosts", vps_hosts_path, icon: :vps, open: "sb" %>
               <% end %>
               <%= sidebar_link "Cloudflare DNS", cloudflare_dns_path, icon: :dns, open: "sb" %>
+              <%= sidebar_link "Quotas de IA", ai_quota_path, icon: :quota, open: "sb" %>
 
               <%# SeaweedFS S3 Storage collapsible %>
               <button @click="seaweed = !seaweed"
@@ -294,30 +297,81 @@
 
           </div><%# end scroll %>
 
-          <%# ── Theme toggle ──
-              x-data tracks `dark` locally just to swap the sun/moon icon;
-              the actual theme is applied to <html class="dark"> (read
-              synchronously in <head>, see inline script above) so it
-              survives full reloads without a flash. %>
+          <%# ── Theme toggle (RedHusky / Ice / Light / Dark) ── %>
           <div class="border-t border-border px-2 py-1.5"
-               x-data="{ dark: document.documentElement.classList.contains('dark') }">
-            <button @click="
-                       dark = !dark;
-                       document.documentElement.classList.toggle('dark', dark);
-                       localStorage.setItem('theme', dark ? 'dark' : 'light');
-                     "
-                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-inset transition-colors"
-                    :title="sb ? '' : (dark ? 'Tema claro' : 'Tema escuro')">
-              <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                <svg x-show="dark" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364-6.364l-1.06 1.06M6.696 17.304l-1.06 1.06m12.728 0l-1.06-1.06M6.696 6.696l-1.06-1.06M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+               x-data="{
+                 themeOpen: false,
+                 currentTheme: localStorage.getItem('theme') || 'orange-dark',
+                 setTheme(theme) {
+                   this.currentTheme = theme;
+                   localStorage.setItem('theme', theme);
+                   document.documentElement.setAttribute('data-theme', theme);
+                   var isDark = !theme.endsWith('-light');
+                   localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+                   document.documentElement.classList.toggle('dark', isDark);
+                 }
+               }">
+            <div class="relative">
+              <button @click="themeOpen = !themeOpen"
+                      class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-inset transition-colors"
+                      :title="sb ? '' : 'Temas e Cores'">
+                <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l9.75 9.75"/>
+                  </svg>
+                </span>
+                <span class="flex-1 text-left truncate text-sm font-medium transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Temas</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0 text-text-muted transition-all" :class="[sb ? 'opacity-100' : 'opacity-0', themeOpen ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
-                <svg x-show="!dark" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
-                </svg>
-              </span>
-              <span class="flex-1 text-left truncate text-sm font-medium transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'" x-text="dark ? 'Tema escuro' : 'Tema claro'"></span>
-            </button>
+              </button>
+
+              <div x-show="themeOpen"
+                   x-cloak
+                   @click.outside="themeOpen = false"
+                   class="absolute bottom-full left-0 mb-1 w-48 bg-surface-inset border border-border-subtle rounded-xl shadow-xl p-1.5 z-40 space-y-1 text-xs">
+                <div class="px-2 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider">RedHusky</div>
+                <button @click="setTheme('orange-dark'); themeOpen = false"
+                        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left hover:bg-surface-active/60 transition-colors"
+                        :class="currentTheme === 'orange-dark' ? 'text-brand font-medium bg-surface-active/30' : 'text-text-secondary'">
+                  <span class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#E84518] shadow"></span>
+                    RedHusky Escuro
+                  </span>
+                  <span x-show="currentTheme === 'orange-dark'">✓</span>
+                </button>
+                <button @click="setTheme('orange-light'); themeOpen = false"
+                        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left hover:bg-surface-active/60 transition-colors"
+                        :class="currentTheme === 'orange-light' ? 'text-brand font-medium bg-surface-active/30' : 'text-text-secondary'">
+                  <span class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#FF7A4D] shadow"></span>
+                    RedHusky Claro
+                  </span>
+                  <span x-show="currentTheme === 'orange-light'">✓</span>
+                </button>
+
+                <div class="border-t border-border-subtle my-1"></div>
+                <div class="px-2 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Azul (Ice)</div>
+                <button @click="setTheme('ice-dark'); themeOpen = false"
+                        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left hover:bg-surface-active/60 transition-colors"
+                        :class="currentTheme === 'ice-dark' ? 'text-blue-400 font-medium bg-surface-active/30' : 'text-text-secondary'">
+                  <span class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#3B9EFF] shadow"></span>
+                    Azul Escuro
+                  </span>
+                  <span x-show="currentTheme === 'ice-dark'">✓</span>
+                </button>
+                <button @click="setTheme('ice-light'); themeOpen = false"
+                        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left hover:bg-surface-active/60 transition-colors"
+                        :class="currentTheme === 'ice-light' ? 'text-blue-500 font-medium bg-surface-active/30' : 'text-text-secondary'">
+                  <span class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#1D7FE8] shadow"></span>
+                    Azul Claro
+                  </span>
+                  <span x-show="currentTheme === 'ice-light'">✓</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <%# ── User profile ── %>
@@ -381,16 +435,41 @@
 
         <%# ══════════════════════════════ MAIN ══════════════════════════════ %>
         <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <header class="flex items-center justify-end px-6 bg-surface-raised/60 border-b border-border backdrop-blur-sm sticky top-0 z-10 h-14">
-            <div class="flex items-center gap-3">
+          <header class="flex items-center justify-between px-6 bg-surface-raised/60 border-b border-border backdrop-blur-sm sticky top-0 z-10 min-h-14 py-2 gap-4">
+            <%# Lado Esquerdo: Título da Página ou Breadcrumbs principais %>
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <% if content_for?(:page_icon) %>
+                <span class="flex-shrink-0 text-brand w-7 h-7 flex items-center justify-center">
+                  <%= yield(:page_icon) %>
+                </span>
+              <% end %>
+              <div class="min-w-0">
+                <% if content_for?(:title) %>
+                  <h1 class="text-base font-semibold text-text-primary leading-tight truncate"><%= yield(:title) %></h1>
+                <% end %>
+                <% if content_for?(:page_subtitle) %>
+                  <p class="text-xs text-text-muted mt-0.5 leading-tight truncate"><%= yield(:page_subtitle) %></p>
+                <% end %>
+              </div>
+            </div>
+
+            <%# Lado Direito: Ações da Página, Ambiente, Sino de Notificações %>
+            <div class="flex items-center gap-3 shrink-0">
               <% if active_environment.present? %>
                 <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-surface-inset border border-border-subtle rounded-lg text-xs text-text-secondary">
                   <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block flex-shrink-0"></span>
                   <span class="font-mono truncate max-w-[120px]"><%= active_environment.name %></span>
                 </div>
               <% end %>
+              <% if content_for?(:title_actions) %>
+                <div class="flex items-center gap-2">
+                  <%= yield :title_actions %>
+                </div>
+              <% end %>
               <% if content_for?(:actions) %>
-                <%= yield :actions %>
+                <div class="flex items-center gap-2">
+                  <%= yield :actions %>
+                </div>
               <% end %>
               <%= render "shared/alert_badge" %>
             </div>
@@ -399,58 +478,34 @@
           <%# ── Auto breadcrumbs ── %>
           <% bc = auto_breadcrumbs %>
           <% if bc.any? %>
-            <nav class="flex items-center gap-1 px-6 py-2 text-xs border-b border-border/50 bg-surface-raised/40 flex-shrink-0">
+            <nav class="flex items-center gap-1 px-6 py-1.5 text-xs border-b border-border/50 bg-surface-raised/30 flex-shrink-0 overflow-x-auto">
               <% bc.each_with_index do |(label, path), i| %>
                 <% is_last = i == bc.size - 1 %>
                 <% if i > 0 %>
-                  <svg class="w-3 h-3 text-orange-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <svg class="w-3 h-3 text-brand/70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                   </svg>
                 <% end %>
                 <% if is_last %>
-                  <span class="text-orange-600 dark:text-orange-400 font-medium"><%= label %></span>
+                  <span class="text-brand font-medium truncate"><%= label %></span>
                 <% elsif path %>
-                  <%= link_to label, path, class: "text-text-muted hover:text-orange-600 dark:hover:text-orange-400 transition-colors" %>
+                  <%= link_to label, path, class: "text-text-muted hover:text-brand transition-colors truncate" %>
                 <% else %>
-                  <span class="text-text-muted"><%= label %></span>
+                  <span class="text-text-muted truncate"><%= label %></span>
                 <% end %>
               <% end %>
             </nav>
           <% end %>
 
-          <%# ── Title strip (auto, abaixo do header) ── %>
-          <% if content_for?(:title) %>
-            <div class="px-6 py-4 border-b border-border bg-surface-raised/20 flex items-center justify-between gap-3.5 flex-shrink-0">
-              <div class="flex items-center gap-3.5 min-w-0">
-                <% if content_for?(:page_icon) %>
-                  <span class="flex-shrink-0 text-text-secondary w-8 h-8 flex items-center justify-center">
-                    <%= yield(:page_icon) %>
-                  </span>
-                <% end %>
-                <div class="min-w-0">
-                  <h1 class="text-xl font-semibold text-text-primary leading-tight"><%= yield(:title) %></h1>
-                  <% if content_for?(:page_subtitle) %>
-                    <p class="text-sm text-text-muted mt-0.5 leading-tight"><%= yield(:page_subtitle) %></p>
-                  <% end %>
-                </div>
-              </div>
-              <% if content_for?(:title_actions) %>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <%= yield :title_actions %>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-
           <% if content_for?(:page_header) %>
-            <div class="px-6 py-4 border-b border-border bg-surface-raised/30">
+            <div class="px-6 py-3 border-b border-border bg-surface-raised/30">
               <%= yield :page_header %>
             </div>
           <% end %>
 
           <%= render "shared/flash" %>
 
-          <main class="flex-1 overflow-y-auto p-6">
+          <main class="flex-1 min-h-0 <%= content_for?(:main_class) ? yield(:main_class) : 'overflow-y-auto p-6' %>">
             <%= yield %>
           </main>
         </div>
