@@ -375,16 +375,19 @@ ContainersController#logs → LogsChannel (ActionCable)
 - [x] Barra de progresso do Turbo na cor da marca, delay 500ms → 100ms
 - [x] `Ui::SkeletonComponent` extraído das 7 cópias de `animate-pulse`
 - [x] `environments#index` como piloto (era a ação mais lenta do app)
-- [ ] Tier S: `kube/fleet`, `security`, `cloudflare_dns`, `vps_files`, `seaweedfs`
-- [ ] Tier B: `dashboard`, `swarm/*`, `kube/*`, `containers#show`, `volumes#browse`
+- [x] Tier S: `kube/fleet`, `security`, `cloudflare_dns`, `vps_files`, `seaweedfs`
+- [x] Tier B: `swarm/*` (5 telas), `kube/*` (6 telas)
+- [ ] Restante do Tier B: `dashboard`, `containers#show`, `images#show`, `configs`, `volumes#browse`
+- [ ] Trocar os skeletons copiados das 7 telas antigas pelo componente
 
 ### Quotas de IA nativas — [spec](docs/specs/feature-ai-quota.md)
 
-- [ ] A1 — `AiAccount`, credencial cifrada, importação e refresh de token
-- [ ] A2 — Fetchers: claude, codex, antigravity, gemini-cli, github
-- [ ] A3 — `AiQuotaSnapshot` + job recorrente (histórico que o 9router não tem)
-- [ ] A4 — Tela nativa: resumo, cards, filtros, ações auditadas
-- [ ] A5 — Deploy: bind-mount das credenciais, cifra via `RAILS_MASTER_KEY`
+- [x] A1 — `AiAccount`, credencial cifrada, importação local e refresh com write-back
+- [x] A2 — Fetchers: claude, codex (validados contra as APIs reais)
+- [x] A3 — `AiQuotaSnapshot` + job de 15min + sparkline (histórico que nenhum provedor guarda)
+- [x] A4 — Tela nativa: resumo, cards, filtros, ações auditadas
+- [ ] A5 — Deploy: bind-mount de `~/.claude` e `~/.codex` no stack
+- [ ] Fetchers restantes: antigravity, gemini-cli, github
 
 ---
 
