@@ -7,7 +7,7 @@ class VpsTerminalSession < ApplicationRecord
   validates :token, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }
 
-  scope :active, -> { where(status: %w[connecting connected]) }
+  scope :active, -> { where(status: %w[connecting connected disconnected]) }
   scope :recent, -> { order(created_at: :desc) }
 
   before_validation :generate_token, on: :create

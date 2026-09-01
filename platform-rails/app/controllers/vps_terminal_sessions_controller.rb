@@ -9,9 +9,10 @@ class VpsTerminalSessionsController < ApplicationController
   end
 
   def create
-    # Reuse active session for this host if one already exists
-    existing = Current.user.vps_terminal_sessions.active.where(vps_host: @host).order(created_at: :desc).first
-    if existing
+    # Reuse recent session for this host (connected, connecting or disconnected)
+    # The shell process on the remote host (tmux) stays alive in the background.
+    existing = Current.user.vps_terminal_sessions.where(vps_host: @host).order(updated_at: :desc).first
+    if existing && existing.status != "error"
       return redirect_to terminal_vps_host_terminal_session_path(@host, existing)
     end
 

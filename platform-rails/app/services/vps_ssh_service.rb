@@ -184,11 +184,9 @@ class VpsSshService
     Rails.logger.error("VpsSshService [#{@session.token}]: #{e.class}: #{e.message}")
   end
 
-  # Persistent, transparent shell so it survives WebSocket drops and resumes
-  # on reconnect. Preference: dtach/abduco (transparent, no altscreen) > tmux
-  # (mouse-scroll enabled) > plain shell. Slot isolates concurrent tabs.
-  # Login shell prefers zsh (user wants zsh w/ Nerd Font glyphs), falls back
-  # to bash — whichever is actually installed on the target host.
+  # Persistent shell that survives WebSocket drops and re-renders full terminal buffer on reconnect.
+  # Preference: tmux (preserves scrollback buffer, redraws on reattach) > dtach > plain shell.
+  # Slot isolates concurrent tabs.
   def shell_command
     slot   = @session.slot.to_i
     suffix = slot.positive? ? "_s#{slot}" : ""
@@ -196,10 +194,9 @@ class VpsSshService
     sock   = "/tmp/.vps-#{@host.id}#{suffix}.dtach"
     login_shell = "$(command -v zsh || command -v bash) -l"
     <<~SH.strip
-      if command -v tmux >/dev/null 2>&1 && tmux has-session -t #{name} 2>/dev/null; then exec tmux new-session -A -s #{name} \\; set -g mouse on;
+      if command -v tmux >/dev/null 2>&1; then exec tmux new-session -A -s #{name} \\; set -g mouse on \\; set -g status off;
       elif command -v dtach >/dev/null 2>&1; then exec dtach -A #{sock} -z -r winch #{login_shell};
       elif command -v abduco >/dev/null 2>&1; then exec abduco -A #{name} #{login_shell};
-      elif command -v tmux >/dev/null 2>&1; then exec tmux new-session -A -s #{name} \\; set -g mouse on;
       else exec #{login_shell}; fi
     SH
   end
