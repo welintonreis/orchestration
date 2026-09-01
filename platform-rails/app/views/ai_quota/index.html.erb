@@ -12,6 +12,14 @@
           class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
       Importar credencial local
     <% end %>
+    <%= link_to new_claude_login_ai_quota_path,
+          class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
+      Conectar Claude
+    <% end %>
+    <%= link_to new_ollama_key_ai_quota_path,
+          class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
+      Conectar Ollama
+    <% end %>
     <%= button_to bulk_toggle_ai_quota_path(to: "off"), method: :post,
           form: { data: { turbo_confirm: "Desligar todas as contas sem quota restante?" } },
           class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
@@ -42,8 +50,12 @@
       (<code class="font-mono text-xs">~/.claude/.credentials.json</code>,
       <code class="font-mono text-xs">~/.codex/auth.json</code>) para acompanhar as quotas aqui.
     </p>
-    <%= button_to "Importar credencial local", import_local_ai_quota_path, method: :post,
-          class: "btn-primary mt-6" %>
+    <div class="flex items-center gap-2 mt-6">
+      <%= button_to "Importar credencial local", import_local_ai_quota_path, method: :post,
+            class: "btn-primary" %>
+      <%= link_to "Conectar Claude", new_claude_login_ai_quota_path, class: "btn-primary" %>
+      <%= link_to "Conectar Ollama", new_ollama_key_ai_quota_path, class: "btn-secondary" %>
+    </div>
   </div>
 <% else %>
   <div class="mb-4 flex flex-wrap items-center gap-2">

@@ -19,6 +19,25 @@ class User < ApplicationRecord
   def operator? = role == "operator"
   def readonly? = role == "readonly"
 
+  def has_avatar?
+    avatar_data.present?
+  end
+
+  def avatar_data_uri
+    return nil unless has_avatar?
+    "data:#{avatar_content_type || 'image/png'};base64,#{Base64.strict_encode64(avatar_data)}"
+  end
+
+  def avatar=(uploaded_file)
+    if uploaded_file.present? && uploaded_file.respond_to?(:read)
+      self.avatar_data = uploaded_file.read
+      self.avatar_content_type = uploaded_file.content_type.presence || "image/png"
+    elsif uploaded_file == ""
+      self.avatar_data = nil
+      self.avatar_content_type = nil
+    end
+  end
+
   private
 
   def set_default_role

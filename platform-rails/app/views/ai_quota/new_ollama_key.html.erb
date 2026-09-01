@@ -1,0 +1,33 @@
+<% page_title "Configurar Conta Ollama" %>
+<% page_subtitle "Adicione uma chave de API para autenticação no serviço Ollama" %>
+
+<div class="max-w-xl mx-auto mt-6 bg-surface-raised border border-border rounded-xl p-6 shadow-sm">
+  <div class="flex items-center gap-3 mb-6">
+    <div class="w-10 h-10 rounded-lg bg-surface-inset border border-border flex items-center justify-center text-text-primary font-bold">
+      🦙
+    </div>
+    <div>
+      <h2 class="text-sm font-semibold text-text-primary">Ollama Cloud / API</h2>
+      <p class="text-xs text-text-muted">Informe uma chave de API para o provedor Ollama</p>
+    </div>
+  </div>
+
+  <%= form_with url: create_ollama_key_ai_quota_path, method: :post, class: "space-y-4" do |f| %>
+    <div>
+      <%= f.label :name, "Rótulo / Nome da conta", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :name, placeholder: "Ex: Ollama Prod / Pessoal", value: "Ollama",
+            class: "w-full px-3 py-2 text-xs rounded-lg bg-surface-inset border border-border text-text-primary focus:outline-none focus:border-border-active" %>
+    </div>
+
+    <div>
+      <%= f.label :api_key, "Chave de API (OLLAMA_API_KEY)", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.password_field :api_key, placeholder: "Cole a chave aqui…", required: true,
+            class: "w-full px-3 py-2 text-xs font-mono rounded-lg bg-surface-inset border border-border text-text-primary focus:outline-none focus:border-border-active" %>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-border mt-6">
+      <%= link_to "Cancelar", ai_quota_path, class: "px-4 py-2 text-xs rounded-lg text-text-secondary hover:text-text-primary transition-colors" %>
+      <%= f.submit "Salvar conta", class: "btn-primary" %>
+    </div>
+  <% end %>
+</div>

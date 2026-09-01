@@ -9,6 +9,12 @@ class VpsTerminalSessionsController < ApplicationController
   end
 
   def create
+    # Reuse active session for this host if one already exists
+    existing = Current.user.vps_terminal_sessions.active.where(vps_host: @host).order(created_at: :desc).first
+    if existing
+      return redirect_to terminal_vps_host_terminal_session_path(@host, existing)
+    end
+
     active_count = Current.user.vps_terminal_sessions.active.count
     return redirect_to vps_hosts_path, alert: "Max #{MAX_ACTIVE_SESSIONS} sessões ativas." if active_count >= MAX_ACTIVE_SESSIONS
 
@@ -20,6 +26,8 @@ class VpsTerminalSessionsController < ApplicationController
 
   def terminal
     @host = @session.vps_host
+    @open_sessions = Current.user.vps_terminal_sessions.active.includes(:vps_host).order(:created_at).to_a
+    @open_sessions << @session unless @open_sessions.any? { |s| s.id == @session.id }
   end
 
   def destroy

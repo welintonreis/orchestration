@@ -129,11 +129,9 @@ class VpsSshService
             next
           end
 
-          # Never `exec CMD 2>/dev/null` for an interactive shell fallback —
-          # bash writes its PS1 prompt and keystroke echo to stderr, so that
-          # redirect mutes the whole session (see SPEC-TERMINAL-TTYD.md
-          # postmortem). shell_command below only redirects capability probes.
-          ch.exec("bash -lc #{Shellwords.escape(shell_command)}") do |_, exec_ok|
+          # Execute shell wrapper via plain sh (fast, skips profile startup overhead).
+          # The inner login shell (zsh -l / bash -l) then loads the user's full environment.
+          ch.exec("sh -c #{Shellwords.escape(shell_command)}") do |_, exec_ok|
             unless exec_ok
               @session.mark_disconnected!(error: "Shell exec failed")
               ch.close

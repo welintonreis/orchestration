@@ -23,6 +23,19 @@ if [ -n "$GIT_WORKSPACE_HOST_PATH" ]; then
   chown -R rails:rails "$GIT_WORKSPACE_HOST_PATH"
 fi
 
+# AiAccount reads/rewrites the CLIs' own credential files (600 root:root on
+# the host). chown would fight the CLI, which still writes as root on its
+# own refreshes; a default ACL grants rails rw without touching ownership,
+# and — because it's a *default* ACL on the directory — the atomic
+# rename(temp, target) used for the rewrite still inherits it on the new
+# inode.
+# /root itself is 700 root:root inside the container (rails' home is
+# /home/rails) — without traverse rights here the ACLs below are unreachable.
+setfacl -m u:rails:--x /root 2>/dev/null || true
+for d in /root/.claude /root/.codex; do
+  [ -d "$d" ] && setfacl -R -m u:rails:rwX -d -m u:rails:rwX "$d" 2>/dev/null || true
+done
+
 gosu rails bin/rails db:migrate 2>&1
 
 exec gosu rails "$@"

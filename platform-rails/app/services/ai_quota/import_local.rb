@@ -1,10 +1,11 @@
 module AiQuota
   # Adopts the credentials the CLIs on this host already hold.
   #
-  # Phase 1 deliberately has no interactive OAuth flow: logging in again would
-  # mint a second credential for the same account, and since these providers
-  # rotate refresh tokens, the two copies would invalidate each other. Pointing
-  # at the CLI's file keeps one credential with one owner.
+  # No interactive re-login for a FILE account: logging in again would mint a
+  # second credential for the same account, and since these providers rotate
+  # refresh tokens, the two copies would invalidate each other. Pointing at
+  # the CLI's file keeps one credential with one owner. A genuinely new Claude
+  # account doesn't have this problem — see AiQuota::ConnectClaude.
   module ImportLocal
     module_function
 
@@ -28,10 +29,9 @@ module AiQuota
     def identity_for(provider, path)
       data = JSON.parse(File.read(path))
       case provider
-      when "claude" then data.dig("claudeAiOauth", "subscriptionType")
-      # Codex's file has only an opaque account_id, which reads worse on a card
-      # than nothing — the first fetch adopts the real email from the endpoint.
-      when "codex"  then nil
+      when "claude"      then data.dig("claudeAiOauth", "subscriptionType")
+      when "codex"       then nil
+      when "antigravity" then "Antigravity CLI"
       end
     rescue StandardError
       nil

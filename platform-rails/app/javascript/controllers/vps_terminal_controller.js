@@ -4,6 +4,7 @@ import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { WebLinksAddon } from "@xterm/addon-web-links"
 import { ClipboardAddon } from "@xterm/addon-clipboard"
+import { SerializeAddon } from "@xterm/addon-serialize"
 
 // One shared cable connection per tab — same pattern as consumer.js used by
 // stats_controller, avoids opening a new WebSocket per terminal pane.
@@ -38,9 +39,11 @@ export default class extends Controller {
     })
 
     this.fitAddon = new FitAddon()
+    this.serializeAddon = new SerializeAddon()
     this.term.loadAddon(this.fitAddon)
     this.term.loadAddon(new WebLinksAddon())
     this.term.loadAddon(new ClipboardAddon())
+    this.term.loadAddon(this.serializeAddon)
 
     this.term.open(this.containerTarget)
     this.containerTarget.addEventListener("click", () => this.term.focus())
@@ -48,6 +51,7 @@ export default class extends Controller {
     this.term.focus()
 
     this._sshDisconnected = false
+    this._savedBuffer = null
 
     this.term.onData((data) => {
       if (this._sshDisconnected) { this._sshDisconnected = false; this.doReconnect(); return }
@@ -57,6 +61,13 @@ export default class extends Controller {
 
     this.resizeObserver = new ResizeObserver(() => this.#fitIfVisible())
     this.resizeObserver.observe(this.containerTarget)
+    this._onActivated = () => {
+      requestAnimationFrame(() => {
+        this.#fitIfVisible()
+        this.term?.focus()
+      })
+    }
+    this.element.addEventListener("terminal:activated", this._onActivated)
     this.#setupCopyPaste()
     this.#setupActionCable()
 
@@ -70,6 +81,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.element.removeEventListener("terminal:activated", this._onActivated)
     this.subscription?.unsubscribe()
     this.resizeObserver?.disconnect()
     this.term?.dispose()
@@ -84,6 +96,12 @@ export default class extends Controller {
           this.#fitIfVisible()
           this.term.focus()
           this.subscription.send({ action: "resize", cols: this.term.cols, rows: this.term.rows })
+          if (this._savedBuffer) {
+            this.term.write(this._savedBuffer)
+            this.term.writeln("\r\n\x1b[2m--- reconectado ---\x1b[0m\r\n")
+            this._savedBuffer = null
+          }
+          this.term.write("\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l")
         },
         disconnected: () => this.#setStatus("disconnected"),
         rejected: () => this.#setStatus("error", "Conexão rejeitada"),
@@ -92,6 +110,7 @@ export default class extends Controller {
           if (data.status) {
             this.#setStatus(data.status, data.message)
             if (data.status === "disconnected") {
+              this._savedBuffer = this.serializeAddon.serialize()
               this._sshDisconnected = true
               this.term.writeln("\r\n\x1b[33mDesconectado. Pressione uma tecla para reconectar…\x1b[0m")
             }

@@ -70,6 +70,11 @@ module AiQuotaHelper
   end
 
   def ai_provider_label(provider)
-    { "claude" => "Claude", "codex" => "Codex" }.fetch(provider, provider.to_s.titleize)
+    {
+      "claude"      => "Claude",
+      "codex"       => "Codex",
+      "antigravity" => "Antigravity",
+      "ollama"      => "Ollama"
+    }.fetch(provider, provider.to_s.titleize)
   end
 end

@@ -1,6 +1,6 @@
 # Feature — Quotas de IA nativas
 
-> Status: ✅ A1–A4 entregues · Escrita e implementada 2026-09-01
+> Status: ✅ A1–A6 entregues · Escrita e implementada 2026-09-01
 
 ## Problema
 
@@ -35,9 +35,10 @@ Por isso o desenho final **não** tem duas cópias. A conta guarda um
 - `inline` — credencial colada aqui, cifrada na coluna, que é nossa para
   renovar.
 
-Não existe fluxo de login OAuth interativo, e isso é deliberado: logar de novo
-mintaria uma segunda credencial para a mesma conta, recriando exatamente a
-briga que o desenho evita.
+A fase A1 não teve fluxo de login OAuth interativo, e isso foi deliberado
+**para contas `file`**: logar de novo mintaria uma segunda credencial para a
+mesma conta que o CLI já possui, recriando exatamente a briga de rotação que o
+desenho evita. Esse risco não existe para uma conta nova — daí a fase A6.
 
 ## Modelo de dado normalizado
 
@@ -124,6 +125,31 @@ chamadas upstream e o Rails não precisa de thread nenhuma. O skeleton vem do
 Bind-mount read-only de `~/.claude` e `~/.codex`; chaves de cifra via
 `RAILS_MASTER_KEY`, que já existe. Sem porta nova, sem rede nova.
 
+### A6 — Login OAuth para contas independentes
+`AiQuota::ConnectClaude` (`app/services/ai_quota/connect_claude.rb`) faz o
+handshake PKCE com o mesmo `client_id` público do Claude Code CLI que
+`Refresh::Claude` já usa para renovar — aqui usado também para o passo de
+autorização inicial. `redirect_uri` é a página hospedada da própria Anthropic
+(não localhost): o usuário copia o `code#state` de lá e cola de volta na tela
+de login do Orchestration.
+
+Cada login cria uma conta **nova**, sempre `credential_source: "inline"` — não
+existe (e não pode existir) uma variante que sobrescreva uma conta `file`
+existente. `state == verifier` (não um valor aleatório separado, igual ao CLI
+oficial) é validado antes de qualquer chamada de rede. O verifier vive só na
+`session` do navegador entre a tela de login e a de colar o código, apagado no
+uso — um único Puma, round-trip de poucos minutos, não precisa de nada
+stateless.
+
+Risco de ToS: reusar o `client_id` do CLI oficial para autorização (não só
+refresh) é a mesma categoria de exposição que ferramentas de terceiros como o
+9router já assumem — a Anthropic pode limitar ou revogar uso fora do CLI sem
+aviso.
+
+### A7 — Expansão de provedores (Antigravity & Ollama)
+- **Antigravity CLI (`agy`)**: adota o arquivo `~/.gemini/antigravity-cli/antigravity-oauth-token` via `ImportLocal` (`credential_source: "file"`), mantendo a integridade da credencial do CLI local. Login OAuth interativo descartado por risco de ban ativo da Google sobre o reuso de client_ids de terceiros (fev/2026).
+- **Ollama**: cadastro inline de `OLLAMA_API_KEY` (`credential_source: "inline"`) via formulário simples (`/ai_quota/ollama/key`), sem fluxo OAuth nem métricas de quota ao vivo (self-hosted).
+
 ## Verificação
 
 Feita contra as APIs reais em 2026-09-01, não só com stub:
@@ -151,6 +177,6 @@ arquivo.
 ## Fora de escopo
 
 Provedores sem fetcher nesta fase (`kiro`, `qoder`, `zed`, `grok-cli`,
-`ollama`, variantes `-cn`); login OAuth interativo dentro do Orchestration
-(importa credencial e renova — login novo continua no CLI de cada provedor);
-roteamento e inferência (o Orchestration mostra quota, não vira gateway).
+`ollama`, variantes `-cn`); login OAuth interativo para provedores além do
+Claude (Codex e os demais continuam só import/renovação — ver A6); roteamento
+e inferência (o Orchestration mostra quota, não vira gateway).

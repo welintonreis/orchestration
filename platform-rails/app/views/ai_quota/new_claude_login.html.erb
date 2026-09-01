@@ -1,0 +1,21 @@
+<% page_title "Conectar conta Claude" %>
+<% page_subtitle "Login OAuth independente — não mexe na conta do CLI local" %>
+
+<div class="max-w-lg mx-auto bg-surface-raised border border-border rounded-xl p-6 space-y-5">
+  <div class="space-y-2">
+    <p class="text-sm text-text-secondary">1. Abra o link, faça login na conta Claude que quer adicionar e copie o código que a Anthropic mostrar.</p>
+    <%= link_to "Abrir login da Anthropic", @authorize_url, target: "_blank", rel: "noopener",
+          class: "inline-block px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-sm font-semibold border border-border transition-colors" %>
+  </div>
+
+  <%= form_with url: create_claude_login_ai_quota_path, method: :post, class: "space-y-3" do %>
+    <div>
+      <label class="block text-sm text-text-secondary mb-1">2. Cole o código aqui</label>
+      <%= text_field_tag :code, nil, placeholder: "code#state", class: "w-full font-mono text-sm px-3 py-2 rounded-lg bg-surface-inset border border-border-subtle" %>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="submit" class="btn-primary">Conectar</button>
+      <%= link_to "Cancelar", ai_quota_path, class: "px-3 py-2 text-sm text-text-secondary hover:text-text-primary" %>
+    </div>
+  <% end %>
+</div>

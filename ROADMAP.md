@@ -386,7 +386,9 @@ ContainersController#logs → LogsChannel (ActionCable)
 - [x] A2 — Fetchers: claude, codex (validados contra as APIs reais)
 - [x] A3 — `AiQuotaSnapshot` + job de 15min + sparkline (histórico que nenhum provedor guarda)
 - [x] A4 — Tela nativa: resumo, cards, filtros, ações auditadas
-- [ ] A5 — Deploy: bind-mount de `~/.claude` e `~/.codex` no stack
+- [x] A5 — Deploy: bind-mount de `~/.claude` e `~/.codex` no stack (+ ACL rails, v0.9.47)
+- [x] A6 — Login OAuth PKCE por conta Claude (`AiQuota::ConnectClaude`), independente do CLI do host
+- [x] A7 — Suporte a Antigravity (`~/.gemini/antigravity-cli/antigravity-oauth-token`) e Ollama (API Key)
 - [ ] Fetchers restantes: antigravity, gemini-cli, github
 
 ---

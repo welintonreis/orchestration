@@ -10,15 +10,18 @@
 class AiAccount < ApplicationRecord
   encrypts :credentials
 
-  # Only providers with a working quota fetcher — see AiQuota::Usage.
-  PROVIDERS = %w[claude codex].freeze
+  # Providers supported on the platform: claude and codex have live quota
+  # fetchers; antigravity imports from ~/.gemini/antigravity-cli/antigravity-oauth-token;
+  # ollama stores an inline API key without quota fetch.
+  PROVIDERS = %w[claude codex antigravity ollama].freeze
 
   SOURCES = %w[inline file].freeze
 
   # Where each CLI keeps its credential, for the "import local credential" flow.
   KNOWN_CREDENTIAL_FILES = {
-    "claude" => "~/.claude/.credentials.json",
-    "codex"  => "~/.codex/auth.json"
+    "claude"      => "~/.claude/.credentials.json",
+    "codex"       => "~/.codex/auth.json",
+    "antigravity" => "~/.gemini/antigravity-cli/antigravity-oauth-token"
   }.freeze
 
   validates :provider, presence: true, inclusion: { in: PROVIDERS }

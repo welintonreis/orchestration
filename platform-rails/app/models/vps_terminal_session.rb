@@ -19,13 +19,24 @@ class VpsTerminalSession < ApplicationRecord
 
   def mark_connected!
     update!(status: "connected", started_at: Time.current)
+    broadcast_status
   end
 
   def mark_disconnected!(error: nil)
     update!(status: error ? "error" : "disconnected", ended_at: Time.current, error_message: error)
+    broadcast_status
   end
 
   private
+
+  # The UI's "Conectado" otherwise comes only from the ActionCable subscribe
+  # handshake (vps_terminal_controller.js `connected:`), which fires before
+  # SSH auth/PTY/exec even run. Push the real backend status down the same
+  # stream VpsTerminalChannel already uses, so a slow or failed handshake
+  # doesn't leave the label lying while the screen stays blank.
+  def broadcast_status
+    ActionCable.server.broadcast("vps_terminal_#{token}", { status: status, message: error_message }.compact)
+  end
 
   def generate_token
     self.token ||= SecureRandom.uuid

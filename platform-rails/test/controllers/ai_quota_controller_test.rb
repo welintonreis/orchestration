@@ -73,6 +73,67 @@ class AiQuotaControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "GET new_claude_login stashes the verifier in session and shows the authorize link" do
+    get new_claude_login_ai_quota_url
+    assert_response :success
+    assert session[:claude_oauth_verifier].present?
+    assert_match "claude.ai/oauth/authorize", response.body
+  end
+
+  test "POST create_claude_login exchanges the code, creates the account and audits it" do
+    get new_claude_login_ai_quota_url
+    verifier = session[:claude_oauth_verifier]
+
+    original = AiQuota::ConnectClaude.method(:post_json)
+    AiQuota::ConnectClaude.define_singleton_method(:post_json) { |*| [ 200, { "access_token" => "a", "refresh_token" => "r", "expires_in" => 3600 } ] }
+    begin
+      assert_difference -> { AiAccount.count }, 1 do
+        post create_claude_login_ai_quota_url, params: { code: "codigo##{verifier}" }
+      end
+    ensure
+      AiQuota::ConnectClaude.define_singleton_method(:post_json, original)
+    end
+
+    assert_redirected_to ai_quota_path
+    assert_equal "ai_account.connect", AuditLog.order(:created_at).last.action
+    assert_nil session[:claude_oauth_verifier], "verifier de uso unico deve ser apagado apos o uso"
+  end
+
+  test "POST create_claude_login with a bad code creates no account" do
+    get new_claude_login_ai_quota_url
+
+    assert_no_difference -> { AiAccount.count } do
+      post create_claude_login_ai_quota_url, params: { code: "codigo-sem-hash" }
+    end
+    assert_redirected_to new_claude_login_ai_quota_path
+  end
+
+  test "GET new_ollama_key renders form" do
+    get new_ollama_key_ai_quota_url
+    assert_response :success
+    assert_match "Ollama", response.body
+  end
+
+  test "POST create_ollama_key creates an inline ollama account and audits it" do
+    assert_difference -> { AiAccount.count }, 1 do
+      post create_ollama_key_ai_quota_url, params: { name: "Ollama Servidor", api_key: "secret123" }
+    end
+
+    assert_redirected_to ai_quota_path
+    assert_equal "ai_account.connect", AuditLog.order(:created_at).last.action
+    account = AiAccount.order(:created_at).last
+    assert_equal "ollama", account.provider
+    assert_equal "inline", account.credential_source
+    assert_equal "secret123", account.credential["apiKey"]
+  end
+
+  test "POST create_ollama_key with empty api_key redirects with alert" do
+    assert_no_difference -> { AiAccount.count } do
+      post create_ollama_key_ai_quota_url, params: { name: "Ollama", api_key: "" }
+    end
+    assert_redirected_to new_ollama_key_ai_quota_path
+  end
+
   private
 
   def ok_result

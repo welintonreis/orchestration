@@ -59,6 +59,49 @@ class AiQuotaController < ApplicationController
     redirect_back fallback_location: ai_quota_path
   end
 
+  # Login PKCE independente por conta — ao contrário de import_local, não
+  # depende do CLI do host estar logado numa conta só. Ver
+  # AiQuota::ConnectClaude e docs/specs/feature-ai-quota.md (fase A6).
+  def new_claude_login
+    @verifier = AiQuota::ConnectClaude.new_verifier
+    session[:claude_oauth_verifier] = @verifier
+    @authorize_url = AiQuota::ConnectClaude.authorize_url(@verifier)
+  end
+
+  def create_claude_login
+    verifier = session.delete(:claude_oauth_verifier)
+    credential = verifier.present? ? AiQuota::ConnectClaude.exchange!(params[:code], verifier) : nil
+
+    if credential
+      account = AiQuota::ConnectClaude.create_account!(credential)
+      audit!("ai_account.connect", account: account)
+      redirect_to ai_quota_path, notice: "Conta Claude conectada"
+    else
+      redirect_to new_claude_login_ai_quota_path, alert: "Código inválido ou expirado — tente de novo"
+    end
+  end
+
+  def new_ollama_key
+  end
+
+  def create_ollama_key
+    key = params[:api_key].to_s.strip
+    name = params[:name].to_s.strip.presence || "Ollama"
+
+    if key.present?
+      account = AiAccount.create!(
+        provider: "ollama",
+        credential_source: "inline",
+        name: name,
+        credential: { "apiKey" => key }
+      )
+      audit!("ai_account.connect", account: account)
+      redirect_to ai_quota_path, notice: "Conta Ollama configurada"
+    else
+      redirect_to new_ollama_key_ai_quota_path, alert: "Chave de API não informada"
+    end
+  end
+
   def destroy
     @account.destroy!
     audit!("ai_account.destroy")
@@ -85,11 +128,11 @@ class AiQuotaController < ApplicationController
     @account = AiAccount.find(params[:id])
   end
 
-  def audit!(action, **details)
+  def audit!(action, account: @account, **details)
     AuditLog.record(
       user: Current.user, action: action,
-      target_type: "AiAccount", target_id: @account&.id,
-      metadata: { provider: @account&.provider, label: @account&.label }.compact.merge(details),
+      target_type: "AiAccount", target_id: account&.id,
+      metadata: { provider: account&.provider, label: account&.label }.compact.merge(details),
       ip_address: request.remote_ip
     )
   end

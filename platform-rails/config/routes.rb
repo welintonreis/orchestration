@@ -258,6 +258,10 @@ Rails.application.routes.draw do
   get  "ai_quota/summary",         to: "ai_quota#summary",     as: :summary_ai_quota
   post "ai_quota/bulk_toggle",     to: "ai_quota#bulk_toggle", as: :bulk_toggle_ai_quota
   post "ai_quota/import_local",    to: "ai_quota#import_local", as: :import_local_ai_quota
+  get  "ai_quota/claude/login",    to: "ai_quota#new_claude_login",    as: :new_claude_login_ai_quota
+  post "ai_quota/claude/login",    to: "ai_quota#create_claude_login", as: :create_claude_login_ai_quota
+  get  "ai_quota/ollama/key",      to: "ai_quota#new_ollama_key",      as: :new_ollama_key_ai_quota
+  post "ai_quota/ollama/key",      to: "ai_quota#create_ollama_key",   as: :create_ollama_key_ai_quota
   get    "ai_quota/:id/card",      to: "ai_quota#card",        as: :card_ai_quota
   post   "ai_quota/:id/toggle",    to: "ai_quota#toggle",      as: :toggle_ai_quota
   post   "ai_quota/:id/refresh",   to: "ai_quota#refresh",     as: :refresh_ai_quota

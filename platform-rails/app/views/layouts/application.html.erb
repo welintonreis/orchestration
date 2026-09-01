@@ -55,6 +55,9 @@
            x-data="{
              sb: true,
              profile: false,
+             docker_group: <%= (request.path.start_with?('/containers') || request.path.start_with?('/images') || request.path.start_with?('/networks') || request.path.start_with?('/volumes') || request.path.start_with?('/configs') || request.path.start_with?('/secrets')) ? 'true' : 'false' %>,
+             stacks_group: <%= (request.path.start_with?('/stacks') || request.path.start_with?('/app_templates') || request.path.start_with?('/swarm/services')) ? 'true' : 'false' %>,
+             infra_group: <%= (request.path.start_with?('/vps_hosts') || request.path.start_with?('/cloudflare_dns') || request.path.start_with?('/seaweedfs')) ? 'true' : 'false' %>,
              swarm: <%= request.path.start_with?('/swarm') ? 'true' : 'false' %>,
              seaweed: <%= request.path.start_with?('/seaweedfs') ? 'true' : 'false' %>,
              git: <%= request.path.start_with?('/git') ? 'true' : 'false' %>,
@@ -148,42 +151,85 @@
                 <%= sidebar_link "Apply",      kube_apply_path,      icon: :stacks,    open: "sb" %>
               </div>
             <% else %>
-              <%= sidebar_link "Stacks",      stacks_path,      icon: :stacks,     open: "sb" %>
-              <%= sidebar_link "App Templates", app_templates_path, icon: :stacks, open: "sb" %>
-              <% if runtime_capabilities[:swarm] %>
-                <%= sidebar_link "Serviços",  swarm_services_path, icon: :services, open: "sb" %>
-              <% end %>
-              <%= sidebar_link "Containers",  containers_path,  icon: :containers, open: "sb" %>
-              <%= sidebar_link "Imagens",     images_path,      icon: :images,     open: "sb" %>
-              <%= sidebar_link "Redes",       networks_path,    icon: :networks,   open: "sb" %>
-              <%= sidebar_link "Volumes",     volumes_path,     icon: :volumes,    open: "sb" %>
-              <% if can?(:admin) %>
-                <%= sidebar_link "VPS Hosts", vps_hosts_path, icon: :vps, open: "sb" %>
-              <% end %>
-              <%= sidebar_link "Cloudflare DNS", cloudflare_dns_path, icon: :dns, open: "sb" %>
-              <%= sidebar_link "Quotas de IA", ai_quota_path, icon: :quota, open: "sb" %>
-
-              <%# SeaweedFS S3 Storage collapsible %>
-              <button @click="seaweed = !seaweed"
+              <%# ── STACKS collapsible ── %>
+              <button @click="stacks_group = !stacks_group"
                       class="w-full flex items-center gap-2.5 px-3 py-2 mt-1 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group">
                 <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                  <%= sidebar_icon(:s3_storage).html_safe %>
+                  <%= sidebar_icon(:stacks).html_safe %>
                 </span>
-                <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">SeaweedFS S3</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', seaweed ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
+                <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Stacks</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', stacks_group ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
               </button>
-              <div x-show="seaweed" x-cloak x-collapse class="pl-4">
-                <%= sidebar_link "Identidades & Keys", seaweedfs_path(tab: "identities"), icon: :credentials, open: "sb" %>
-                <%= sidebar_link "Buckets",           seaweedfs_path(tab: "buckets"),    icon: :volumes,     open: "sb" %>
-                <%= sidebar_link "Documentação",      seaweedfs_path(tab: "docs"),       icon: :chat_help,   open: "sb" %>
+              <div x-show="stacks_group" x-cloak x-collapse class="pl-4">
+                <%= sidebar_link "Stacks",          stacks_path,          icon: :stacks,     open: "sb" %>
+                <%= sidebar_link "App Templates",   app_templates_path,   icon: :stacks,     open: "sb" %>
+                <% if runtime_capabilities[:swarm] %>
+                  <%= sidebar_link "Serviços",      swarm_services_path,  icon: :services,   open: "sb" %>
+                <% end %>
               </div>
 
-              <% if runtime_capabilities[:swarm] %>
-                <%= sidebar_link "Configs",     configs_path,     icon: :configs,    open: "sb" %>
-                <%= sidebar_link "Secrets",     secrets_path,     icon: :secrets,    open: "sb" %>
+              <%# ── DOCKER collapsible ── %>
+              <button @click="docker_group = !docker_group"
+                      class="w-full flex items-center gap-2.5 px-3 py-2 mt-1 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group">
+                <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                  <%= sidebar_icon(:containers).html_safe %>
+                </span>
+                <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Docker</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', docker_group ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+              <div x-show="docker_group" x-cloak x-collapse class="pl-4">
+                <%= sidebar_link "Containers",  containers_path,  icon: :containers, open: "sb" %>
+                <%= sidebar_link "Imagens",     images_path,      icon: :images,     open: "sb" %>
+                <%= sidebar_link "Redes",       networks_path,    icon: :networks,   open: "sb" %>
+                <%= sidebar_link "Volumes",     volumes_path,     icon: :volumes,    open: "sb" %>
+                <% if runtime_capabilities[:swarm] %>
+                  <%= sidebar_link "Configs",   configs_path,     icon: :configs,    open: "sb" %>
+                  <%= sidebar_link "Secrets",   secrets_path,     icon: :secrets,    open: "sb" %>
+                <% end %>
+              </div>
 
+              <%# ── INFRAESTRUTURA collapsible ── %>
+              <button @click="infra_group = !infra_group"
+                      class="w-full flex items-center gap-2.5 px-3 py-2 mt-1 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group">
+                <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                  <%= sidebar_icon(:vps).html_safe %>
+                </span>
+                <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">Infraestrutura</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', infra_group ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+              <div x-show="infra_group" x-cloak x-collapse class="pl-4">
+                <% if can?(:admin) %>
+                  <%= sidebar_link "VPS Hosts", vps_hosts_path, icon: :vps, open: "sb" %>
+                <% end %>
+                <%= sidebar_link "Cloudflare DNS", cloudflare_dns_path, icon: :dns, open: "sb" %>
+
+                <%# SeaweedFS S3 sub-collapsible %>
+                <button @click="seaweed = !seaweed"
+                        class="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-text-muted hover:text-text-secondary transition-colors group">
+                  <span class="flex-shrink-0 w-4 h-4 flex items-center justify-center">
+                    <%= sidebar_icon(:s3_storage).html_safe %>
+                  </span>
+                  <span class="flex-1 text-left truncate transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">SeaweedFS S3</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 flex-shrink-0 transition-transform" :class="[sb ? 'opacity-100' : 'opacity-0', seaweed ? 'rotate-180' : '']" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+                <div x-show="seaweed" x-cloak x-collapse class="pl-3">
+                  <%= sidebar_link "Identidades & Keys", seaweedfs_path(tab: "identities"), icon: :credentials, open: "sb" %>
+                  <%= sidebar_link "Buckets",           seaweedfs_path(tab: "buckets"),    icon: :volumes,     open: "sb" %>
+                  <%= sidebar_link "Documentação",      seaweedfs_path(tab: "docs"),       icon: :chat_help,   open: "sb" %>
+                </div>
+              </div>
+
+              <%= sidebar_link "Quotas de IA", ai_quota_path, icon: :quota, open: "sb" %>
+
+              <% if runtime_capabilities[:swarm] %>
                 <%# Swarm collapsible %>
                 <button @click="swarm = !swarm"
                         class="w-full flex items-center gap-2.5 px-3 py-2 mt-1 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group">
@@ -380,9 +426,13 @@
               <button @click="profile = !profile"
                       class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-surface-inset transition-colors"
                       :title="sb ? '' : '<%= user_email %>'">
-                <span class="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-brand flex items-center justify-center text-xs font-mono font-bold text-white shadow">
-                  <%= user_initial %>
-                </span>
+                <% if Current.user&.has_avatar? %>
+                  <img src="<%= Current.user.avatar_data_uri %>" class="flex-shrink-0 w-7 h-7 rounded-full object-cover border border-border shadow" alt="Avatar">
+                <% else %>
+                  <span class="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-brand flex items-center justify-center text-xs font-mono font-bold text-white shadow">
+                    <%= user_initial %>
+                  </span>
+                <% end %>
                 <span class="flex-1 min-w-0 text-left transition-all" :class="sb ? 'opacity-100' : 'opacity-0 pointer-events-none'">
                   <span class="block text-xs font-medium text-text-primary truncate"><%= user_email %></span>
                   <span class="block font-mono text-[9.5px] font-semibold text-brand capitalize"><%= user_role %></span>
@@ -402,12 +452,17 @@
                    x-transition:leave-end="opacity-0 -translate-y-1"
                    @click.outside="profile = false"
                    class="absolute bottom-full left-2 right-2 mb-1 bg-surface-inset border border-border-subtle rounded-xl shadow-xl overflow-hidden z-30">
-                <div class="px-4 py-3 border-b border-border-subtle">
-                  <div class="text-xs font-semibold text-text-primary truncate"><%= user_email %></div>
-                  <div class="flex items-center gap-1.5 mt-0.5">
-                    <% role_dot = is_admin ? "bg-purple-500" : Current.user&.operator? ? "bg-cyan-500" : "bg-gray-500" %>
-                    <span class="w-1.5 h-1.5 rounded-full <%= role_dot %> inline-block"></span>
-                    <span class="text-[10px] text-text-secondary capitalize"><%= user_role %></span>
+                <div class="px-4 py-3 border-b border-border-subtle flex items-center gap-3">
+                  <% if Current.user&.has_avatar? %>
+                    <img src="<%= Current.user.avatar_data_uri %>" class="w-9 h-9 rounded-full object-cover border border-border shrink-0" alt="Avatar">
+                  <% end %>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-xs font-semibold text-text-primary truncate"><%= user_email %></div>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                      <% role_dot = is_admin ? "bg-purple-500" : Current.user&.operator? ? "bg-cyan-500" : "bg-gray-500" %>
+                      <span class="w-1.5 h-1.5 rounded-full <%= role_dot %> inline-block"></span>
+                      <span class="text-[10px] text-text-secondary capitalize"><%= user_role %></span>
+                    </div>
                   </div>
                 </div>
                 <div class="py-1">

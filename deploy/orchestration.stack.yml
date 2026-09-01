@@ -40,6 +40,7 @@ services:
       # docker.sock, que e root no host.
       - /root/.claude:/root/.claude
       - /root/.codex:/root/.codex
+      - /root/.gemini:/root/.gemini
       - ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}:${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}
     networks:
       - traefik

@@ -1,0 +1,38 @@
+<% page_title "Sessões — #{@host.name}" %>
+<% page_subtitle "#{@host.username}@#{@host.hostname}:#{@host.port}" %>
+
+<% content_for :title_actions do %>
+  <%= render Ui::ButtonComponent.new(url: vps_hosts_path, variant: :gray, size: :sm, label: "Voltar") %>
+<% end %>
+
+<% if @sessions.empty? %>
+  <div class="flex flex-col items-center justify-center py-24 text-center bg-surface-raised border border-border rounded-xl">
+    <p class="text-text-secondary font-medium mb-1">Nenhuma sessão</p>
+    <p class="text-sm text-text-muted">Abra um shell a partir da lista de hosts.</p>
+  </div>
+<% else %>
+  <div class="bg-surface-raised border border-border rounded-xl divide-y divide-border/60">
+    <% @sessions.each do |session| %>
+      <div class="flex items-center gap-4 px-4 py-3">
+        <span class="w-2 h-2 rounded-full shrink-0 <%= session.connected? ? "bg-green-500" : (session.status == "error" ? "bg-red-500" : "bg-yellow-400") %>"></span>
+        <div class="min-w-0 flex-1">
+          <div class="font-medium text-text-primary"><%= session.status.humanize %> <span class="text-text-muted font-normal">· slot <%= session.slot %></span></div>
+          <div class="text-xs text-text-muted">
+            aberta <%= time_ago_in_words(session.created_at) %> atrás
+            <% if session.error_message.present? %><span class="mx-1.5">·</span><%= session.error_message %><% end %>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <% if session.status == "connected" || session.status == "connecting" %>
+            <%= render Ui::ButtonComponent.new(url: terminal_vps_host_terminal_session_path(@host, session), variant: :solid_cyan, size: :sm, label: "Abrir") %>
+          <% else %>
+            <%= button_to "Reconectar", reconnect_vps_host_terminal_session_path(@host, session), method: :post,
+                  class: "px-3 py-1.5 text-xs font-medium bg-cyan-100 dark:bg-cyan-500/12 hover:bg-cyan-200 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30 rounded-lg transition-colors" %>
+          <% end %>
+          <%= render Ui::ButtonComponent.new(url: vps_host_terminal_session_path(@host, session), method: :delete, variant: :red, icon: :remove,
+                confirm: "Encerrar esta sessão?") %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
