@@ -12,6 +12,7 @@ class VpsTerminalSession < ApplicationRecord
 
   before_validation :generate_token, on: :create
   before_validation :assign_slot,    on: :create
+  before_create :set_uuid_id
 
   def connected?
     status == "connected"
@@ -28,6 +29,10 @@ class VpsTerminalSession < ApplicationRecord
   end
 
   private
+
+  def set_uuid_id
+    self.id ||= SecureRandom.uuid
+  end
 
   # The UI's "Conectado" otherwise comes only from the ActionCable subscribe
   # handshake (vps_terminal_controller.js `connected:`), which fires before

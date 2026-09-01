@@ -12,4 +12,12 @@ class VpsHost < ApplicationRecord
 
   scope :recent, -> { order(last_connected_at: :desc) }
   scope :by_name, -> { order(:name) }
+
+  before_create :set_uuid_id
+
+  private
+
+  def set_uuid_id
+    self.id ||= SecureRandom.uuid
+  end
 end
