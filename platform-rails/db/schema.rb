@@ -10,7 +10,43 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_31_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_093529) do
+  create_table "ai_accounts", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "auth_type", default: "oauth", null: false
+    t.datetime "created_at", null: false
+    t.string "credential_path"
+    t.string "credential_source", default: "inline", null: false
+    t.text "credentials"
+    t.string "display_name"
+    t.string "email"
+    t.string "last_error"
+    t.datetime "last_error_at"
+    t.datetime "last_used_at"
+    t.string "name"
+    t.integer "priority", default: 1
+    t.string "provider", null: false
+    t.json "provider_data", default: {}
+    t.string "test_status"
+    t.datetime "updated_at", null: false
+    t.index ["provider", "active"], name: "index_ai_accounts_on_provider_and_active"
+    t.index ["provider"], name: "index_ai_accounts_on_provider"
+  end
+
+  create_table "ai_quota_snapshots", force: :cascade do |t|
+    t.integer "ai_account_id", null: false
+    t.datetime "captured_at", null: false
+    t.datetime "created_at", null: false
+    t.string "model_key"
+    t.string "quota_name", null: false
+    t.integer "remaining_pct"
+    t.datetime "reset_at"
+    t.integer "total"
+    t.integer "used"
+    t.index ["ai_account_id", "quota_name", "captured_at"], name: "index_ai_quota_snapshots_on_account_quota_time"
+    t.index ["ai_account_id"], name: "index_ai_quota_snapshots_on_ai_account_id"
+  end
+
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -339,6 +375,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_120001) do
     t.index ["vps_host_id"], name: "index_vps_terminal_sessions_on_vps_host_id"
   end
 
+  add_foreign_key "ai_quota_snapshots", "ai_accounts"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "edge_commands", "edge_nodes"
   add_foreign_key "edge_nodes", "environments"

@@ -1,6 +1,6 @@
 # Feature — Quotas de IA nativas
 
-> Status: 📋 planejada · Escrita 2026-09-01
+> Status: ✅ A1–A4 entregues · Escrita e implementada 2026-09-01
 
 ## Problema
 
@@ -20,11 +20,24 @@ credenciais no banco dele, refresh de token próprio, e consulta direta às APIs
 de quota de cada provedor. Isso é reimplementar a gestão de contas, não só
 desenhar uma tela — daí o faseamento.
 
-**Custo aceito conscientemente:** duas cópias de credencial do mesmo provedor
-(uma no 9router, uma aqui), cada uma renovando seu token. Provedores que
-invalidam o refresh token anterior a cada renovação vão brigar entre si; se
-acontecer, a saída é o Orchestration virar dono da credencial e o 9router
-consumir dele, nunca o contrário.
+**O risco previsto aconteceu, no mesmo dia.** Ao renovar o token do Codex em
+2026-09-01, o endpoint devolveu um **refresh token novo** — a rotação é padrão
+lá. Duas cópias independentes da mesma credencial se invalidam mutuamente: quem
+renova por último deixa a outra com um token morto.
+
+Por isso o desenho final **não** tem duas cópias. A conta guarda um
+`credential_source`:
+
+- `file` — aponta para o arquivo de credencial de um CLI já autenticado neste
+  host (`~/.claude/.credentials.json`, `~/.codex/auth.json`). Quando o
+  Orchestration renova, ele **grava de volta nesse arquivo**, atomicamente
+  (escreve temporário, `rename` por cima, modo 600). Um dono, uma credencial.
+- `inline` — credencial colada aqui, cifrada na coluna, que é nossa para
+  renovar.
+
+Não existe fluxo de login OAuth interativo, e isso é deliberado: logar de novo
+mintaria uma segunda credencial para a mesma conta, recriando exatamente a
+briga que o desenho evita.
 
 ## Modelo de dado normalizado
 
@@ -51,13 +64,23 @@ Cores: `> 70` verde, `>= 30` amarelo, resto vermelho. Conta "vazia" =
 | Provedor | Endpoint | Agregação |
 |---|---|---|
 | claude | `GET api.anthropic.com/api/oauth/usage` | `used = utilization` (0–100), `total = 100`, `reset_at = resets_at`. Buckets: `five_hour` → `session (5h)`, `seven_day` → `weekly (7d)`, `seven_day_<x>` → `weekly <x> (7d)` |
-| codex | `GET chatgpt.com/backend-api/wham/usage` | `used = clamp(used_percent, 0, 100)`, `total = 100`. `primary_window` → `5h`, `secondary_window` → `Weekly`, mais os prefixos `review_` e `spark_`. Extras: `plan`, `limitReached`, `resetCredits.availableCount` |
+| codex | `GET chatgpt.com/backend-api/wham/usage` | `used = clamp(used_percent, 0, 100)`, `total = 100`. As janelas ficam **dentro de `rate_limit`** (`primary_window`/`secondary_window`), com as famílias `code_review_rate_limit` e `spark_rate_limit` ao lado. `reset_at` é **epoch em segundos**. Extras: `plan_type`, `email`, `rate_limit.limit_reached`, `rate_limit_reset_credits.available_count`, `credits` |
 | antigravity | `POST cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels` | por modelo: `total = 1000`, `used = 1000 - round(1000 × remainingFraction)`, `remaining_pct = 100 × f`. Pula `isInternal` |
 | gemini-cli | `POST cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota` | idem antigravity |
 | github | `GET api.github.com/copilot_internal/user` | `used = entitlement - remaining`, `total = entitlement`, respeita `unlimited`. Quotas `chat`, `completions`, `premium_interactions`, com `reset_at = quota_reset_date` compartilhado |
 
-**Claude limita agressivamente:** cache de 5 min por token e cooldown de 3 min
-depois de um 429. Os demais, 60s. `?force=1` fura o cache — nunca em rotina.
+**Claude limita agressivamente:** cache de 5 min por conta. Codex, 60s.
+`force: true` fura o cache — nunca em rotina.
+
+**O nome da janela do Codex é dado, não posição.** Cada janela traz
+`limit_window_seconds`; a conta de teste é `free`, com janela de **30 dias**.
+Rotular a primeira janela como "5h" por convenção mostraria "Sessão (5h)" numa
+quota mensal. O rótulo sai do tamanho da janela, com fallback humanizado.
+
+**O formato real divergiu do que o bundle do 9router sugeria.** Os dois
+provedores foram conferidos contra a API de verdade antes de escrever o parser
+— e o do Codex teve que ser reescrito depois da primeira versão, que seguia a
+estrutura inferida do código compilado.
 
 ## Fases
 
@@ -103,9 +126,27 @@ Bind-mount read-only de `~/.claude` e `~/.codex`; chaves de cifra via
 
 ## Verificação
 
-Comparar lado a lado com a tela do 9router **no mesmo minuto** — os números têm
-que bater. É o único critério honesto de "mesmos dados". Depois: forçar
-`expires_at` no passado e confirmar que a conta se recupera sozinha.
+Feita contra as APIs reais em 2026-09-01, não só com stub:
+
+```
+claude — pro — plano="Pro"
+  Sessão (5h)    95/100  restante=5%   vermelho  reset 2026-09-01 13:20 UTC
+  Semanal (7d)   62/100  restante=38%  amarelo   reset 2026-09-06 08:00 UTC
+  extra: créditos 0,00 / 52,44 USD (desativado: out_of_credits)
+
+codex — plano="Free"
+  Mensal (30d)  100/100  restante=0%   vermelho  reset 2026-09-16 00:38 UTC
+  extra: limite atingido, 0 créditos de reset
+```
+
+O token do Codex estava **expirado** (último refresh em 18/08) e a conta se
+recuperou sozinha: o `Usage` detectou a expiração, chamou o refresher, gravou o
+token novo de volta no arquivo do CLI e refez a leitura. É o caminho de
+recuperação inteiro, exercitado de ponta a ponta.
+
+Os testes cobrem o que não dá para checar à mão: rotação de refresh token,
+escrita atômica, permissão 600, e que uma renovação falha não encoste no
+arquivo.
 
 ## Fora de escopo
 

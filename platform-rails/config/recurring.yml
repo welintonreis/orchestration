@@ -18,3 +18,10 @@ production:
     class: MetricsJob
     schedule: every 30 seconds
     queue: default
+
+  # The AI providers keep no quota history — this table is the only source of
+  # a trend. 15min matches the Claude fetcher's 5min cache without hammering it.
+  ai_quota_snapshot:
+    class: AiQuotaSnapshotJob
+    schedule: every 15 minutes
+    queue: default
