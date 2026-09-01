@@ -379,6 +379,8 @@ DEPENDENCIES
   excon
   importmap-rails
   kamal
+  net-sftp (~> 4.0)
+  net-ssh (~> 7.3)
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.3)

@@ -155,6 +155,9 @@
               <%= sidebar_link "Imagens",     images_path,      icon: :images,     open: "sb" %>
               <%= sidebar_link "Redes",       networks_path,    icon: :networks,   open: "sb" %>
               <%= sidebar_link "Volumes",     volumes_path,     icon: :volumes,    open: "sb" %>
+              <% if can?(:admin) %>
+                <%= sidebar_link "VPS Hosts", vps_hosts_path, icon: :vps, open: "sb" %>
+              <% end %>
               <%= sidebar_link "Cloudflare DNS", cloudflare_dns_path, icon: :dns, open: "sb" %>
 
               <%# SeaweedFS S3 Storage collapsible %>

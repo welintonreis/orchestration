@@ -69,6 +69,33 @@ Rails.application.routes.draw do
   delete "containers/:id/files",         to: "containers#files_delete",  as: :container_files_delete
   post   "containers/:id/files/mkdir",   to: "containers#files_mkdir",   as: :container_files_mkdir
   patch  "containers/:id/files/rename",  to: "containers#files_rename",  as: :container_files_rename
+  # ── VPS hosts: real SSH terminal + SFTP file explorer on the host itself
+  # (not a container/pod exec) — ported from redhusky-remote-ssh.
+  resources :vps_hosts do
+    resources :terminal_sessions, controller: "vps_terminal_sessions", only: %i[index create destroy] do
+      member do
+        get  :terminal
+        post :reconnect
+      end
+    end
+    resources :files, controller: "vps_files", only: [:index] do
+      collection do
+        get    :download
+        get    :archive
+        get    :raw
+        get    :content
+        post   :upload
+        post   :mkdir
+        post   :move
+        post   :copy
+        patch  :rename
+        patch  :permissions
+        patch  :update_content
+        delete :destroy
+      end
+    end
+  end
+
   resources :images, only: %i[index show] do
     member { delete :remove }
     collection do
@@ -212,6 +239,10 @@ Rails.application.routes.draw do
 
   # ── SeaweedFS S3 Storage ──
   get    "seaweedfs",                     to: "seaweedfs#index",              as: :seaweedfs
+  post   "seaweedfs/buckets",             to: "seaweedfs#create_bucket",      as: :create_seaweedfs_bucket
+  post   "seaweedfs/upload",              to: "seaweedfs#upload_file",        as: :upload_seaweedfs_file
+  get    "seaweedfs/download",            to: "seaweedfs#download_object",    as: :download_seaweedfs_object
+  delete "seaweedfs/object",              to: "seaweedfs#destroy_object",     as: :destroy_seaweedfs_object
   post   "seaweedfs/identities",          to: "seaweedfs#create_identity",    as: :create_seaweedfs_identity
   delete "seaweedfs/identities/:name",    to: "seaweedfs#destroy_identity",   as: :delete_seaweedfs_identity
 
@@ -246,14 +277,7 @@ Rails.application.routes.draw do
     get  "help",      to: "help#index",     as: :help
   end
 
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
   get "app-assets/:key", to: "app_assets#show", as: :app_asset
-
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 end

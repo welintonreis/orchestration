@@ -1,7 +1,31 @@
 <% page_title "SeaweedFS S3 Storage" %>
-<% page_subtitle "Gerenciamento de Object Storage S3 compatível, identidades, credenciais e parametrização" %>
+<% page_subtitle "Gerenciamento de Object Storage S3 compatível, buckets, arquivos, identidades e credenciais" %>
 
-<div class="space-y-6" x-data="{ tab: '<%= @tab %>' }">
+<div class="space-y-6" x-data="{
+  tab: '<%= @tab %>',
+  previewModal: false,
+  previewUrl: '',
+  previewTitle: '',
+  previewMime: '',
+  openPreview(url, title, mime) {
+    this.previewUrl = url;
+    this.previewTitle = title;
+    this.previewMime = mime || '';
+    this.previewModal = true;
+  },
+  isImage() {
+    return this.previewMime.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(this.previewTitle);
+  },
+  isAudio() {
+    return this.previewMime.startsWith('audio/') || /\.(ogg|oga|mp3|wav|m4a|aac)$/i.test(this.previewTitle);
+  },
+  isVideo() {
+    return this.previewMime.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(this.previewTitle);
+  },
+  isPdf() {
+    return this.previewMime === 'application/pdf' || /\.pdf$/i.test(this.previewTitle);
+  }
+}">
 
   <%# ── Header & Tabs ── %>
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
@@ -19,25 +43,204 @@
 
     <%# Tabs Nav %>
     <div class="flex items-center gap-1.5 p-1 bg-surface-raised rounded-lg border border-border">
-      <button @click="tab = 'identities'"
-              :class="tab === 'identities' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
-              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-        Identidades & Keys
-      </button>
       <button @click="tab = 'buckets'"
               :class="tab === 'buckets' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
-              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-        Buckets (<%= @buckets.size %>)
+              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer">
+        Explorer & Buckets (<%= @buckets.size %>)
+      </button>
+      <button @click="tab = 'identities'"
+              :class="tab === 'identities' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
+              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer">
+        Identidades & Keys
       </button>
       <button @click="tab = 'docs'"
               :class="tab === 'docs' ? 'bg-brand text-white shadow-sm' : 'text-text-muted hover:text-text-primary'"
-              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer">
         Documentação & Parâmetros
       </button>
     </div>
   </div>
 
-  <%# ── TAB 1: IDENTIDADES & CHAVES ── %>
+  <%# ── TAB 1: BUCKETS & FILE EXPLORER ── %>
+  <div x-show="tab === 'buckets'" x-cloak class="space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+      <%# Coluna Esquerda: Lista de Buckets + Criar Bucket %>
+      <div class="lg:col-span-1 space-y-4">
+        <div class="rounded-xl border border-border bg-surface-raised overflow-hidden">
+          <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Buckets S3</h2>
+            <span class="text-xs text-text-muted font-mono"><%= @buckets.size %></span>
+          </div>
+
+          <div class="divide-y divide-border max-h-[400px] overflow-y-auto">
+            <% if @buckets.empty? %>
+              <div class="p-4 text-center text-xs text-text-muted">Nenhum bucket.</div>
+            <% else %>
+              <% @buckets.each do |b| %>
+                <%= link_to seaweedfs_path(tab: "buckets", bucket: b),
+                      class: "p-3 flex items-center justify-between text-xs transition-colors #{b == @selected_bucket ? 'bg-brand/10 border-l-2 border-brand text-text-primary font-semibold' : 'text-text-secondary hover:bg-surface-inset/50'}" do %>
+                  <div class="flex items-center gap-2 truncate">
+                    <span class="text-brand"><%= sidebar_icon(:volumes).html_safe %></span>
+                    <span class="truncate"><%= b %></span>
+                  </div>
+                  <span class="text-[10px] text-text-muted font-mono">s3</span>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+
+          <%# Form Novo Bucket %>
+          <div class="p-3 border-t border-border bg-surface-inset/30">
+            <%= form_with url: create_seaweedfs_bucket_path, method: :post, class: "space-y-2" do |f| %>
+              <label class="block text-[11px] font-medium text-text-muted">Criar Novo Bucket</label>
+              <div class="flex gap-1.5">
+                <%= f.text_field :bucket_name, placeholder: "nome-do-bucket", required: true,
+                      class: "w-full text-xs font-mono rounded-lg border border-border bg-surface-inset px-2.5 py-1.5 text-text-primary focus:outline-none focus:border-brand" %>
+                <%= f.submit "+", class: "px-3 py-1.5 bg-brand hover:bg-brand/90 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <%# Coluna Direita: File Explorer %>
+      <div class="lg:col-span-3 space-y-4">
+        <div class="rounded-xl border border-border bg-surface-raised overflow-hidden">
+
+          <%# Explorer Header / Breadcrumb & Actions %>
+          <div class="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-raised">
+            <div class="flex items-center gap-2 text-xs font-mono text-text-muted flex-wrap">
+              <span class="text-brand font-bold text-sm">s3://</span>
+              <% if @selected_bucket.present? %>
+                <%= link_to @selected_bucket, seaweedfs_path(tab: "buckets", bucket: @selected_bucket), class: "text-text-primary hover:underline font-semibold" %>
+                <% parts = @prefix.split("/").reject(&:blank?) %>
+                <% running_path = "" %>
+                <% parts.each do |part| %>
+                  <% running_path = running_path.blank? ? part : "#{running_path}/#{part}" %>
+                  <span>/</span>
+                  <%= link_to part, seaweedfs_path(tab: "buckets", bucket: @selected_bucket, prefix: running_path), class: "text-text-secondary hover:underline" %>
+                <% end %>
+              <% else %>
+                <span class="text-text-muted">Nenhum bucket selecionado</span>
+              <% end %>
+            </div>
+
+            <%# Upload Form %>
+            <% if @selected_bucket.present? %>
+              <%= form_with url: upload_seaweedfs_file_path, method: :post, multipart: true, class: "flex items-center gap-2" do |f| %>
+                <%= f.hidden_field :bucket, value: @selected_bucket %>
+                <%= f.hidden_field :prefix, value: @prefix %>
+                <label class="px-3 py-1.5 bg-surface-inset hover:bg-surface-inset/80 border border-border text-text-secondary text-xs rounded-lg cursor-pointer transition-colors flex items-center gap-1.5">
+                  <span>📎 Selecionar</span>
+                  <%= f.file_field :file, class: "hidden", onchange: "this.form.submit()" %>
+                </label>
+              <% end %>
+            <% end %>
+          </div>
+
+          <%# Tabela de Arquivos %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="border-b border-border bg-surface-inset/30 text-text-muted uppercase">
+                <tr>
+                  <th class="py-2.5 px-4">Nome</th>
+                  <th class="py-2.5 px-3">Tamanho</th>
+                  <th class="py-2.5 px-3">Modificado em</th>
+                  <th class="py-2.5 px-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+
+                <%# Voltar diretório anterior %>
+                <% if @prefix.present? %>
+                  <% parent_prefix = @prefix.split("/")[0...-1].join("/") %>
+                  <tr class="hover:bg-surface-inset/30 transition-colors">
+                    <td colspan="4" class="py-2.5 px-4">
+                      <%= link_to seaweedfs_path(tab: "buckets", bucket: @selected_bucket, prefix: parent_prefix),
+                            class: "text-brand hover:underline flex items-center gap-2 font-mono" do %>
+                        <span>📁 ..</span>
+                        <span class="text-text-muted text-[11px]">(diretório anterior)</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+
+                <% entries = @objects_data["Entries"] || [] %>
+                <% if entries.empty? %>
+                  <tr>
+                    <td colspan="4" class="py-12 text-center text-text-muted">
+                      <div class="space-y-1">
+                        <p class="text-sm">Bucket ou diretório vazio</p>
+                        <p class="text-[11px] text-text-muted">Faça upload de um arquivo acima ou envie dados via S3 API.</p>
+                      </div>
+                    </td>
+                  </tr>
+                <% else %>
+                  <% entries.each do |entry| %>
+                    <tr class="hover:bg-surface-inset/30 transition-colors">
+                      <td class="py-2.5 px-4 font-mono flex items-center gap-2">
+                        <% if entry["is_dir"] %>
+                          <span class="text-yellow-400">📁</span>
+                          <%= link_to entry["name"], seaweedfs_path(tab: "buckets", bucket: @selected_bucket, prefix: entry["rel_path"]),
+                                class: "text-text-primary hover:underline font-medium" %>
+                        <% else %>
+                          <span class="text-text-muted">📄</span>
+                          <span class="text-text-primary"><%= entry["name"] %></span>
+                        <% end %>
+                      </td>
+
+                      <td class="py-2.5 px-3 text-text-muted font-mono">
+                        <% if entry["is_dir"] %>
+                          -
+                        <% else %>
+                          <%= number_to_human_size(entry["size"]) %>
+                        <% end %>
+                      </td>
+
+                      <td class="py-2.5 px-3 text-text-muted font-mono text-[11px]">
+                        <%= entry["mtime"].to_s.sub("T", " ").sub(/\..*$/, "") %>
+                      </td>
+
+                      <td class="py-2.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <% unless entry["is_dir"] %>
+                            <% download_url = download_seaweedfs_object_path(bucket: @selected_bucket, path: entry["rel_path"]) %>
+                            <button type="button"
+                                    @click="openPreview('<%= j download_url %>', '<%= j entry["name"] %>', '<%= j entry["mime"].to_s %>')"
+                                    class="px-2 py-1 bg-brand/10 hover:bg-brand/20 text-brand rounded text-[11px] border border-brand/20 cursor-pointer transition-colors">
+                              Preview
+                            </button>
+                            <%= link_to download_url,
+                                  target: "_blank",
+                                  class: "px-2 py-1 bg-surface-inset hover:bg-surface-inset/80 text-text-secondary rounded text-[11px] border border-border" do %>
+                              Baixar
+                            <% end %>
+                          <% end %>
+
+                          <%= button_to destroy_seaweedfs_object_path(bucket: @selected_bucket, path: entry["rel_path"], prefix: @prefix),
+                                method: :delete,
+                                data: { turbo_confirm: "Excluir permanentemente '#{entry["name"]}'?" },
+                                class: "px-2 py-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded text-[11px] border border-red-500/20" do %>
+                            Excluir
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                <% end %>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <%# ── TAB 2: IDENTIDADES & CHAVES ── %>
   <div x-show="tab === 'identities'" x-cloak class="space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -159,34 +362,6 @@
     </div>
   </div>
 
-  <%# ── TAB 2: BUCKETS ── %>
-  <div x-show="tab === 'buckets'" x-cloak class="space-y-6">
-    <div class="rounded-xl border border-border bg-surface-raised overflow-hidden">
-      <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-text-primary">Buckets S3 Criados</h2>
-        <span class="text-xs text-text-muted">Total: <%= @buckets.size %></span>
-      </div>
-
-      <div class="divide-y divide-border">
-        <% if @buckets.empty? %>
-          <div class="p-8 text-center text-text-muted text-sm">
-            Nenhum bucket criado ainda. Buckets são criados automaticamente via S3 API (Cyberduck, AWS CLI, Rails ActiveStorage).
-          </div>
-        <% else %>
-          <% @buckets.each do |b| %>
-            <div class="p-4 flex items-center justify-between hover:bg-surface-inset/30">
-              <div class="flex items-center gap-3">
-                <span class="text-text-muted"><%= sidebar_icon(:volumes).html_safe %></span>
-                <span class="font-mono text-sm font-medium text-text-primary"><%= b %></span>
-              </div>
-              <span class="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-400 font-mono">s3://<%= b %></span>
-            </div>
-          <% end %>
-        <% end %>
-      </div>
-    </div>
-  </div>
-
   <%# ── TAB 3: DOCUMENTAÇÃO COMPLETA DE PARAMETRIZAÇÃO ── %>
   <div x-show="tab === 'docs'" x-cloak class="space-y-6">
 
@@ -218,7 +393,6 @@
       </h2>
 
       <div class="space-y-4">
-        <%# Rails ActiveStorage %>
         <div class="space-y-2">
           <h3 class="text-sm font-semibold text-text-secondary">1. Ruby on Rails (ActiveStorage — <code>config/storage.yml</code>)</h3>
           <pre class="p-4 rounded-lg bg-surface-inset border border-border font-mono text-xs text-text-primary overflow-x-auto">
@@ -227,25 +401,23 @@ seaweedfs:
   access_key_id: redhusky-s3-admin
   secret_access_key: meq9naPRSeaweed2026!
   region: us-east-1
-  bucket: huskyos-storage
-  endpoint: https://s3.redhusky.com.br
+  bucket: whatsapp-media
+  endpoint: http://seaweedfs:8333
   force_path_style: true</pre>
         </div>
 
-        <%# Evolution API %>
         <div class="space-y-2">
           <h3 class="text-sm font-semibold text-text-secondary">2. Evolution API (Armazenamento de Mídia WhatsApp — <code>.env</code>)</h3>
           <pre class="p-4 rounded-lg bg-surface-inset border border-border font-mono text-xs text-text-primary overflow-x-auto">
 S3_ENABLED=true
 S3_ACCESS_KEY=redhusky-s3-admin
 S3_SECRET_KEY=meq9naPRSeaweed2026!
-S3_BUCKET=evolution-media
+S3_BUCKET=whatsapp-media
 S3_PORT=8333
 S3_ENDPOINT=seaweedfs_seaweedfs
 S3_USE_SSL=false</pre>
         </div>
 
-        <%# AWS CLI %>
         <div class="space-y-2">
           <h3 class="text-sm font-semibold text-text-secondary">3. AWS CLI / Scripts</h3>
           <pre class="p-4 rounded-lg bg-surface-inset border border-border font-mono text-xs text-text-primary overflow-x-auto">
@@ -256,57 +428,65 @@ aws --endpoint-url=https://s3.redhusky.com.br s3 cp arquivo.pdf s3://meu-novo-bu
       </div>
     </div>
 
-    <%# Card Flags e Parâmetros SeaweedFS %>
-    <div class="rounded-xl border border-border bg-surface-raised p-6 space-y-4">
-      <h2 class="text-base font-bold text-text-primary flex items-center gap-2">
-        <span class="text-brand">⚙️</span> Referência Completa de Parâmetros (SeaweedFS Server CLI)
-      </h2>
+  </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="border-b border-border text-text-muted uppercase">
-            <tr>
-              <th class="py-2.5 px-3">Parâmetro</th>
-              <th class="py-2.5 px-3">Padrão</th>
-              <th class="py-2.5 px-3">Descrição</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border text-text-secondary font-mono">
-            <tr>
-              <td class="py-2.5 px-3 text-brand">-s3</td>
-              <td class="py-2.5 px-3">false</td>
-              <td class="py-2.5 px-3 font-sans">Habilita a API compatível com Amazon S3.</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-3 text-brand">-s3.port</td>
-              <td class="py-2.5 px-3">8333</td>
-              <td class="py-2.5 px-3 font-sans">Porta de escuta do gateway S3.</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-3 text-brand">-s3.config</td>
-              <td class="py-2.5 px-3">/etc/seaweedfs/s3.json</td>
-              <td class="py-2.5 px-3 font-sans">Caminho do arquivo de identidades, keys e políticas.</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-3 text-brand">-dir</td>
-              <td class="py-2.5 px-3">/data</td>
-              <td class="py-2.5 px-3 font-sans">Diretório de persistência dos blocos de dados.</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-3 text-brand">-volume.max</td>
-              <td class="py-2.5 px-3">7</td>
-              <td class="py-2.5 px-3 font-sans">Limite máximo de volumes de 30GB por drive/pasta.</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-3 text-brand">-ip.bind</td>
-              <td class="py-2.5 px-3">0.0.0.0</td>
-              <td class="py-2.5 px-3 font-sans">Interface de rede para escuta dos serviços.</td>
-            </tr>
-          </tbody>
-        </table>
+  <%# ── PREVIEW MODAL IN-PAGE ── %>
+  <div x-show="previewModal" x-cloak
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs"
+       @keydown.escape.window="previewModal = false">
+    <div class="relative w-full max-w-4xl max-h-[90vh] bg-surface-raised border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col"
+         @click.away="previewModal = false">
+      <%# Modal Header %>
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-border bg-surface-inset/50">
+        <div class="flex items-center gap-2.5 truncate">
+          <span class="text-brand text-base font-bold">👁️</span>
+          <span class="font-mono text-sm font-semibold text-text-primary truncate" x-text="previewTitle"></span>
+        </div>
+        <div class="flex items-center gap-3">
+          <a :href="previewUrl" target="_blank"
+             class="px-2.5 py-1 text-xs text-text-secondary hover:text-text-primary bg-surface-inset hover:bg-surface-inset/80 border border-border rounded-md transition-colors">
+            Baixar Arquivo
+          </a>
+          <button type="button" @click="previewModal = false"
+                  class="text-text-muted hover:text-text-primary text-lg font-bold px-2 py-0.5 rounded hover:bg-surface-inset cursor-pointer transition-colors">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <%# Modal Body %>
+      <div class="p-6 overflow-auto flex-1 flex items-center justify-center min-h-[320px] bg-surface">
+        <%# Imagem %>
+        <template x-if="isImage()">
+          <img :src="previewUrl" class="max-h-[70vh] max-w-full rounded-lg object-contain border border-border shadow-md" />
+        </template>
+
+        <%# Áudio %>
+        <template x-if="isAudio()">
+          <div class="w-full max-w-md p-6 bg-surface-raised border border-border rounded-xl flex flex-col items-center gap-4">
+            <span class="text-4xl">🎙️</span>
+            <audio :src="previewUrl" controls class="w-full" preload="metadata" autoplay></audio>
+          </div>
+        </template>
+
+        <%# Vídeo %>
+        <template x-if="isVideo()">
+          <video :src="previewUrl" controls class="max-h-[70vh] max-w-full rounded-lg border border-border shadow-md"></video>
+        </template>
+
+        <%# PDF ou outros documentos %>
+        <template x-if="isPdf()">
+          <iframe :src="previewUrl" class="w-full h-[70vh] rounded-lg border border-border"></iframe>
+        </template>
+
+        <%# Fallback texto / outros %>
+        <template x-if="!isImage() && !isAudio() && !isVideo() && !isPdf()">
+          <div class="w-full h-[60vh] flex flex-col">
+            <iframe :src="previewUrl" class="w-full flex-1 rounded-lg border border-border bg-surface-raised"></iframe>
+          </div>
+        </template>
       </div>
     </div>
-
   </div>
 
 </div>

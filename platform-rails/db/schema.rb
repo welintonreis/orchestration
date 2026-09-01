@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_06_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_31_120001) do
   create_table "alerts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "level", null: false
@@ -305,6 +305,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_06_120000) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "vps_hosts", force: :cascade do |t|
+    t.string "auth_method", default: "password", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "host_key_fingerprint"
+    t.string "hostname", null: false
+    t.datetime "last_connected_at"
+    t.string "name", null: false
+    t.integer "port", default: 22, null: false
+    t.integer "shared_credential_id"
+    t.datetime "updated_at", null: false
+    t.string "username", null: false
+    t.index ["name"], name: "index_vps_hosts_on_name", unique: true
+    t.index ["shared_credential_id"], name: "index_vps_hosts_on_shared_credential_id"
+  end
+
+  create_table "vps_terminal_sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "ended_at"
+    t.text "error_message"
+    t.integer "slot", default: 0
+    t.datetime "started_at"
+    t.string "status", default: "connecting", null: false
+    t.integer "terminal_cols"
+    t.integer "terminal_rows"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "vps_host_id", null: false
+    t.index ["token"], name: "index_vps_terminal_sessions_on_token", unique: true
+    t.index ["user_id"], name: "index_vps_terminal_sessions_on_user_id"
+    t.index ["vps_host_id"], name: "index_vps_terminal_sessions_on_vps_host_id"
+  end
+
   add_foreign_key "audit_logs", "users"
   add_foreign_key "edge_commands", "edge_nodes"
   add_foreign_key "edge_nodes", "environments"
@@ -322,4 +356,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_06_120000) do
   add_foreign_key "team_environment_permissions", "teams"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
+  add_foreign_key "vps_hosts", "shared_credentials"
+  add_foreign_key "vps_terminal_sessions", "users"
+  add_foreign_key "vps_terminal_sessions", "vps_hosts"
 end

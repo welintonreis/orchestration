@@ -1,0 +1,51 @@
+<%= form_with model: host, url: host.persisted? ? vps_host_path(host) : vps_hosts_path, class: "space-y-5 max-w-xl" do |f| %>
+  <% if host.errors.any? %>
+    <div class="bg-red-100 dark:bg-red-500/10 border border-red-300 dark:border-red-500/30 rounded-lg p-4 text-sm text-red-700 dark:text-red-300">
+      <% host.errors.full_messages.each do |msg| %><div><%= msg %></div><% end %>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="sm:col-span-2">
+      <%= f.label :name, class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :name, placeholder: "Meu VPS", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
+    </div>
+    <div>
+      <%= f.label :hostname, "Hostname / IP", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :hostname, placeholder: "192.168.1.1", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
+    </div>
+    <div>
+      <%= f.label :port, class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.number_field :port, value: host.port || 22, class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
+    </div>
+    <div>
+      <%= f.label :username, class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.text_field :username, placeholder: "root", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600" %>
+    </div>
+    <div>
+      <%= f.label :auth_method, "Autenticação", class: "block text-xs font-medium text-text-secondary mb-1" %>
+      <%= f.select :auth_method, VpsHost::AUTH_METHODS.map { |m| [m.humanize, m] }, {},
+            class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
+    </div>
+  </div>
+
+  <div>
+    <%= f.label :shared_credential_id, "Credencial", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.collection_select :shared_credential_id, SharedCredential.where(credential_type: %w[ssh_key password]).order(:name), :id,
+          ->(c) { "#{c.name} (#{c.credential_type.humanize})" }, { include_blank: "Selecione…" },
+          class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary focus:outline-none focus:border-cyan-600" %>
+    <p class="text-xs text-text-muted mt-1">
+      Senha ou chave privada SSH guardadas em <%= link_to "Credenciais compartilhadas", new_settings_credential_path, class: "text-cyan-600 dark:text-cyan-400 hover:underline", target: "_blank" %>.
+    </p>
+  </div>
+
+  <div>
+    <%= f.label :description, "Notas", class: "block text-xs font-medium text-text-secondary mb-1" %>
+    <%= f.text_area :description, rows: 2, placeholder: "Opcional…", class: "w-full px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600 resize-none" %>
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <%= f.submit host.persisted? ? "Atualizar host" : "Salvar host", class: "px-4 py-2 text-sm font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors cursor-pointer" %>
+    <%= link_to "Cancelar", vps_hosts_path, class: "text-sm text-text-secondary hover:text-text-primary" %>
+  </div>
+<% end %>

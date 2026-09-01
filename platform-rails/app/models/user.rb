@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_many :audit_logs, dependent: :nullify
   has_many :team_memberships, dependent: :destroy
   has_many :teams, through: :team_memberships
+  has_many :vps_terminal_sessions, dependent: :destroy
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 

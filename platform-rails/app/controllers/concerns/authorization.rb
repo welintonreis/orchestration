@@ -37,6 +37,9 @@ module Authorization
     "settings/auth"               => :admin,
     "settings/edge"               => :admin,
     "settings/credentials"        => :admin,
+    "vps_hosts"                   => :admin, # SSH shell + real filesystem access to the host — RCE-adjacent
+    "vps_terminal_sessions"       => :admin,
+    "vps_files"                   => :admin,
     "settings/kubeconfig_imports" => :admin,
     "ambiente/licenses"           => :admin,
     "ambiente/registries"         => :admin,
