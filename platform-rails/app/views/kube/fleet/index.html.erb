@@ -1,31 +1,16 @@
 <% page_title "Fleet" %>
 <% page_subtitle "Visão consolidada de todos os clusters Kubernetes registrados" %>
 
-<div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
-  <% if @rows.empty? %>
+<% if @environments.empty? %>
+  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
     <div class="py-16 text-center text-sm text-text-muted">Nenhum environment Kubernetes cadastrado ainda.</div>
-  <% else %>
-    <%= render Ui::TableComponent.new(headers: ["Cluster", "Status", "Versão", "Nodes", "Pods falhando", "Deployments degradados"]) do %>
-      <% @rows.each do |row| %>
-        <tr class="hover:bg-surface-inset/30 transition-colors">
-          <td class="px-4 py-3 font-mono text-text-primary"><%= row[:environment].name %></td>
-          <td class="px-4 py-3">
-            <% if row[:online] %>
-              <%= render(Ui::BadgeComponent.new(color: :green, dot: true)) { "Online" } %>
-            <% else %>
-              <span title="<%= row[:error] %>"><%= render(Ui::BadgeComponent.new(color: :red, dot: true)) { "Offline" } %></span>
-            <% end %>
-          </td>
-          <% if row[:online] %>
-            <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= row[:version] %></td>
-            <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= row[:nodes_ready] %>/<%= row[:nodes_total] %></td>
-            <td class="px-4 py-3 font-mono text-xs <%= row[:pods_failed] > 0 ? 'text-red-600 dark:text-red-400' : 'text-text-secondary' %>"><%= row[:pods_failed] %></td>
-            <td class="px-4 py-3 font-mono text-xs <%= row[:deployments_degraded] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-text-secondary' %>"><%= row[:deployments_degraded] %></td>
-          <% else %>
-            <td class="px-4 py-3 text-text-muted" colspan="4">—</td>
-          <% end %>
-        </tr>
-      <% end %>
-    <% end %>
-  <% end %>
-</div>
+  </div>
+<% else %>
+  <%# Each cluster costs 4 API calls, and an offline one holds the request for
+    PROBE_TIMEOUT — load it behind a skeleton so the table paints at once. %>
+  <turbo-frame id="fleet-content" refresh="morph" src="<%= kube_rows_fleet_path %>">
+    <%= render Ui::SkeletonComponent.new(:table,
+          columns: [ "w-32", "w-16", "w-20", "w-12", "w-8", "w-8" ],
+          rows: @environments.size) %>
+  </turbo-frame>
+<% end %>

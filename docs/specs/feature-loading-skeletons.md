@@ -99,16 +99,52 @@ frame sendo renavegado e o fetch seguinte nunca dispara. Telas sem filtro (como
 | Tela | Custo antes | Status |
 |---|---|---|
 | `environments#index` | **7 chamadas de socket por ambiente, em série** — 5 ambientes = 35 chamadas em fila. A ação mais lenta do app. | ✅ piloto |
-| `kube/fleet#index` | 4 chamadas × N clusters; cluster offline segura a página 5s | 📋 |
-| `security#index` | varredura de `/proc` + 2 chamadas de socket | 📋 |
-| `cloudflare_dns#index` | HTTPS externo + 2 chamadas de socket, em série | 📋 |
-| `vps_files#index` | handshake SSH | 📋 |
-| `seaweedfs#index` | 3 chamadas HTTP em série | 📋 |
+| `kube/fleet#index` | 4 chamadas × N clusters; cluster offline segura a página 5s | ✅ |
+| `security#index` | varredura de `/proc` + 2 chamadas de socket | ✅ |
+| `cloudflare_dns#index` | HTTPS externo + 2 chamadas de socket, em série | ✅ |
+| `vps_files#index` | handshake SSH | ✅ (sem frame — ver abaixo) |
+| `seaweedfs#index` | 3 chamadas HTTP em série | ✅ |
 | `dashboard#index` | 7 chamadas Docker (é a rota raiz) | 📋 |
-| `swarm/{topology,dashboard,policies,nodes}#index`, `swarm/services#show` | 1–4 em série cada | 📋 |
-| `kube/*#index` (7 telas) | 2–4 em série cada | 📋 |
+| `swarm/{topology,dashboard,policies,nodes}#index`, `swarm/services#show` | 1–4 em série cada | ✅ |
+| `kube/*#index` (7 telas) | 2–4 em série cada | ✅ |
 | `containers#{show,files}`, `images#show`, `configs#index` | 1–2 cada | 📋 |
 | `volumes#browse` | pode **criar e subir um container auxiliar** antes de responder | 📋 |
+
+### `vps_files#index` não virou turbo-frame
+
+O HTML dessa tela nunca usou o resultado do SFTP: `vps_file_browser_controller.js`
+busca a **mesma ação em JSON** ao conectar e desenha a listagem sozinho. O
+handshake SSH no caminho HTML só atrasava o primeiro byte de uma resposta que
+jogava o resultado fora. O conserto foi tirar o I/O do `format.html` (o
+`format.json` continua igual) e pôr o skeleton dentro do alvo `list`, que o
+Stimulus substitui inteiro no primeiro render. Um `rows` aqui seria um
+roundtrip a mais para devolver nada.
+
+### `card: false` e `grid:` no `Ui::SkeletonComponent`
+
+Duas opções novas, cada uma por um motivo concreto: `security` monta os stat
+cards num grid de 4 colunas (o do dashboard é de 5) e o skeleton do `vps_files`
+mora **dentro** de um card que já existe — um segundo box com borda aninhado no
+primeiro é exatamente o ruído de layout que o skeleton deveria evitar.
+
+### Três casos que não couberam no molde do piloto
+
+`swarm/topology#index` — o Stimulus `metrics-refresh` recarrega o frame
+limpando o `src` e reapontando para `window.location.href`, ou seja, bate no
+`index` com header `Turbo-Frame`. Sem `rows if turbo_frame_request?` cada
+auto-refresh trocaria a topologia por um skeleton que nunca resolve.
+
+`kube/*#index` — o seletor de namespace precisa da lista de namespaces (mais
+uma chamada), então mora **dentro** do frame; mas ele posta de volta no
+`index`, e o namespace aparece no `page_subtitle`, que está **fora** do frame.
+Com `target="_top"` no frame o submit continua sendo navegação de página
+inteira: URL e subtítulo seguem coerentes e o skeleton reaparece na troca.
+
+`swarm/services#show` — o título da página era o nome do serviço, que só existe
+depois do I/O. A casca passa a mostrar "Serviço Swarm" + o ID da URL; o nome
+real continua no herói, dentro do frame. E o `rescue` do `show` não pode mais
+redirecionar (a resposta cairia dentro de um frame que não existe no index dos
+serviços): `#body` renderiza o erro no lugar, com um link `_top` de volta.
 
 ## Verificação
 
@@ -119,5 +155,9 @@ frame sendo renavegado e o fetch seguinte nunca dispara. Telas sem filtro (como
   o socket**: o teste roda com um cliente que levanta `ConnectionError` e ainda
   espera `200` com o frame e o `aria-busy`. Se alguém mover o probing de volta
   para o `index`, esse teste quebra.
+- `test/controllers/{security,seaweedfs,vps_files,cloudflare_dns}_controller_test.rb`
+  e `test/controllers/kube/fleet_controller_test.rb` — o mesmo par por tela: o
+  `index` responde 200 com a dependência externa levantando erro, e o `rows`
+  responde 200 tanto no caminho feliz quanto com ela morta.
 - Manual: com throttling de rede no DevTools, a tela mostra o skeleton e nunca
   um branco, e nada salta de lugar na troca.

@@ -3,15 +3,35 @@ require "test_helper"
 class SecurityControllerTest < ActionDispatch::IntegrationTest
   setup { sign_in(users(:admin_user)) }
 
-  test "GET /security renders Fase 2 placeholder when collector hasn't run" do
-    with_security_path("/nonexistent/state.json") do
+  # index must not run the audit: it scans /host/proc and hits the Docker
+  # socket, which is exactly what used to stall the page before any paint.
+  test "GET /security renders the shell without running the audit" do
+    with_stub(SecurityAudit, :new, ->(*) { raise "SecurityAudit não pode rodar no index" }) do
       get security_path
+      assert_response :success
+      assert_select "turbo-frame#security-content[src=?]", rows_security_path
+      assert_select "[aria-busy='true']"
+    end
+  end
+
+  # A dead Docker socket degrades the port map to empty, never a 500.
+  test "GET /security/rows survives an unreachable daemon" do
+    with_stub(DockerClient, :new, ->(*) { raise DockerClient::ConnectionError }) do
+      get rows_security_path
+      assert_response :success
+      assert_select "turbo-frame#security-content"
+    end
+  end
+
+  test "GET /security/rows renders Fase 2 placeholder when collector hasn't run" do
+    with_security_path("/nonexistent/state.json") do
+      get rows_security_path
       assert_response :success
       assert_match "Fase 2 indisponível", response.body
     end
   end
 
-  test "GET /security renders brute-force, fail2ban and login sections when host_state is present" do
+  test "GET /security/rows renders brute-force, fail2ban and login sections when host_state is present" do
     Dir.mktmpdir do |dir|
       path = File.join(dir, "state.json")
       File.write(path, {
@@ -27,7 +47,7 @@ class SecurityControllerTest < ActionDispatch::IntegrationTest
       }.to_json)
 
       with_security_path(path) do
-        get security_path
+        get rows_security_path
         assert_response :success
         assert_match "45.148.10.240", response.body
         assert_match "(externo)", response.body
@@ -36,7 +56,7 @@ class SecurityControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "GET /security flags containers with suspicious filesystem drift" do
+  test "GET /security/rows flags containers with suspicious filesystem drift" do
     Dir.mktmpdir do |dir|
       path = File.join(dir, "container-diff.json")
       File.write(path, {
@@ -49,7 +69,7 @@ class SecurityControllerTest < ActionDispatch::IntegrationTest
       }.to_json)
 
       with_container_diff_path(path) do
-        get security_path
+        get rows_security_path
         assert_response :success
         assert_match "metabase_metabase", response.body
         assert_match "/etc/passwd", response.body

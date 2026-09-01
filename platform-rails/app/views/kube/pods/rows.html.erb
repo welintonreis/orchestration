@@ -1,0 +1,48 @@
+<turbo-frame id="pods-content" refresh="morph" target="_top">
+  <%= render "kube/namespace_selector" %>
+
+  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
+    <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">Pods</h2>
+      <span class="text-xs font-mono text-text-muted"><%= @pods.size %> item<%= @pods.size == 1 ? "" : "s" %></span>
+    </div>
+
+    <% if @pods.empty? %>
+      <div class="py-16 text-center text-sm text-text-muted">Nenhum pod encontrado neste namespace</div>
+    <% else %>
+      <%
+        phase_color = {
+          "Running" => :green,
+          "Pending" => :yellow,
+          "Failed"  => :red,
+        }
+      %>
+      <%= render Ui::TableComponent.new(headers: ["Nome", "Fase", "Restarts", "Node", { label: "Ações", align: :right }]) do %>
+        <% @pods.each do |pod| %>
+          <% name = pod.dig("metadata", "name") %>
+          <% phase = pod.dig("status", "phase") %>
+          <% restarts = pod.dig("status", "containerStatuses")&.sum { |c| c["restartCount"].to_i } || 0 %>
+          <tr class="hover:bg-surface-inset/30 transition-colors">
+            <td class="px-4 py-3 font-mono text-text-primary"><%= name %></td>
+            <td class="px-4 py-3"><%= render(Ui::BadgeComponent.new(color: phase_color.fetch(phase, :gray), dot: true)) { phase } %></td>
+            <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= restarts %></td>
+            <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= pod.dig("spec", "nodeName") %></td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <%= render Ui::ButtonComponent.new(url: kube_pod_logs_path(name, ns: @namespace),
+                      variant: :gray, icon: :logs, title: "Logs") %>
+                <%= render Ui::ButtonComponent.new(url: kube_pod_terminal_path(name, ns: @namespace),
+                      variant: :green, icon: :terminal, title: "Terminal") %>
+                <% if Current.user&.admin? || Current.user&.operator? %>
+                  <%= render Ui::ButtonComponent.new(url: kube_pod_path(name, ns: @namespace), method: :delete,
+                        variant: :red, icon: :remove, title: "Remover",
+                        confirm: "Remover pod #{name}?") %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</turbo-frame>

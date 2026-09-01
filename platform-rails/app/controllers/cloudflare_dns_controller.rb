@@ -2,9 +2,19 @@
 
 class CloudflareDnsController < ApplicationController
   before_action :set_service
-  before_action :set_zones
 
+  # Shell only. Listing the zones and the records are two external HTTPS
+  # roundtrips plus (via #map_dns_correlations) two Docker socket calls, so
+  # they live in #rows. Tab/zone/filter links inside rows point back at this
+  # action to keep the URL honest — when that arrives as a frame navigation,
+  # render the rows directly (see ContainersController#index for why nesting a
+  # frame inside the frame being renavigated silently stalls the fetch).
   def index
+    rows if turbo_frame_request?
+  end
+
+  def rows
+    set_zones
     @current_zone_id = params[:zone_id].presence || @service.default_zone_id
     @search = params[:search].to_s.strip
     @type_filter = params[:type].to_s.strip.upcase
@@ -37,6 +47,8 @@ class CloudflareDnsController < ApplicationController
     elsif params[:tab] == "turnstile" && @service.configured?
       @turnstile_widgets = @service.list_turnstile_widgets
     end
+
+    render "rows", layout: false
   end
 
   def create

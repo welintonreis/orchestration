@@ -3,6 +3,9 @@ module Swarm
     include SwarmGuard
 
     def index
+    end
+
+    def rows
       @nodes = current_docker_client.nodes
     rescue => e
       @nodes = []

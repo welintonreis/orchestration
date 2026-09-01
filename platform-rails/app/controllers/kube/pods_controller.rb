@@ -3,6 +3,9 @@ module Kube
     include RequireKubernetes
 
     def index
+    end
+
+    def rows
       load_namespaces
       @pods = current_kube_client.pods(ns: @namespace)
     rescue KubeClient::Error => e

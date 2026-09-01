@@ -1,11 +1,74 @@
 <% page_title "Quotas de IA" %>
-<% page_subtitle "9router — status de uso e limites das contas conectadas" %>
-
-<% content_for :title_actions do %>
-  <%= link_to "Abrir em nova aba", @router_url, target: "_blank", rel: "noopener",
-        class: "px-3 py-1.5 text-xs font-medium bg-surface-active hover:bg-surface-active-hover text-text-primary rounded-lg border border-border-subtle transition-colors" %>
+<% page_subtitle "Uso e limites das contas de IA da plataforma" %>
+<% content_for :page_icon do %>
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.5h4l2.5 6 5-15 2.5 9h4"/>
+  </svg>
 <% end %>
 
-<div class="bg-surface-raised border border-border rounded-xl overflow-hidden" style="height: calc(100vh - 220px);">
-  <iframe src="<%= @router_url %>" class="w-full h-full border-0" title="9router — Quotas de IA"></iframe>
-</div>
+<% content_for :title_actions do %>
+  <div class="flex items-center gap-2">
+    <%= button_to import_local_ai_quota_path, method: :post,
+          class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
+      Importar credencial local
+    <% end %>
+    <%= button_to bulk_toggle_ai_quota_path(to: "off"), method: :post,
+          form: { data: { turbo_confirm: "Desligar todas as contas sem quota restante?" } },
+          class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
+      Desligar vazias
+    <% end %>
+    <%= button_to bulk_toggle_ai_quota_path(to: "on"), method: :post,
+          class: "px-3 py-2 rounded-lg bg-surface-inset hover:bg-surface-active text-text-primary text-xs font-semibold border border-border transition-colors" do %>
+      Ligar disponíveis
+    <% end %>
+  </div>
+<% end %>
+
+<%# Summary and cards each load in their own frame: the summary needs every
+    account's quota, so holding the cards behind it would make the slowest
+    provider decide when the whole page appears. %>
+<turbo-frame id="ai-quota-summary" refresh="morph" src="<%= summary_ai_quota_path %>">
+  <%= render Ui::SkeletonComponent.new(:stats, count: 4, grid: "grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6") %>
+</turbo-frame>
+
+<% if @accounts.empty? %>
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-text-muted mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.5h4l2.5 6 5-15 2.5 9h4"/>
+    </svg>
+    <p class="text-text-secondary font-medium mb-1">Nenhuma conta de IA cadastrada</p>
+    <p class="text-sm text-text-muted max-w-md">
+      Importe a credencial de um CLI já autenticado neste host
+      (<code class="font-mono text-xs">~/.claude/.credentials.json</code>,
+      <code class="font-mono text-xs">~/.codex/auth.json</code>) para acompanhar as quotas aqui.
+    </p>
+    <%= button_to "Importar credencial local", import_local_ai_quota_path, method: :post,
+          class: "btn-primary mt-6" %>
+  </div>
+<% else %>
+  <div class="mb-4 flex flex-wrap items-center gap-2">
+    <%= form_with url: ai_quota_path, method: :get, data: { turbo_frame: "_top" }, class: "flex items-center gap-2" do %>
+      <%= select_tag :provider,
+            options_for_select([["Todos os provedores", ""]] + @providers.map { |p| [ai_provider_label(p), p] }, params[:provider]),
+            onchange: "this.form.requestSubmit()",
+            class: "px-3 py-1.5 text-xs rounded-lg bg-surface-inset border border-border text-text-primary" %>
+      <%= select_tag :status,
+            options_for_select([["Todas", ""], ["Ativas", "active"], ["Desligadas", "off"]], params[:status]),
+            onchange: "this.form.requestSubmit()",
+            class: "px-3 py-1.5 text-xs rounded-lg bg-surface-inset border border-border text-text-primary" %>
+    <% end %>
+    <span class="text-xs text-text-muted ml-auto">
+      <%= pluralize(@accounts.size, "conta") %>
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <% @accounts.each do |account| %>
+      <%# One frame per account: the browser runs the N provider calls in
+          parallel, so the slowest account never delays the others. %>
+      <turbo-frame id="ai-account-<%= account.id %>" refresh="morph" src="<%= card_ai_quota_path(account) %>">
+        <%= render Ui::SkeletonComponent.new(:cards, count: 1) %>
+      </turbo-frame>
+    <% end %>
+  </div>
+<% end %>

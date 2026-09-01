@@ -50,14 +50,25 @@ module Swarm
       render "rows", layout: false
     end
 
+    # Shell only: everything on this page comes from the four serial socket
+    # calls in #body. Scale/drain/update redirect back here from inside the
+    # lazy frame, so the same guard as #index applies.
     def show
+      body if turbo_frame_request?
+    end
+
+    def body
       @service = current_docker_client.service(params[:id])
       @tasks   = current_docker_client.service_tasks(params[:id])
                    .sort_by { |t| -(Time.parse(t["UpdatedAt"]).to_f rescue 0.0) }
       @nodes   = current_docker_client.nodes.index_by { |n| n["ID"] }
       @max_cpu = [@nodes.values.sum { |n| n.dig("Description", "Resources", "NanoCPUs").to_f / 1_000_000_000 }.ceil, 1].max
+      render "body", layout: false
     rescue => e
-      redirect_to swarm_services_path, alert: "Serviço não encontrado: #{e.message}"
+      # A redirect here would be answered into the frame, which has no
+      # matching frame on the services index — render the failure in place.
+      @error = e.message
+      render "body", layout: false
     end
 
     def update_resources

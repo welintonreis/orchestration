@@ -8,7 +8,16 @@ module Swarm
   class TopologyController < ApplicationController
     include SwarmGuard
 
+    # Shell only — but the metrics-refresh Stimulus controller reloads the
+    # frame by pointing it back at this URL (it clears the src first, so it
+    # falls through to window.location.href). That arrives as a turbo-frame
+    # navigation: answer it with the real content, otherwise every auto-refresh
+    # replaces the topology with a skeleton that never resolves.
     def index
+      rows if turbo_frame_request?
+    end
+
+    def rows
       client   = current_docker_client
       @nodes   = client.nodes rescue []
       services = client.services rescue []
@@ -39,6 +48,10 @@ module Swarm
 
         { node: node, stacks: stacks }
       end
+
+      # Explicit: #index delegates here, so the implicit template lookup would
+      # pick index.html.erb (the skeleton shell) instead of the content.
+      render "rows", layout: false
     end
 
     def prune_services

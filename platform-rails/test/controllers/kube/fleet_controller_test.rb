@@ -29,22 +29,35 @@ class Kube::FleetControllerTest < ActionDispatch::IntegrationTest
     assert_select "body", text: /Nenhum environment Kubernetes/
   end
 
-  test "index reports an online cluster with its node/pod/deployment summary" do
+  # index must not probe: 4 API calls per cluster, and an offline one holds the
+  # request for PROBE_TIMEOUT. The shell has to paint before any of that.
+  test "index renders the shell without probing the clusters" do
+    Environment.create!(name: "k3s-shell-test", endpoint_type: "kubernetes", kube_api_url: "https://127.0.0.1:6443", kube_token_ciphertext: "tok")
+    Excon.stub({ path: "/version" }, { status: 500, body: "não deveria ser chamado" })
+
+    get kube_fleet_url
+    assert_response :success
+    assert_select "turbo-frame#fleet-content[src=?]", kube_rows_fleet_path
+    assert_select "[aria-busy='true']"
+    assert_no_match "k3s-shell-test", response.body
+  end
+
+  test "rows reports an online cluster with its node/pod/deployment summary" do
     Environment.create!(name: "k3s-fleet-test", endpoint_type: "kubernetes", kube_api_url: "https://127.0.0.1:6443", kube_token_ciphertext: "tok")
     stub_healthy_cluster
 
-    get kube_fleet_url
+    get kube_rows_fleet_url
     assert_response :success
     assert_select "body", text: /k3s-fleet-test/
     assert_select "body", text: /Online/
   end
 
-  test "index marks an unreachable cluster offline without erroring the whole page" do
+  test "rows marks an unreachable cluster offline without erroring the whole page" do
     Environment.create!(name: "k3s-fleet-offline", endpoint_type: "kubernetes", kube_api_url: "https://127.0.0.1:6443", kube_token_ciphertext: "tok")
     Excon.stub({ path: "/version" }, { status: 500, body: "boom" })
     Excon.stub({}, { status: 500, body: "boom" })
 
-    get kube_fleet_url
+    get kube_rows_fleet_url
     assert_response :success
     assert_select "body", text: /Offline/
   end

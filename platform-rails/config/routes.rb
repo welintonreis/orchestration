@@ -13,29 +13,36 @@ Rails.application.routes.draw do
 
   # ── Kubernetes (environment endpoint_type: kubernetes) ──
   namespace :kube do
-    get "fleet", to: "fleet#index", as: :fleet
+    get "fleet",      to: "fleet#index", as: :fleet
+    get "fleet/rows", to: "fleet#rows",  as: :rows_fleet
 
     get    "workloads",                  to: "workloads#index",   as: :workloads
+    get    "workloads/rows",             to: "workloads#rows",    as: :rows_workloads
     post   "workloads/:kind/:name/scale",   to: "workloads#scale",   as: :workload_scale
     post   "workloads/:kind/:name/restart", to: "workloads#restart", as: :workload_restart
     delete "workloads/:kind/:name",         to: "workloads#destroy", as: :workload
 
     get    "pods",                to: "pods#index",    as: :pods
+    get    "pods/rows",           to: "pods#rows",     as: :rows_pods
     get    "pods/:name/logs",     to: "pods#logs",      as: :pod_logs
     get    "pods/:name/terminal", to: "pods#terminal",  as: :pod_terminal
     get    "pods/:name/ttyd-ws",  to: "pods#ttyd_ws",   as: :pod_ttyd_ws
     delete "pods/:name",          to: "pods#destroy",   as: :pod
 
     get    "services",       to: "services#index",   as: :services
+    get    "services/rows",  to: "services#rows",    as: :rows_services
     delete "services/:name", to: "services#destroy",  as: :service
 
     get    "configmaps",       to: "config_maps#index",  as: :config_maps
+    get    "configmaps/rows",  to: "config_maps#rows",   as: :rows_config_maps
     delete "configmaps/:name", to: "config_maps#destroy", as: :config_map
 
     get    "secrets",       to: "secrets#index",   as: :secrets
+    get    "secrets/rows",  to: "secrets#rows",    as: :rows_secrets
     delete "secrets/:name", to: "secrets#destroy",  as: :secret
 
-    get "nodes", to: "nodes#index", as: :nodes
+    get "nodes",      to: "nodes#index", as: :nodes
+    get "nodes/rows", to: "nodes#rows",  as: :rows_nodes
 
     get  "apply", to: "apply#new", as: :apply
     post "apply", to: "apply#create"
@@ -138,13 +145,17 @@ Rails.application.routes.draw do
   end
 
   get  "swarm",                    to: "swarm/dashboard#index", as: :swarm
+  get  "swarm/rows",               to: "swarm/dashboard#rows",  as: :rows_swarm
   get  "swarm/nodes",              to: "swarm/nodes#index",     as: :swarm_nodes
+  get  "swarm/nodes/rows",         to: "swarm/nodes#rows",      as: :rows_swarm_nodes
   get    "swarm/topology",                    to: "swarm/topology#index",          as: :swarm_topology
+  get    "swarm/topology/rows",               to: "swarm/topology#rows",           as: :rows_swarm_topology
   delete "swarm/topology/prune_services",    to: "swarm/topology#prune_services",  as: :prune_services_swarm_topology
   delete "swarm/topology/system_prune",      to: "swarm/topology#system_prune",    as: :system_prune_swarm_topology
   get  "swarm/services",           to: "swarm/services#index",  as: :swarm_services
   get  "swarm/services/rows",      to: "swarm/services#rows",   as: :rows_swarm_services
   get  "swarm/services/:id",       to: "swarm/services#show",   as: :swarm_service
+  get  "swarm/services/:id/body",  to: "swarm/services#body",   as: :body_swarm_service
   post "swarm/services/:id/scale",    to: "swarm/services#scale",       as: :scale_swarm_service
   post "swarm/services/:id/drain",            to: "swarm/services#drain",              as: :drain_swarm_service
   post "swarm/services/:id/update_resources", to: "swarm/services#update_resources",   as: :update_resources_swarm_service
@@ -199,7 +210,8 @@ Rails.application.routes.draw do
   get "metrics/latest",    to: "metrics#latest",    as: :metrics_latest
   get "metrics/processes", to: "metrics#processes", as: :metrics_processes
 
-  get "security", to: "security#index", as: :security
+  get "security",      to: "security#index", as: :security
+  get "security/rows", to: "security#rows",  as: :rows_security
 
   # ── Teams & Roles ──
   resources :teams do
@@ -220,6 +232,7 @@ Rails.application.routes.draw do
   patch "swarm/registries/:id",     to: "swarm/registries#update", as: :swarm_registry
   delete "swarm/registries/:id",    to: "swarm/registries#destroy"
   get "swarm/policies",        to: "swarm/policies#index",     as: :swarm_policies
+  get "swarm/policies/rows",   to: "swarm/policies#rows",      as: :rows_swarm_policies
 
   # ── Ambiente extras ──
   namespace :ambiente do
@@ -240,11 +253,19 @@ Rails.application.routes.draw do
   post "notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_read_notifications
   post "notifications/:id/read",      to: "notifications#mark_read",     as: :mark_read_notification
 
-  # ── 9router AI quota status ──
-  get "ai_quota", to: "ai_quota#index", as: :ai_quota
+  # ── Quotas de IA ──
+  get  "ai_quota",                 to: "ai_quota#index",       as: :ai_quota
+  get  "ai_quota/summary",         to: "ai_quota#summary",     as: :summary_ai_quota
+  post "ai_quota/bulk_toggle",     to: "ai_quota#bulk_toggle", as: :bulk_toggle_ai_quota
+  post "ai_quota/import_local",    to: "ai_quota#import_local", as: :import_local_ai_quota
+  get    "ai_quota/:id/card",      to: "ai_quota#card",        as: :card_ai_quota
+  post   "ai_quota/:id/toggle",    to: "ai_quota#toggle",      as: :toggle_ai_quota
+  post   "ai_quota/:id/refresh",   to: "ai_quota#refresh",     as: :refresh_ai_quota
+  delete "ai_quota/:id",           to: "ai_quota#destroy",     as: :destroy_ai_quota
 
   # ── SeaweedFS S3 Storage ──
   get    "seaweedfs",                     to: "seaweedfs#index",              as: :seaweedfs
+  get    "seaweedfs/rows",                to: "seaweedfs#rows",               as: :rows_seaweedfs
   post   "seaweedfs/buckets",             to: "seaweedfs#create_bucket",      as: :create_seaweedfs_bucket
   post   "seaweedfs/upload",              to: "seaweedfs#upload_file",        as: :upload_seaweedfs_file
   get    "seaweedfs/download",            to: "seaweedfs#download_object",    as: :download_seaweedfs_object
@@ -254,6 +275,7 @@ Rails.application.routes.draw do
 
   # ── Cloudflare DNS, Email Routing & Turnstile ──
   get    "cloudflare/dns",                    to: "cloudflare_dns#index",                as: :cloudflare_dns
+  get    "cloudflare/dns/rows",               to: "cloudflare_dns#rows",                 as: :rows_cloudflare_dns
   post   "cloudflare/dns",                    to: "cloudflare_dns#create"
   patch  "cloudflare/dns/:id",                to: "cloudflare_dns#update",               as: :update_cloudflare_dns_record
   delete "cloudflare/dns/:id",                to: "cloudflare_dns#destroy",              as: :delete_cloudflare_dns_record

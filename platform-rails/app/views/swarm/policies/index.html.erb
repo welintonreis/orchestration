@@ -15,65 +15,11 @@
   <p class="text-sm text-text-secondary mt-0.5">Constraints e preferências de agendamento de tarefas nos serviços Swarm</p>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-  <div class="bg-surface-raised border border-border rounded-xl p-4">
-    <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Regras Ativas</p>
-    <p class="text-2xl font-bold text-text-primary"><%= @placement_rules.count %></p>
-  </div>
-  <div class="bg-surface-raised border border-border rounded-xl p-4">
-    <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Nós no Cluster</p>
-    <p class="text-2xl font-bold text-text-primary"><%= @nodes.count %></p>
-  </div>
-  <div class="bg-surface-raised border border-border rounded-xl p-4">
-    <p class="text-xs text-text-muted uppercase tracking-wider mb-1">Labels de Nó</p>
-    <p class="text-2xl font-bold text-text-primary"><%= @node_labels.count %></p>
-    <p class="text-xs text-text-muted truncate"><%= @node_labels.first(3).join(", ") %></p>
-  </div>
-</div>
-
-<div class="bg-surface-raised border border-border rounded-xl overflow-hidden mb-6">
-  <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-    <h3 class="text-sm font-semibold text-text-primary">Regras de Placement por Serviço</h3>
-  </div>
-  <% if @placement_rules.empty? %>
-    <div class="text-center py-12 text-text-muted">
-      <p class="text-sm">Nenhuma regra de placement configurada</p>
-      <p class="text-xs mt-1 text-text-muted">Configure placement constraints nas specs dos serviços Docker</p>
-    </div>
-  <% else %>
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="text-xs text-text-muted uppercase border-b border-border">
-          <th class="px-4 py-3 text-left">Serviço</th>
-          <th class="px-4 py-3 text-left">Tipo</th>
-          <th class="px-4 py-3 text-left">Regra</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @placement_rules.each do |rule| %>
-          <tr class="border-b border-border/50 hover:bg-surface-inset/20">
-            <td class="px-4 py-3 font-mono text-xs text-text-secondary"><%= rule[:service] %></td>
-            <td class="px-4 py-3">
-              <%= render(Ui::BadgeComponent.new(color: rule[:type] == "Constraint" ? :orange : :blue, size: :xs)) { rule[:type] } %>
-            </td>
-            <td class="px-4 py-3 font-mono text-xs text-text-secondary"><%= rule[:rule] %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% end %>
-</div>
-
-<div class="bg-surface-raised border border-border rounded-xl p-4">
-  <h3 class="text-sm font-semibold text-text-primary mb-3">Labels dos Nós</h3>
-  <% if @node_labels.empty? %>
-    <p class="text-xs text-text-muted">Nenhum label configurado nos nós</p>
-  <% else %>
-    <div class="flex flex-wrap gap-2">
-      <% @node_labels.each do |label| %>
-        <%= render(Ui::BadgeComponent.new(color: :gray, size: :sm)) { label } %>
-      <% end %>
-    </div>
-  <% end %>
-  <p class="text-xs text-text-muted mt-3">Use esses labels como constraints: <code class="text-text-secondary">node.labels.&lt;label&gt; == value</code></p>
-</div>
+<%# services + nodes are two serial socket calls — everything below the
+    static heading comes from them, so it loads behind a skeleton.
+    See Swarm::PoliciesController#rows. %>
+<turbo-frame id="policies-content" refresh="morph" src="<%= rows_swarm_policies_path %>">
+  <%= render Ui::SkeletonComponent.new(:stats, count: 3, grid: "grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6") %>
+  <%= render Ui::SkeletonComponent.new(:table, columns: [ "w-48", "w-20", "w-56" ], rows: 6, css_class: "mb-6") %>
+  <%= render Ui::SkeletonComponent.new(:detail) %>
+</turbo-frame>

@@ -7,12 +7,22 @@ module Kube
   class FleetController < ApplicationController
     PROBE_TIMEOUT = 5 # seconds — one slow/offline cluster must not stall the rest
 
+    # Shell only: the cluster list is one AR query, enough for the empty state
+    # and for sizing the skeleton. The probing (4 API calls per cluster, and up
+    # to PROBE_TIMEOUT seconds when one is offline) happens in #rows.
     def index
-      environments = Environment.where(endpoint_type: "kubernetes").order(:name).to_a
-      @rows = environments.map { |env| Thread.new { fleet_row(env) } }.map(&:value)
+      @environments = kube_environments
+    end
+
+    def rows
+      @rows = kube_environments.map { |env| Thread.new { fleet_row(env) } }.map(&:value)
     end
 
     private
+
+    def kube_environments
+      Environment.where(endpoint_type: "kubernetes").order(:name).to_a
+    end
 
     def fleet_row(env)
       Timeout.timeout(PROBE_TIMEOUT) do

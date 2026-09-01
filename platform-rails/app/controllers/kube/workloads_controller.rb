@@ -2,7 +2,12 @@ module Kube
   class WorkloadsController < ApplicationController
     include RequireKubernetes
 
+    # Shell only — RequireKubernetes still redirects a non-k8s environment
+    # here, before any skeleton paints. The API calls live in #rows.
     def index
+    end
+
+    def rows
       load_namespaces
       @deployments  = current_kube_client.deployments(ns: @namespace)
       @statefulsets = current_kube_client.statefulsets(ns: @namespace)

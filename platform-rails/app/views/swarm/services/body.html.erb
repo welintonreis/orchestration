@@ -1,0 +1,827 @@
+<turbo-frame id="service-content" refresh="morph">
+<% if @error %>
+  <div class="bg-surface-raised border border-border rounded-xl px-6 py-10 text-center">
+    <p class="text-text-secondary text-sm">Serviço não encontrado</p>
+    <p class="text-xs mt-1 text-text-muted font-mono break-all"><%= @error %></p>
+    <%= link_to "Voltar aos serviços", swarm_services_path, class: "inline-block mt-4 text-sm text-cyan-600 dark:text-cyan-400 hover:underline", data: { turbo_frame: "_top" } %>
+  </div>
+<% else %>
+<% service_name = @service.dig("Spec", "Name") || "—" %>
+<%
+  spec          = @service["Spec"] || {}
+  task_template = spec["TaskTemplate"] || {}
+  container     = task_template["ContainerSpec"] || {}
+  resources     = task_template["Resources"] || {}
+  restart       = task_template["RestartPolicy"] || {}
+  placement     = task_template["Placement"] || {}
+  update_cfg    = spec["UpdateConfig"] || {}
+  log_driver    = task_template["LogDriver"] || {}
+  mode_key      = spec["Mode"]&.keys&.first || "—"
+  running       = @service.dig("ServiceStatus", "RunningTasks").to_i
+  desired       = (@service.dig("ServiceStatus", "DesiredTasks") || spec.dig("Mode", "Replicated", "Replicas")).to_i
+  created_at    = (Time.parse(@service["CreatedAt"]) rescue nil)
+  updated_at    = (Time.parse(@service["UpdatedAt"]) rescue nil)
+
+  raw_image = container["Image"] || ""
+  image     = raw_image.split("@").first
+
+  envs     = container["Env"] || []
+  mounts   = container["Mounts"] || []
+  c_labels = container["Labels"] || {}
+  s_labels = spec["Labels"] || {}
+
+  net_refs  = spec.dig("TaskTemplate", "Networks") || spec["Networks"] || []
+  pub_ports = spec.dig("EndpointSpec", "Ports") || []
+
+  secrets = container["Secrets"] || []
+  configs = container["Configs"] || []
+
+  lim_mem = resources.dig("Limits", "MemoryBytes").to_i
+  lim_cpu = resources.dig("Limits", "NanoCPUs").to_f / 1_000_000_000
+  res_mem = resources.dig("Reservations", "MemoryBytes").to_i
+  res_cpu = resources.dig("Reservations", "NanoCPUs").to_f / 1_000_000_000
+  max_cpu = [(@max_cpu || 4), 1].max
+
+  healthy          = running >= desired && desired > 0
+  current_replicas = spec.dig("Mode", "Replicated", "Replicas").to_i
+  is_global        = spec["Mode"]&.key?("Global")
+
+  # reusable CSS snippets
+  card       = "bg-surface-raised border border-border rounded-xl overflow-hidden"
+  hdr        = "px-5 py-3 border-b border-border"
+  body       = "px-5 py-4"
+  lbl        = "text-[10px] font-semibold text-text-muted uppercase tracking-wider block mb-0.5"
+  inp        = "bg-surface-inset border border-border-subtle rounded text-text-primary text-sm px-2.5 py-1.5 focus:outline-none focus:border-cyan-600"
+  apply      = "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-cyan-100 dark:bg-cyan-500/12 hover:bg-cyan-200 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30"
+  sum_cls    = "flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-surface-inset/30 transition-colors select-none [&::-webkit-details-marker]:hidden list-none"
+%>
+
+<div class="flex gap-5 items-start">
+
+  <%# ══════════ MAIN CONTENT ══════════ %>
+  <div class="flex-1 min-w-0 space-y-4">
+
+    <%# ── HERO ── %>
+    <div id="svc-details" data-section class="<%= card %>">
+      <div class="h-0.5 bg-gradient-to-r from-cyan-700/80 via-cyan-500/40 to-transparent"></div>
+      <div class="px-6 py-5 flex items-start gap-5">
+        <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-500/10 border border-cyan-300 dark:border-cyan-500/25 flex items-center justify-center flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-cyan-600 dark:text-cyan-400" viewBox="0 0 32 32" fill="currentColor">
+            <path d="m22.505 11.637l-5.989-3.5a1 1 0 0 0-1.008-.001l-6.011 3.5A1 1 0 0 0 9 12.5v7a1 1 0 0 0 .497.864l6.011 3.5A.96.96 0 0 0 16 24c.174 0 .36-.045.516-.137l5.989-3.5A1 1 0 0 0 23 19.5v-7a1 1 0 0 0-.495-.863m-6.494-1.48l4.007 2.343l-4.007 2.342l-4.023-2.342zM11 14.24l4 2.33v4.685l-4-2.33zm6 7.025v-4.683l4-2.338v4.683z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <h1 class="text-xl font-bold text-text-primary font-mono truncate"><%= service_name %></h1>
+              <div class="flex items-center gap-3 mt-2 flex-wrap">
+                <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs, css_class: "uppercase tracking-widest")) { mode_key } %>
+                <% dots = [desired, 12].min %>
+                <div class="flex items-center gap-0.5">
+                  <% dots.times do |i| %>
+                    <span class="w-2 h-2 rounded-full <%= i < running ? 'bg-green-400' : 'bg-surface-active' %>"></span>
+                  <% end %>
+                  <% if desired > 12 %><span class="text-xs text-text-muted ml-1">+<%= desired - 12 %></span><% end %>
+                </div>
+                <span class="text-sm font-semibold <%= healthy ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400' %>">
+                  <%= mode_key.downcase == "global" ? "global mode" : "#{running}/#{desired} running" %>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="bg-surface-inset/50 rounded-lg px-3 py-2 min-w-0">
+              <div class="<%= lbl %>">ID</div>
+              <div class="font-mono text-xs text-text-secondary truncate" title="<%= @service["ID"] %>"><%= @service["ID"]&.first(20) %>&hellip;</div>
+            </div>
+            <div class="bg-surface-inset/50 rounded-lg px-3 py-2 col-span-1 sm:col-span-2 min-w-0">
+              <div class="<%= lbl %>">Image</div>
+              <div class="font-mono text-xs text-text-secondary truncate" title="<%= image %>"><%= image %></div>
+            </div>
+            <div class="bg-surface-inset/50 rounded-lg px-3 py-2">
+              <div class="<%= lbl %>">Version</div>
+              <div class="font-mono text-sm text-text-secondary"><%= @service.dig("Version", "Index") %></div>
+            </div>
+            <div class="bg-surface-inset/50 rounded-lg px-3 py-2">
+              <div class="<%= lbl %>">Created</div>
+              <div class="text-xs text-text-secondary"><%= created_at&.strftime("%b %d, %Y") || "—" %></div>
+            </div>
+            <div class="bg-surface-inset/50 rounded-lg px-3 py-2 col-span-1 sm:col-span-3 min-w-0">
+              <div class="<%= lbl %>">Last Updated</div>
+              <div class="text-xs text-text-secondary"><%= updated_at&.strftime("%b %d, %Y %H:%M:%S") || "—" %></div>
+            </div>
+          </div>
+
+          <%# ── Actions inside hero ── %>
+          <div class="flex items-center gap-2 mt-4 pt-4 border-t border-border/80 flex-wrap">
+            <% unless is_global %>
+              <%= form_with url: scale_swarm_service_path(id: @service["ID"]), method: :post,
+                            class: "flex items-center gap-0 flex-shrink-0" do |f| %>
+                <div class="flex items-center gap-1.5 mr-1">
+                  <span class="text-xs text-text-muted font-medium">Replicas</span>
+                </div>
+                <%= render Ui::InputComponent.new(name: "replicas", type: :number, value: current_replicas, min: 0, max: 99,
+                      css_class: "w-16 px-2 py-1.5 text-sm rounded-l text-center tabular-nums") %>
+                <button type="submit"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-r border-l-0 transition-colors bg-cyan-100 dark:bg-cyan-500/12 hover:bg-cyan-200 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30">
+                  Scale
+                </button>
+              <% end %>
+              <div class="h-5 w-px bg-surface-active mx-1 flex-shrink-0"></div>
+              <%= render Ui::ButtonComponent.new(url: drain_swarm_service_path(id: @service["ID"]), method: :post,
+                    variant: :solid_orange,
+                    size: "px-3 py-1.5 text-xs font-semibold rounded-lg",
+                    css_class: "flex-shrink-0", confirm: "Desidratar #{service_name}? Zera réplicas.") do %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                Desidratar
+              <% end %>
+              <%= render Ui::ButtonComponent.new(url: rollback_swarm_service_path(id: @service["ID"]), method: :post,
+                    variant: :solid_purple,
+                    size: "px-3 py-1.5 text-xs font-semibold rounded-lg",
+                    css_class: "flex-shrink-0", confirm: "Iniciar rollback de #{service_name}?") do %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                Rollback
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# ── GROUP: Container Specification ── %>
+    <div class="flex items-center gap-3 my-1 pt-1">
+      <div class="h-px flex-1 bg-surface-inset"></div>
+      <span class="text-[10px] font-bold text-text-muted uppercase tracking-[0.18em]">Container Specification</span>
+      <div class="h-px flex-1 bg-surface-inset"></div>
+    </div>
+
+    <%# Container Image (editable) %>
+    <div id="container-image" data-section class="<%= card %>">
+      <div class="<%= hdr %> flex items-center gap-2.5">
+        <div class="w-0.5 h-5 rounded-full bg-cyan-600/70 flex-shrink-0"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V11"/></svg>
+        <h2 class="text-sm font-semibold text-text-primary">Container Image</h2>
+      </div>
+      <div class="<%= body %>">
+        <%= form_with url: update_image_swarm_service_path(id: @service["ID"]), method: :post, data: { turbo: false } do |f| %>
+          <label class="<%= lbl %>">Image</label>
+          <div class="flex gap-2 mt-1">
+            <%= render Ui::InputComponent.new(name: "image", value: image, placeholder: "nginx:latest",
+                  css_class: "flex-1 font-mono rounded px-2.5 py-1.5") %>
+            <button type="submit" class="<%= apply %>">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Apply changes
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Env Vars (collapsible) %>
+    <details id="env-vars" data-section class="<%= card %> group" open>
+      <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Environment Variables</h2>
+          <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= envs.size %></span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <% if envs.empty? %>
+        <p class="<%= body %> text-xs text-text-muted">Nenhuma variável de ambiente.</p>
+      <% else %>
+        <table class="w-full text-xs">
+          <thead class="bg-surface-inset/40">
+            <tr>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider w-2/5">Name</th>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Value</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <% envs.each do |env_str| %>
+              <% key, val = env_str.split("=", 2) %>
+              <tr class="hover:bg-surface-inset/30">
+                <td class="px-5 py-2 font-mono text-cyan-600 dark:text-cyan-400 font-medium"><%= key %></td>
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= val || "" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </details>
+
+    <%# Container Labels %>
+    <details id="container-labels" data-section class="<%= card %> group">
+      <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Container Labels</h2>
+          <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= c_labels.size %></span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <% if c_labels.empty? %>
+        <p class="<%= body %> text-xs text-text-muted">Nenhum label de container.</p>
+      <% else %>
+        <table class="w-full text-xs">
+          <thead class="bg-surface-inset/40">
+            <tr>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider w-2/5">Label</th>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Value</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <% c_labels.each do |k, v| %>
+              <tr class="hover:bg-surface-inset/30">
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= k %></td>
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= v %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </details>
+
+    <%# Mounts %>
+    <details id="mounts" data-section class="<%= card %> group" open>
+      <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Mounts</h2>
+          <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= mounts.size %></span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <% if mounts.empty? %>
+        <p class="<%= body %> text-xs text-text-muted">Nenhum mount configurado.</p>
+      <% else %>
+        <table class="w-full text-xs">
+          <thead class="bg-surface-inset/40">
+            <tr>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Type</th>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Source</th>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Target</th>
+              <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Read-only</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <% mounts.each do |m| %>
+              <tr class="hover:bg-surface-inset/30">
+                <td class="px-5 py-2"><%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle", size: :xs)) { m["Type"] || "bind" } %></td>
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= m["Source"].presence || "—" %></td>
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= m["Target"] %></td>
+                <td class="px-5 py-2 text-text-secondary"><%= m["ReadOnly"] ? "Sim" : "Não" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </details>
+
+    <%# ── GROUP: Networking ── %>
+    <div class="flex items-center gap-3 my-1 pt-1">
+      <div class="h-px flex-1 bg-surface-inset"></div>
+      <span class="text-[10px] font-bold text-text-muted uppercase tracking-[0.18em]">Networking</span>
+      <div class="h-px flex-1 bg-surface-inset"></div>
+    </div>
+
+    <%# Networks + Ports (2-col) %>
+    <div id="networks-ports" data-section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="<%= card %>">
+        <div class="<%= hdr %> flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Networks</h2>
+        </div>
+        <% if net_refs.empty? %>
+          <p class="<%= body %> text-xs text-text-muted">Nenhuma rede.</p>
+        <% else %>
+          <table class="w-full text-xs">
+            <thead class="bg-surface-inset/40"><tr>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Target</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Aliases</th>
+            </tr></thead>
+            <tbody class="divide-y divide-border/60">
+              <% net_refs.each do |nr| %>
+                <tr class="hover:bg-surface-inset/30">
+                  <td class="px-4 py-2 font-mono text-text-secondary break-all"><%= nr["Target"] %></td>
+                  <td class="px-4 py-2 font-mono text-text-muted"><%= (nr["Aliases"] || []).join(", ").presence || "—" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+      <div class="<%= card %>">
+        <div class="<%= hdr %> flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Published Ports</h2>
+        </div>
+        <% if pub_ports.empty? %>
+          <p class="<%= body %> text-xs text-text-muted">Nenhuma porta publicada.</p>
+        <% else %>
+          <table class="w-full text-xs">
+            <thead class="bg-surface-inset/40"><tr>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Published</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Target</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Proto</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Mode</th>
+            </tr></thead>
+            <tbody class="divide-y divide-border/60">
+              <% pub_ports.each do |p| %>
+                <tr class="hover:bg-surface-inset/30">
+                  <td class="px-4 py-2 font-mono text-cyan-700 dark:text-cyan-300 font-semibold"><%= p["PublishedPort"] %></td>
+                  <td class="px-4 py-2 font-mono text-text-secondary"><%= p["TargetPort"] %></td>
+                  <td class="px-4 py-2 text-text-muted"><%= p["Protocol"] || "tcp" %></td>
+                  <td class="px-4 py-2 text-text-muted"><%= p["PublishMode"] || "ingress" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ── GROUP: Service Specification ── %>
+    <div class="flex items-center gap-3 my-1 pt-1">
+      <div class="h-px flex-1 bg-surface-inset"></div>
+      <span class="text-[10px] font-bold text-text-muted uppercase tracking-[0.18em]">Service Specification</span>
+      <div class="h-px flex-1 bg-surface-inset"></div>
+    </div>
+
+    <%# Resources + Update Config (2-col) %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <%# Resources (editable) %>
+      <div id="resources" data-section class="<%= card %>">
+        <div class="<%= hdr %> flex items-center gap-2.5">
+          <div class="w-0.5 h-5 rounded-full bg-cyan-600/70 flex-shrink-0"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Resources</h2>
+        </div>
+        <div class="<%= body %>">
+          <%= form_with url: update_resources_swarm_service_path(id: @service["ID"]), method: :post, data: { turbo: false } do |f| %>
+            <div class="space-y-4">
+              <%# Memory %>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="<%= lbl %>">Memory Reservation</label>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <%= render Ui::InputComponent.new(name: "mem_res_mb", type: :number, min: 0, step: 1,
+                          value: res_mem / 1_048_576, css_class: "w-full text-right rounded px-2.5 py-1.5") %>
+                    <span class="text-xs text-text-muted flex-shrink-0">MB</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="<%= lbl %>">Memory Limit</label>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <%= render Ui::InputComponent.new(name: "mem_limit_mb", type: :number, min: 0, step: 1,
+                          value: lim_mem / 1_048_576, css_class: "w-full text-right rounded px-2.5 py-1.5") %>
+                    <span class="text-xs text-text-muted flex-shrink-0">MB</span>
+                  </div>
+                  <div class="text-[10px] text-text-muted mt-0.5">0 = unlimited</div>
+                </div>
+              </div>
+              <%# CPU %>
+              <div class="space-y-3 pt-1 border-t border-border">
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="<%= lbl %> mb-0">CPU Reservation</label>
+                    <span id="cpu_res_val" class="font-mono text-sm text-cyan-700 dark:text-cyan-300 tabular-nums"><%= "%.2f" % res_cpu %></span>
+                  </div>
+                  <%= render Ui::SliderComponent.new(name: "cpu_res", min: 0, max: max_cpu, step: 0.01, value: res_cpu,
+                        oninput: "document.getElementById('cpu_res_val').textContent = parseFloat(this.value).toFixed(2)") %>
+                  <div class="flex justify-between text-[10px] text-text-muted mt-0.5">
+                    <span>0</span><span><%= max_cpu %> cores</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="<%= lbl %> mb-0">CPU Limit</label>
+                    <span id="cpu_limit_val" class="font-mono text-sm text-cyan-700 dark:text-cyan-300 tabular-nums"><%= lim_cpu > 0 ? ("%.2f" % lim_cpu) : "∞" %></span>
+                  </div>
+                  <%= render Ui::SliderComponent.new(name: "cpu_limit", min: 0, max: max_cpu, step: 0.01, value: lim_cpu,
+                        oninput: "document.getElementById('cpu_limit_val').textContent = parseFloat(this.value) === 0 ? '∞' : parseFloat(this.value).toFixed(2)") %>
+                  <div class="flex justify-between text-[10px] text-text-muted mt-0.5">
+                    <span>0 (∞)</span><span><%= max_cpu %> cores</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="<%= apply %> mt-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Apply changes
+            </button>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Update Config (editable) %>
+      <div id="update-config" data-section class="<%= card %>">
+        <div class="<%= hdr %> flex items-center gap-2.5">
+          <div class="w-0.5 h-5 rounded-full bg-cyan-600/70 flex-shrink-0"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Update Configuration</h2>
+        </div>
+        <div class="<%= body %>">
+          <%= form_with url: update_config_swarm_service_path(id: @service["ID"]), method: :post, data: { turbo: false } do |f| %>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label class="<%= lbl %>">Parallelism</label>
+                <%= render Ui::InputComponent.new(name: "parallelism", type: :number, min: 0, step: 1,
+                      value: update_cfg["Parallelism"] || 1, css_class: "w-full text-right mt-1 rounded px-2.5 py-1.5") %>
+              </div>
+              <div>
+                <label class="<%= lbl %>">Delay</label>
+                <%
+                  upd_delay_s = update_cfg["Delay"].to_i > 0 ? update_cfg["Delay"].to_i / 1_000_000_000 : 0
+                %>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <%= render Ui::InputComponent.new(name: "delay_s", type: :number, min: 0, step: 1,
+                        value: upd_delay_s, css_class: "w-full text-right rounded px-2.5 py-1.5") %>
+                  <span class="text-xs text-text-muted flex-shrink-0">s</span>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-3 border-t border-border pt-4">
+              <div>
+                <label class="<%= lbl %> mb-2">Failure Action</label>
+                <div class="flex gap-4">
+                  <% [["pause","Pause"], ["continue","Continue"], ["rollback","Rollback"]].each do |val, txt| %>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="failure_action" value="<%= val %>"
+                             <%= "checked" if (update_cfg["FailureAction"] || "pause") == val %>
+                             class="accent-cyan-500 w-4 h-4">
+                      <span class="text-sm text-text-secondary"><%= txt %></span>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+              <div>
+                <label class="<%= lbl %> mb-2">Order</label>
+                <div class="flex gap-4">
+                  <% [["stop-first","stop-first"], ["start-first","start-first"]].each do |val, txt| %>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="order" value="<%= val %>"
+                             <%= "checked" if (update_cfg["Order"] || "stop-first") == val %>
+                             class="accent-cyan-500 w-4 h-4">
+                      <span class="text-sm text-text-secondary"><%= txt %></span>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="<%= apply %> mt-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Apply changes
+            </button>
+          <% end %>
+        </div>
+      </div>
+    </div><%# end 2-col grid %>
+
+    <%# Restart Policy + Logging (2-col) %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div id="restart-policy" data-section class="<%= card %>">
+        <div class="<%= hdr %> flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Restart Policy</h2>
+        </div>
+        <div class="<%= body %> grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <div class="<%= lbl %>">Condition</div>
+            <%= render(Ui::BadgeComponent.new(color: "bg-surface-inset text-text-secondary border-border-subtle")) { restart["Condition"] || "any" } %>
+          </div>
+          <div>
+            <div class="<%= lbl %>">Delay</div>
+            <%
+              delay_ns = restart["Delay"].to_i
+              delay_s  = delay_ns > 0 ? "#{delay_ns / 1_000_000_000}s" : "5s"
+            %>
+            <div class="font-mono text-text-secondary"><%= delay_s %></div>
+          </div>
+          <div>
+            <div class="<%= lbl %>">Max Attempts</div>
+            <div class="font-mono text-text-secondary"><%= restart["MaxAttempts"] || 0 %></div>
+          </div>
+          <div>
+            <div class="<%= lbl %>">Window</div>
+            <%
+              win_ns = restart["Window"].to_i
+              win_s  = win_ns > 0 ? "#{win_ns / 1_000_000_000}s" : "0s"
+            %>
+            <div class="font-mono text-text-secondary"><%= win_s %></div>
+          </div>
+        </div>
+      </div>
+
+      <%# Logging (editable) %>
+      <div id="logging" data-section class="<%= card %>">
+        <div class="<%= hdr %> flex items-center gap-2.5">
+          <div class="w-0.5 h-5 rounded-full bg-cyan-600/70 flex-shrink-0"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Logging</h2>
+        </div>
+        <div class="<%= body %>">
+          <%= form_with url: update_logging_swarm_service_path(id: @service["ID"]), method: :post, data: { turbo: false } do |f| %>
+            <label class="<%= lbl %>">Driver</label>
+            <div class="flex items-center gap-2 mt-1">
+              <select name="driver" class="<%= inp %> flex-1">
+                <% ["", "json-file", "local", "journald", "syslog", "gelf", "fluentd", "awslogs", "splunk", "gcplogs"].each do |drv| %>
+                  <option value="<%= drv %>" <%= "selected" if (log_driver["Name"] || "") == drv %>><%= drv.presence || "Default" %></option>
+                <% end %>
+              </select>
+              <button type="submit" class="<%= apply %> flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Apply
+              </button>
+            </div>
+            <% opts = log_driver["Options"] || {} %>
+            <% if opts.any? %>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <% opts.each do |k, v| %>
+                  <span class="font-mono text-[10px] px-1.5 py-0.5 bg-surface-inset border border-border-subtle rounded text-text-secondary"><%= k %>=<%= v %></span>
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div><%# end restart + logging %>
+
+    <%# Placement (collapsible) %>
+    <details id="placement" data-section class="<%= card %> group">
+      <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Placement</h2>
+          <%
+            constraints = placement["Constraints"] || []
+            prefs       = placement["Preferences"] || []
+          %>
+          <% if constraints.any? || prefs.any? %>
+            <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= constraints.size + prefs.size %></span>
+          <% end %>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="<%= body %> space-y-3">
+        <div>
+          <div class="<%= lbl %>">Constraints</div>
+          <% if constraints.any? %>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <% constraints.each do |c| %>
+                <span class="font-mono text-xs px-2 py-1 bg-surface-inset border border-border-subtle rounded text-text-secondary"><%= c %></span>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-xs text-text-muted">Sem constraints.</p>
+          <% end %>
+        </div>
+        <div>
+          <div class="<%= lbl %>">Preferences</div>
+          <% if prefs.any? %>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <% prefs.each do |p| %>
+                <span class="font-mono text-xs px-2 py-1 bg-surface-inset border border-border-subtle rounded text-text-secondary"><%= p.to_json %></span>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-xs text-text-muted">Sem preferences.</p>
+          <% end %>
+        </div>
+      </div>
+    </details>
+
+    <% if s_labels.any? %>
+      <details id="service-labels" data-section class="<%= card %> group">
+        <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            <h2 class="text-sm font-semibold text-text-primary">Service Labels</h2>
+            <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= s_labels.size %></span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <table class="w-full text-xs">
+          <thead class="bg-surface-inset/40"><tr>
+            <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider w-2/5">Label</th>
+            <th class="px-5 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Value</th>
+          </tr></thead>
+          <tbody class="divide-y divide-border/60">
+            <% s_labels.each do |k, v| %>
+              <tr class="hover:bg-surface-inset/30">
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= k %></td>
+                <td class="px-5 py-2 font-mono text-text-secondary break-all"><%= v %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </details>
+    <% end %>
+
+    <%# ── GROUP: Secrets & Configs ── %>
+    <div class="flex items-center gap-3 my-1 pt-1">
+      <div class="h-px flex-1 bg-surface-inset"></div>
+      <span class="text-[10px] font-bold text-text-muted uppercase tracking-[0.18em]">Secrets &amp; Configs</span>
+      <div class="h-px flex-1 bg-surface-inset"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <details id="secrets" data-section class="<%= card %> group">
+        <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <h2 class="text-sm font-semibold text-text-primary">Secrets</h2>
+            <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= secrets.size %></span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <% if secrets.empty? %>
+          <p class="<%= body %> text-xs text-text-muted">Nenhum secret.</p>
+        <% else %>
+          <table class="w-full text-xs">
+            <thead class="bg-surface-inset/40"><tr>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Name</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">File</th>
+            </tr></thead>
+            <tbody class="divide-y divide-border/60">
+              <% secrets.each do |s| %>
+                <tr class="hover:bg-surface-inset/30">
+                  <td class="px-4 py-2 font-mono text-text-secondary"><%= s["SecretName"] || s.dig("File","Name") || "—" %></td>
+                  <td class="px-4 py-2 font-mono text-text-muted"><%= s.dig("File","Name") || "—" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </details>
+
+      <details id="configs" data-section class="<%= card %> group">
+        <summary class="<%= sum_cls %> border-b border-transparent group-open:border-border">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <h2 class="text-sm font-semibold text-text-primary">Configs</h2>
+            <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= configs.size %></span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <% if configs.empty? %>
+          <p class="<%= body %> text-xs text-text-muted">Nenhum config.</p>
+        <% else %>
+          <table class="w-full text-xs">
+            <thead class="bg-surface-inset/40"><tr>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Name</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">File</th>
+            </tr></thead>
+            <tbody class="divide-y divide-border/60">
+              <% configs.each do |cfg| %>
+                <tr class="hover:bg-surface-inset/30">
+                  <td class="px-4 py-2 font-mono text-text-secondary"><%= cfg["ConfigName"] || cfg.dig("File","Name") || "—" %></td>
+                  <td class="px-4 py-2 font-mono text-text-muted"><%= cfg.dig("File","Name") || "—" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </details>
+    </div>
+
+    <%# ── GROUP: Tasks ── %>
+    <div class="flex items-center gap-3 my-1 pt-1">
+      <div class="h-px flex-1 bg-surface-inset"></div>
+      <span class="text-[10px] font-bold text-text-muted uppercase tracking-[0.18em]">Tasks</span>
+      <div class="h-px flex-1 bg-surface-inset"></div>
+    </div>
+
+    <div id="tasks" data-section class="<%= card %>">
+      <div class="<%= hdr %> flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <h2 class="text-sm font-semibold text-text-primary">Tasks</h2>
+          <span class="font-mono text-[10px] text-text-muted bg-surface-inset px-1.5 py-0.5 rounded"><%= @tasks.size %></span>
+        </div>
+        <%= render Ui::InputComponent.new(name: "tasks_filter", placeholder: "Filtrar…",
+              css_class: "rounded text-xs px-2.5 py-1.5 w-40 placeholder-text-muted",
+              html_attrs: { "oninput" => "filterTasks(this.value)" }) %>
+      </div>
+      <% if @tasks.empty? %>
+        <p class="<%= body %> text-xs text-text-muted">Nenhuma task encontrada.</p>
+      <% else %>
+        <table class="w-full text-xs" id="tasks-table">
+          <thead class="bg-surface-inset/40">
+            <tr>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Status</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">ID</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Slot</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Node</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Error</th>
+              <th class="px-4 py-2 text-left font-semibold text-text-muted uppercase tracking-wider">Updated</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <% @tasks.each do |t| %>
+              <%
+                t_state   = t.dig("Status", "State") || "—"
+                t_updated = (Time.parse(t["UpdatedAt"]) rescue nil)
+                t_error   = t.dig("Status", "Err").to_s.truncate(50)
+                node_id   = t["NodeID"]
+                node_info = @nodes[node_id]
+                node_name = node_info&.dig("Description", "Hostname") || node_id&.first(10) || "—"
+                state_badge, state_left = case t_state
+                  when "running"   then [:green,  "border-l-green-500"]
+                  when "complete"  then [:gray,   "border-l-gray-600"]
+                  when "failed"    then [:red,    "border-l-red-500"]
+                  when "rejected"  then [:orange, "border-l-orange-500"]
+                  when "shutdown"  then [:gray,   "border-l-gray-700"]
+                  when "starting"  then [:blue,   "border-l-blue-500"]
+                  when "preparing" then [:yellow, "border-l-yellow-500"]
+                  else                  [:gray,   "border-l-gray-700"]
+                end
+              %>
+              <tr class="hover:bg-surface-inset/30 border-l-2 <%= state_left %>">
+                <td class="px-4 py-2.5">
+                  <%= render(Ui::BadgeComponent.new(color: state_badge, size: :xs)) { t_state } %>
+                </td>
+                <td class="px-4 py-2.5 font-mono text-text-muted"><%= t["ID"]&.first(12) %></td>
+                <td class="px-4 py-2.5 text-text-secondary"><%= t["Slot"] || "—" %></td>
+                <td class="px-4 py-2.5 font-mono text-text-secondary"><%= node_name %></td>
+                <td class="px-4 py-2.5 text-red-600 dark:text-red-400/70 font-mono text-[10px]"><%= t_error.presence || "—" %></td>
+                <td class="px-4 py-2.5 text-text-muted tabular-nums"><%= t_updated ? t_updated.strftime("%m/%d %H:%M:%S") : "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+
+  </div><%# end main content %>
+
+  <%# ══════════ STICKY SIDEBAR ══════════ %>
+  <div class="hidden xl:block w-44 flex-shrink-0">
+    <div class="sticky top-4">
+      <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
+        <div class="px-3 py-2.5 border-b border-border">
+          <div class="text-[10px] font-bold text-text-muted uppercase tracking-widest">Seções</div>
+        </div>
+        <nav id="side-nav" class="p-2 space-y-0.5">
+          <% [
+            ["#svc-details",     "Service Details"],
+            ["#container-image", "Container Image"],
+            ["#env-vars",        "Environment"],
+            ["#container-labels","Labels"],
+            ["#mounts",          "Mounts"],
+            ["#networks-ports",  "Networks & Ports"],
+            ["#resources",       "Resources"],
+            ["#update-config",   "Update Config"],
+            ["#restart-policy",  "Restart Policy"],
+            ["#logging",         "Logging"],
+            ["#placement",       "Placement"],
+            (s_labels.any? ? ["#service-labels", "Service Labels"] : nil),
+            ["#secrets",         "Secrets"],
+            ["#configs",         "Configs"],
+            ["#tasks",           "Tasks"],
+          ].compact.each do |href, label| %>
+            <a href="<%= href %>"
+               data-nav-link="<%= href.delete_prefix('#') %>"
+               class="block text-xs text-text-muted hover:text-text-primary hover:bg-surface-inset rounded px-2 py-1.5 transition-colors">
+              <%= label %>
+            </a>
+          <% end %>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function filterTasks(q) {
+  const lq = q.toLowerCase();
+  document.querySelectorAll('#tasks-table tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(lq) ? '' : 'none';
+  });
+}
+
+(function() {
+  const links = document.querySelectorAll('[data-nav-link]');
+  if (!links.length) return;
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const a = document.querySelector(`[data-nav-link="${e.target.id}"]`);
+      if (!a) return;
+      if (e.isIntersecting) {
+        a.classList.remove('text-text-muted');
+        a.classList.add('text-cyan-700', 'dark:text-cyan-300', 'bg-surface-inset/60');
+      } else {
+        a.classList.remove('text-cyan-700', 'dark:text-cyan-300', 'bg-surface-inset/60');
+        a.classList.add('text-text-muted');
+      }
+    });
+  }, { rootMargin: '-5% 0px -75% 0px' });
+
+  document.querySelectorAll('[data-section]').forEach(el => obs.observe(el));
+})();
+</script>
+<% end %>
+</turbo-frame>

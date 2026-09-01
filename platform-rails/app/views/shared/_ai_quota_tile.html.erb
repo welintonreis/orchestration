@@ -1,0 +1,13 @@
+<%# Summary tile. Mirrors dashboard/_stat_card's proportions so the row reads as
+    part of the same platform, but carries a tone for the "something is wrong"
+    case — the whole point of a summary is that a bad number stands out. %>
+<% tone = local_assigns.fetch(:tone, :normal) %>
+<div class="bg-surface-raised border <%= tone == :red ? 'border-red-500/40' : 'border-border' %> rounded-xl p-5">
+  <div class="text-3xl font-bold <%= tone == :red ? 'text-red-600 dark:text-red-400' : 'text-text-primary' %> mb-1">
+    <%= value %>
+  </div>
+  <div class="text-sm text-text-secondary"><%= label %></div>
+  <% if local_assigns[:sub].present? %>
+    <div class="text-xs text-text-muted mt-0.5 truncate" title="<%= sub %>"><%= sub %></div>
+  <% end %>
+</div>

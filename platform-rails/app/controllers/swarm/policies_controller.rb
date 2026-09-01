@@ -3,6 +3,9 @@ module Swarm
     include SwarmGuard
 
     def index
+    end
+
+    def rows
       services = current_docker_client.services
       @placement_rules = services.flat_map do |svc|
         constraints = svc.dig("Spec", "TaskTemplate", "Placement", "Constraints") || []

@@ -1,44 +1,13 @@
 <% page_title "Services" %>
 <% page_subtitle "Services no namespace #{@namespace}" %>
 
-<%= render "kube/namespace_selector" %>
-
-<div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
-  <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-    <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">Services</h2>
-    <span class="text-xs font-mono text-text-muted"><%= @services.size %> item<%= @services.size == 1 ? "" : "s" %></span>
-  </div>
-
-  <% if @services.empty? %>
-    <div class="py-16 text-center text-sm text-text-muted">Nenhum service encontrado</div>
-  <% else %>
-    <%
-      svc_type_color = {
-        "ClusterIP"    => :gray,
-        "NodePort"     => :blue,
-        "LoadBalancer" => :purple,
-        "ExternalName" => :cyan,
-      }
-    %>
-    <%= render Ui::TableComponent.new(headers: ["Nome", "Tipo", "Cluster IP", "Portas", { label: "Ações", align: :right }]) do %>
-      <% @services.each do |svc| %>
-        <% name = svc.dig("metadata", "name") %>
-        <% type = svc.dig("spec", "type") %>
-        <% ports = svc.dig("spec", "ports")&.map { |p| "#{p['port']}#{p['nodePort'] ? ":#{p['nodePort']}" : ''}/#{p['protocol']}" }&.join(", ") %>
-        <tr class="hover:bg-surface-inset/30 transition-colors">
-          <td class="px-4 py-3 font-mono text-text-primary"><%= name %></td>
-          <td class="px-4 py-3"><%= render(Ui::BadgeComponent.new(color: svc_type_color.fetch(type, :gray))) { type } %></td>
-          <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= svc.dig("spec", "clusterIP") %></td>
-          <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= ports %></td>
-          <td class="px-4 py-3 text-right">
-            <% if Current.user&.admin? || Current.user&.operator? %>
-              <%= render Ui::ButtonComponent.new(url: kube_service_path(name, ns: @namespace), method: :delete,
-                    variant: :red, icon: :remove, title: "Remover",
-                    confirm: "Remover service #{name}?") %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-    <% end %>
-  <% end %>
-</div>
+<%# Namespaces + services are two serial API calls. The namespace picker
+    needs the namespace list, another API call, so it rides inside the
+    frame; target="_top" keeps its submit a full-page visit, which is what
+    keeps the URL and the subtitle in sync. See
+    Kube::ServicesController#rows. %>
+<turbo-frame id="services-content" refresh="morph" target="_top" src="<%= kube_rows_services_path(ns: @namespace) %>">
+  <%= render Ui::SkeletonComponent.new(:toolbar, css_class: "mb-4") %>
+  <%= render Ui::SkeletonComponent.new(:table,
+        columns: [ "w-40", "w-20", "w-24", "w-28", :actions ], rows: 6) %>
+</turbo-frame>

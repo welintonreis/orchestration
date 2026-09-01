@@ -1,32 +1,13 @@
 <% page_title "ConfigMaps" %>
 <% page_subtitle "ConfigMaps no namespace #{@namespace}" %>
 
-<%= render "kube/namespace_selector" %>
-
-<div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
-  <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-    <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">ConfigMaps</h2>
-    <span class="text-xs font-mono text-text-muted"><%= @config_maps.size %> item<%= @config_maps.size == 1 ? "" : "s" %></span>
-  </div>
-
-  <% if @config_maps.empty? %>
-    <div class="py-16 text-center text-sm text-text-muted">Nenhum ConfigMap encontrado</div>
-  <% else %>
-    <%= render Ui::TableComponent.new(headers: ["Nome", "Chaves", { label: "Ações", align: :right }]) do %>
-      <% @config_maps.each do |cm| %>
-        <% name = cm.dig("metadata", "name") %>
-        <tr class="hover:bg-surface-inset/30 transition-colors">
-          <td class="px-4 py-3 font-mono text-text-primary"><%= name %></td>
-          <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= (cm["data"] || {}).keys.join(", ") %></td>
-          <td class="px-4 py-3 text-right">
-            <% if Current.user&.admin? || Current.user&.operator? %>
-              <%= render Ui::ButtonComponent.new(url: kube_config_map_path(name, ns: @namespace), method: :delete,
-                    variant: :red, icon: :remove, title: "Remover",
-                    confirm: "Remover ConfigMap #{name}?") %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-    <% end %>
-  <% end %>
-</div>
+<%# Namespaces + configmaps are two serial API calls. The namespace picker
+    needs the namespace list, another API call, so it rides inside the
+    frame; target="_top" keeps its submit a full-page visit, which is what
+    keeps the URL and the subtitle in sync. See
+    Kube::ConfigMapsController#rows. %>
+<turbo-frame id="configmaps-content" refresh="morph" target="_top" src="<%= kube_rows_config_maps_path(ns: @namespace) %>">
+  <%= render Ui::SkeletonComponent.new(:toolbar, css_class: "mb-4") %>
+  <%= render Ui::SkeletonComponent.new(:table,
+        columns: [ "w-40", "w-56", :actions ], rows: 6) %>
+</turbo-frame>

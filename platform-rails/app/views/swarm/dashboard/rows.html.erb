@@ -1,0 +1,175 @@
+<turbo-frame id="swarm-content" refresh="morph">
+  <% if @swarm.nil? %>
+    <div class="flex flex-col items-center justify-center py-24 text-center">
+      <p class="text-text-secondary text-sm">Swarm indisponível ou não inicializado.</p>
+    </div>
+  <% else %>
+  
+    <%# ── Cluster overview cards ── %>
+    <%
+      managers_count = @nodes&.count { |n| n.dig("Spec", "Role") == "manager" } || 0
+      workers_count  = @nodes&.count { |n| n.dig("Spec", "Role") == "worker" }  || 0
+      total_nodes    = @nodes&.size || 0
+      swarm_id       = @swarm.dig("ID") || "—"
+      created_at     = begin; Time.parse(@swarm["CreatedAt"]); rescue; nil; end
+      updated_at     = begin; Time.parse(@swarm["UpdatedAt"]); rescue; nil; end
+    %>
+  
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <div class="text-3xl font-bold text-text-primary"><%= total_nodes %></div>
+        <div class="text-sm text-text-secondary mt-1">Nós totais</div>
+      </div>
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <div class="text-3xl font-bold text-purple-600 dark:text-purple-400"><%= managers_count %></div>
+        <div class="text-sm text-text-secondary mt-1">Managers</div>
+      </div>
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <div class="text-3xl font-bold text-cyan-600 dark:text-cyan-400"><%= workers_count %></div>
+        <div class="text-sm text-text-secondary mt-1">Workers</div>
+      </div>
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <div class="text-3xl font-bold text-green-600 dark:text-green-400"><%= @nodes&.count { |n| n.dig("Status", "State") == "ready" } || 0 %></div>
+        <div class="text-sm text-text-secondary mt-1">Ready</div>
+      </div>
+    </div>
+  
+    <%# ── Cluster info ── %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <h3 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">Cluster</h3>
+        <dl class="space-y-3">
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">ID</dt>
+            <dd class="text-sm font-mono text-text-primary"><%= swarm_id.to_s.first(20) %>…</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">Criado</dt>
+            <dd class="text-sm text-text-secondary"><%= created_at ? created_at.strftime("%Y-%m-%d %H:%M") : "—" %></dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">Atualizado</dt>
+            <dd class="text-sm text-text-secondary"><%= updated_at ? updated_at.strftime("%Y-%m-%d %H:%M") : "—" %></dd>
+          </div>
+          <% raft = @swarm.dig("Spec", "Raft") %>
+          <% if raft %>
+            <div class="flex justify-between">
+              <dt class="text-sm text-text-secondary">Heartbeat interval</dt>
+              <dd class="text-sm text-text-secondary"><%= raft["HeartbeatTick"] %> tick(s)</dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="text-sm text-text-secondary">Election timeout</dt>
+              <dd class="text-sm text-text-secondary"><%= raft["ElectionTick"] %> tick(s)</dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+  
+      <%# Docker host info %>
+      <% host = @info || {} %>
+      <% mem_total = host["MemTotal"].to_i %>
+      <div class="bg-surface-raised border border-border rounded-xl p-5">
+        <h3 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">Host Docker</h3>
+        <dl class="space-y-3">
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">Versão Docker</dt>
+            <dd class="text-sm font-mono text-text-primary"><%= host["ServerVersion"] || "—" %></dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">CPUs</dt>
+            <dd class="text-sm text-text-secondary"><%= host["NCPU"] || "—" %></dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">Memória total</dt>
+            <dd class="text-sm text-text-secondary"><%= mem_total > 0 ? human_bytes(mem_total) : "—" %></dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">OS / Kernel</dt>
+            <dd class="text-sm text-text-secondary text-right max-w-[60%] truncate" title="<%= host["OperatingSystem"] %> / <%= host["KernelVersion"] %>">
+              <%= host["OperatingSystem"] %>
+            </dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">Kernel</dt>
+            <dd class="text-sm font-mono text-text-secondary"><%= host["KernelVersion"] || "—" %></dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-text-secondary">Containers</dt>
+            <dd class="text-sm text-text-secondary">
+              <span class="text-green-600 dark:text-green-400"><%= host["ContainersRunning"] || 0 %></span>
+              <span class="text-text-muted"> / </span>
+              <span class="text-text-secondary"><%= host["Containers"] || 0 %> total</span>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  
+    <%# ── Nodes table ── %>
+    <% if @nodes&.any? %>
+      <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-border">
+          <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">Nós</h3>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-surface-inset/50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Hostname</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Role</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Availability</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">Engine</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider"><%= cpu_icon(css_class: "w-3.5 h-3.5 inline") %> CPU / <%= ram_icon(css_class: "w-3.5 h-3.5 inline") %> RAM</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <% @nodes.each do |node| %>
+              <%
+                hostname     = node.dig("Description", "Hostname") || "—"
+                role         = node.dig("Spec", "Role") || "—"
+                status       = node.dig("Status", "State") || "—"
+                availability = node.dig("Spec", "Availability") || "—"
+                engine_ver   = node.dig("Description", "Engine", "EngineVersion") || "—"
+                cpus         = node.dig("Description", "Resources", "NanoCPUs").to_i / 1_000_000_000
+                mem          = node.dig("Description", "Resources", "MemoryBytes").to_i
+                is_manager   = role == "manager"
+                is_ready     = status == "ready"
+                is_active    = availability == "active"
+              %>
+              <tr class="hover:bg-surface-inset/30 transition-colors">
+                <td class="px-4 py-3 font-mono text-text-primary font-medium"><%= hostname %></td>
+                <td class="px-4 py-3">
+                  <%= render(Ui::BadgeComponent.new(color: is_manager ? :orange : :gray, dot: true, size: :xs)) { role } %>
+                </td>
+                <td class="px-4 py-3">
+                  <%= render(Ui::BadgeComponent.new(color: is_ready ? :green : :red, dot: true, size: :xs)) { status } %>
+                </td>
+                <td class="px-4 py-3">
+                  <%
+                    avail_color = case availability
+                      when "active" then :green
+                      when "drain"  then :yellow
+                      else               :red
+                    end
+                  %>
+                  <%= render(Ui::BadgeComponent.new(color: avail_color, dot: true, size: :xs)) { availability } %>
+                </td>
+                <td class="px-4 py-3 font-mono text-text-secondary text-xs"><%= engine_ver %></td>
+                <td class="px-4 py-3 text-text-secondary text-xs">
+                  <% if cpus > 0 || mem > 0 %>
+                    <span class="text-text-secondary"><%= cpus %> vCPU</span>
+                    <span class="text-text-muted mx-1">·</span>
+                    <span class="text-text-secondary"><%= human_bytes(mem) %></span>
+                  <% else %>
+                    <span class="text-text-muted">—</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  
+  <% end %>
+</turbo-frame>

@@ -1,0 +1,240 @@
+<turbo-frame id="security-content" refresh="morph">
+<%
+  sev = {
+    critical: { color: :red,    label: "Crítico" },
+    warning:  { color: :yellow, label: "Aviso" },
+    ok:       { color: :green,  label: "OK" }
+  }
+  score_color = @score >= 85 ? "text-emerald-600 dark:text-emerald-400" : @score >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"
+%>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-surface-raised border border-border rounded-xl p-5">
+    <div class="text-3xl font-bold <%= score_color %>"><%= @score %><span class="text-lg text-text-muted">/100</span></div>
+    <div class="text-sm text-text-secondary mt-0.5">Score de exposição</div>
+    <div class="text-xs text-text-muted mt-1">quanto maior, melhor</div>
+  </div>
+  <%= render "dashboard/stat_card", count: @summary[:critical], label: "Serviços sensíveis expostos", sub: "fechar imediatamente", icon: :alert_tri %>
+  <%= render "dashboard/stat_card", count: @summary[:warning],  label: "Portas públicas não catalogadas", sub: "revisar", icon: :networks %>
+  <%= render "dashboard/stat_card", count: @summary[:ok],       label: "Exposições esperadas", sub: "SSH / HTTP / HTTPS", icon: :auth_shield %>
+</div>
+
+<div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
+  <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+    <h2 class="text-sm font-semibold text-text-primary">Portas em LISTEN no host (namespace de rede da VPS)</h2>
+    <span class="text-xs text-text-muted"><%= @findings.size %> sockets · <%= l(@audit.collected_at, format: :short) rescue @audit.collected_at.strftime("%H:%M") %></span>
+  </div>
+
+  <% if @findings.empty? %>
+    <div class="px-5 py-10 text-center text-sm text-text-muted">Nenhuma porta pública detectada (ou /host/proc indisponível).</div>
+  <% else %>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-text-muted uppercase tracking-wide">
+          <th class="px-5 py-3 font-medium">Severidade</th>
+          <th class="px-5 py-3 font-medium">Porta</th>
+          <th class="px-5 py-3 font-medium">Proto</th>
+          <th class="px-5 py-3 font-medium">Serviço</th>
+          <th class="px-5 py-3 font-medium">Stack</th>
+          <th class="px-5 py-3 font-medium">Swarm service</th>
+          <th class="px-5 py-3 font-medium">Container</th>
+          <th class="px-5 py-3 font-medium">Observação</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border/60">
+        <% @findings.each do |f| s = sev[f.severity]; info = @port_map[f.port] %>
+          <tr class="hover:bg-surface-inset/40">
+            <td class="px-5 py-3">
+              <%= render Ui::BadgeComponent.new(color: s[:color], dot: true) { s[:label] } %>
+            </td>
+            <td class="px-5 py-3 font-mono font-semibold text-text-primary"><%= f.port %></td>
+            <td class="px-5 py-3 font-mono text-text-muted"><%= f.proto %></td>
+            <td class="px-5 py-3 text-text-primary"><%= f.service %></td>
+            <td class="px-5 py-3 text-text-secondary"><%= info&.dig(:stack) || tag.span("—", class: "text-text-muted") %></td>
+            <td class="px-5 py-3 font-mono text-text-secondary"><%= info&.dig(:service) || tag.span("—", class: "text-text-muted") %></td>
+            <td class="px-5 py-3 font-mono">
+              <% if info&.dig(:container_id) %>
+                <%= link_to container_path(info[:container_id]), data: { turbo_frame: "_top" },
+                      class: "inline-flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400 hover:underline" do %>
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><%= info[:container_name] %>
+                <% end %>
+              <% else %>
+                <span class="text-text-muted">— <span class="text-[10px]">(host)</span></span>
+              <% end %>
+            </td>
+            <td class="px-5 py-3 text-text-muted"><%= f.note %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
+
+<% if @host_state %>
+  <% bf     = @host_state[:ssh_brute_force] || {} %>
+  <% fb     = @host_state[:fail2ban] || {} %>
+  <% fw     = @host_state[:firewall] || {} %>
+  <% logins = @host_state[:accepted_logins] || [] %>
+  <% banned_now = (fb[:jails] || []).sum { |j| j[:currently_banned].to_i } %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 mb-6">
+    <%= render "dashboard/stat_card", count: bf[:total_failed_attempts] || 0, label: "Tentativas SSH falhas (24h)", sub: "#{(bf[:top_ips] || []).size} IPs distintos", icon: :alert_tri %>
+    <%= render "dashboard/stat_card", count: banned_now, label: "IPs banidos agora", sub: fb[:running] ? "fail2ban ativo" : "fail2ban parado", icon: :auth_shield %>
+    <%= render "dashboard/stat_card", count: logins.count { |l| l[:external] }, label: "Logins aceitos de IP externo (24h)", sub: "revisar se inesperado", icon: :notif_bell %>
+    <%= render "dashboard/stat_card", count: fw[:ufw_active] ? "ON" : "OFF", label: "UFW", sub: "#{fw[:docker_user_drop_rules] || 0} regras DOCKER-USER", icon: :networks %>
+  </div>
+
+  <% geo_points = (bf[:top_ips] || []).select { |p| p[:lat] && p[:lon] } %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <% if geo_points.any? %>
+      <div class="bg-surface-raised border border-border rounded-xl overflow-hidden min-w-0">
+        <div class="px-5 py-3 border-b border-border">
+          <h2 class="text-sm font-semibold text-text-primary">Origem geográfica — brute-force SSH (24h)</h2>
+          <p class="text-xs text-text-muted mt-0.5">Cor do país = volume de tentativas · ponto = cidade de origem</p>
+        </div>
+        <div class="w-full" style="height: 520px"
+             data-controller="security-map"
+             data-security-map-points-value="<%= geo_points.to_json %>"></div>
+      </div>
+    <% end %>
+
+    <div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
+      <div class="px-5 py-3 border-b border-border">
+        <h2 class="text-sm font-semibold text-text-primary">Top IPs — brute-force SSH (24h)</h2>
+      </div>
+      <% if (bf[:top_ips] || []).empty? %>
+        <div class="px-5 py-8 text-center text-sm text-text-muted">Nenhuma tentativa registrada.</div>
+      <% else %>
+        <div class="overflow-y-auto" style="max-height: 520px">
+          <table class="w-full text-sm">
+            <tbody class="divide-y divide-border/60">
+              <% bf[:top_ips].each do |ip| %>
+                <tr>
+                  <td class="px-5 py-2.5 font-mono text-text-primary"><%= ip[:ip] %></td>
+                  <td class="px-5 py-2.5 text-text-muted"><%= [ip[:city], ip[:country]].compact.join(", ") %></td>
+                  <td class="px-5 py-2.5 text-right text-text-muted"><%= ip[:attempts] %> tentativas</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden mb-6">
+    <div class="px-5 py-3 border-b border-border">
+      <h2 class="text-sm font-semibold text-text-primary">fail2ban — IPs bloqueados</h2>
+    </div>
+    <% unless fb[:running] %>
+      <div class="px-5 py-8 text-center text-sm text-text-muted">fail2ban não está rodando.</div>
+    <% else %>
+      <div class="divide-y divide-border/60">
+        <% (fb[:jails] || []).each do |jail| %>
+          <div class="px-5 py-3">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-sm text-text-primary"><%= jail[:name] %></span>
+              <span class="text-xs text-text-muted"><%= jail[:currently_banned] %> banidos agora · <%= jail[:total_banned] %> total</span>
+            </div>
+            <% if (jail[:banned_ips] || []).any? %>
+              <div class="mt-1.5 flex flex-wrap gap-1.5">
+                <% jail[:banned_ips].each do |ip| %>
+                  <%= render Ui::BadgeComponent.new(color: :red, size: :xs) { ip } %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden mb-2">
+    <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-text-primary">Logins aceitos (24h)</h2>
+      <span class="text-xs text-text-muted"><%= logins.size %> sessões</span>
+    </div>
+    <% if logins.empty? %>
+      <div class="px-5 py-8 text-center text-sm text-text-muted">Nenhum login nas últimas 24h.</div>
+    <% else %>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-text-muted uppercase tracking-wide">
+            <th class="px-5 py-2.5 font-medium">Quando</th>
+            <th class="px-5 py-2.5 font-medium">Usuário</th>
+            <th class="px-5 py-2.5 font-medium">Método</th>
+            <th class="px-5 py-2.5 font-medium">IP</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <% logins.reverse_each do |l| %>
+            <tr class="<%= "bg-red-50 dark:bg-red-950/20" if l[:external] %>">
+              <td class="px-5 py-2.5 text-text-muted text-xs font-mono"><%= l[:time] %></td>
+              <td class="px-5 py-2.5 font-mono text-text-primary"><%= l[:user] %></td>
+              <td class="px-5 py-2.5 text-text-secondary"><%= l[:method] %></td>
+              <td class="px-5 py-2.5 font-mono <%= l[:external] ? "text-red-600 dark:text-red-400 font-semibold" : "text-text-secondary" %>">
+                <%= l[:ip] %><% if l[:external] %> <span class="text-[10px]">(externo)</span><% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+  <div class="text-xs text-text-muted mb-6">Coletado em <%= @host_state[:collected_at] %> pelo host (cron a cada 5 min).</div>
+<% else %>
+  <div class="mt-6 bg-surface-raised border border-border rounded-xl p-5">
+    <h3 class="text-sm font-semibold text-text-primary mb-2">Fase 2 indisponível</h3>
+    <p class="text-xs text-text-muted leading-relaxed">
+      O coletor do host (<span class="font-mono">security-collect.sh</span>) ainda não gerou
+      <span class="font-mono">/srv/redhusky/security/state.json</span>, ou o bind-mount
+      <span class="font-mono">/host/security:ro</span> não está presente neste deploy.
+      O cron roda a cada 5 minutos — se acabou de subir o host collector, aguarde o próximo ciclo.
+    </p>
+  </div>
+<% end %>
+
+<% cd = @container_diff %>
+<div class="bg-surface-raised border border-border rounded-xl overflow-hidden mb-6">
+  <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+    <h2 class="text-sm font-semibold text-text-primary">Integridade dos containers</h2>
+    <% if cd %>
+      <span class="text-xs text-text-muted"><%= cd[:containers]&.size || 0 %> verificados · <%= l(Time.zone.parse(cd[:collected_at]), format: :short) rescue cd[:collected_at] %></span>
+    <% end %>
+  </div>
+  <% if cd.nil? %>
+    <div class="px-5 py-8 text-center text-sm text-text-muted">
+      Coletor <span class="font-mono">container-diff-collect.sh</span> ainda não rodou (cron a cada 15min).
+    </div>
+  <% else %>
+    <% flagged = (cd[:containers] || []).select { |c| (c[:critical] || []).any? } %>
+    <% if flagged.empty? %>
+      <div class="px-5 py-8 text-center text-sm text-text-muted">Nenhuma alteração suspeita em binários/persistência em nenhum container.</div>
+    <% else %>
+      <div class="px-5 py-2 text-xs text-text-muted bg-amber-50 dark:bg-amber-950/20 border-b border-border">
+        Revisar manualmente — comparado só contra a imagem original (<span class="font-mono">docker diff</span>), pode incluir falso positivo
+        (ex: entrypoint que reescreve <span class="font-mono">/etc/passwd</span> pra suportar UID arbitrário).
+      </div>
+      <div class="divide-y divide-border/60">
+        <% flagged.each do |c| %>
+          <div class="px-5 py-3">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-sm text-text-primary"><%= c[:name] %></span>
+              <span class="text-xs text-text-muted"><%= c[:total_changes] %> mudanças no total</span>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-1.5">
+              <% c[:critical].each do |f| %>
+                <%= render Ui::BadgeComponent.new(color: :red, size: :xs) do %>
+                  <%= f[:type] == "A" ? "novo" : "alterado" %><%= " executável" if f[:executable] %>: <%= f[:path] %><% if f[:size_bytes] %> (<%= number_to_human_size(f[:size_bytes]) %>)<% end %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+</turbo-frame>

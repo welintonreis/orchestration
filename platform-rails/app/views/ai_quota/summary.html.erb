@@ -1,0 +1,33 @@
+<turbo-frame id="ai-quota-summary" refresh="morph">
+  <%
+    results  = @results.values
+    lowest   = results.select(&:ok?).filter_map(&:lowest).min_by { |q| q.remaining_pct.to_i }
+    soonest  = results.select(&:ok?).filter_map(&:next_reset).min
+    empties  = results.count(&:any_empty?)
+    failing  = results.count { |r| !r.ok? }
+  %>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <%= render "shared/ai_quota_tile",
+          value: @results.size,
+          label: "Contas ativas",
+          sub: failing.positive? ? "#{failing} com erro" : "todas respondendo",
+          tone: failing.positive? ? :red : :normal %>
+
+    <%= render "shared/ai_quota_tile",
+          value: empties,
+          label: "Sem quota",
+          sub: "≤ 5% restante",
+          tone: empties.positive? ? :red : :normal %>
+
+    <%= render "shared/ai_quota_tile",
+          value: lowest ? "#{lowest.remaining_pct}%" : "—",
+          label: "Menor quota",
+          sub: lowest&.name,
+          tone: lowest&.color == :red ? :red : :normal %>
+
+    <%= render "shared/ai_quota_tile",
+          value: soonest ? quota_countdown(soonest) : "—",
+          label: "Próximo reset",
+          sub: soonest ? quota_reset_at(soonest) : nil %>
+  </div>
+</turbo-frame>

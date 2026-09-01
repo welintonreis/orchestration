@@ -1,6 +1,11 @@
 class SecurityController < ApplicationController
 
+  # Shell only — SecurityAudit scans /host/proc and #docker_port_map makes two
+  # socket calls, so all of it lives in #rows behind the lazy turbo-frame.
   def index
+  end
+
+  def rows
     @audit          = SecurityAudit.new
     @findings       = @audit.findings
     @summary        = @audit.summary

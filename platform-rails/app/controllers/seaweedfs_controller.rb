@@ -1,7 +1,15 @@
 class SeaweedfsController < ApplicationController
   before_action :require_admin
 
+  # Bucket and prefix links inside rows.html.erb point back at this action so
+  # the URL keeps the selected bucket — when that arrives as a frame
+  # navigation, render the rows directly (see ContainersController#index for
+  # why nesting a frame inside the frame being renavigated silently stalls).
   def index
+    rows if turbo_frame_request?
+  end
+
+  def rows
     @config   = SeaweedfsService.load_config
     @buckets  = SeaweedfsService.list_buckets
     @tab      = params[:tab] || "buckets"
@@ -13,6 +21,8 @@ class SeaweedfsController < ApplicationController
     else
       @objects_data = { "Entries" => [] }
     end
+
+    render "rows", layout: false
   end
 
   def create_bucket

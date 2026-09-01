@@ -14,25 +14,24 @@ class VpsFilesController < ApplicationController
   STREAM_CHUNK   = 65_536
   PREVIEWABLE_IMAGE = %w[.png .jpg .jpeg .gif .svg .webp].freeze
 
+  # The HTML render is a shell: vps_file_browser_controller.js fetches this
+  # same action as JSON on connect and paints the listing itself, so nothing
+  # in the page ever used @entries. Doing the SSH/SFTP handshake here only
+  # made the first byte wait on a connection the response threw away — the
+  # skeleton in the list target now covers the JSON roundtrip instead.
   def index
-    requested = params[:path].presence
-    sftp_operation do |sftp|
-      @current_path = requested ? sanitize_path(requested) : resolve_home(sftp)
-      @entries = list_directory(sftp, @current_path)
-    end
-    @entries ||= []
-    @path_parts = @current_path.to_s.split("/").reject(&:empty?)
-
     respond_to do |format|
       format.html
-      format.json { render json: { path: @current_path, entries: @entries } }
-    end
-  rescue => e
-    @entries = []
-    @error = e.message
-    respond_to do |format|
-      format.html
-      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+      format.json do
+        requested = params[:path].presence
+        sftp_operation do |sftp|
+          @current_path = requested ? sanitize_path(requested) : resolve_home(sftp)
+          @entries = list_directory(sftp, @current_path)
+        end
+        render json: { path: @current_path, entries: @entries || [] }
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
     end
   end
 

@@ -79,7 +79,12 @@
   </div>
 
   <div class="bg-surface-raised border border-border rounded-xl overflow-hidden" tabindex="0" data-action="keydown->vps-file-browser#keydown">
-    <div data-vps-file-browser-target="list" class="min-h-[200px] py-1"></div>
+    <%# Placeholder until the JSON listing lands — the Stimulus controller
+        replaces this whole node on its first render. %>
+    <div data-vps-file-browser-target="list" class="min-h-[200px] py-1">
+      <%= render Ui::SkeletonComponent.new(:table, card: false,
+            columns: [ "w-56", "w-16", "w-24", "w-20" ], rows: 10) %>
+    </div>
     <div data-vps-file-browser-target="progress" class="hidden px-3 py-2 border-t border-border text-xs bg-surface-inset text-text-secondary"></div>
   </div>
 </div>

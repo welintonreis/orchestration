@@ -1,31 +1,10 @@
 <% page_title "Nodes" %>
 <% page_subtitle "Nodes do cluster" %>
 
-<div class="bg-surface-raised border border-border rounded-xl overflow-hidden">
-  <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-    <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider">Nodes</h2>
-    <span class="text-xs font-mono text-text-muted"><%= @nodes.size %> item<%= @nodes.size == 1 ? "" : "s" %></span>
-  </div>
-
-  <% if @nodes.empty? %>
-    <div class="py-16 text-center text-sm text-text-muted">Nenhum node encontrado</div>
-  <% else %>
-    <%= render Ui::TableComponent.new(headers: ["Nome", "Status", "Versão", "CPU/Mem alocável"]) do %>
-      <% @nodes.each do |node| %>
-        <% name = node.dig("metadata", "name") %>
-        <% ready = node.dig("status", "conditions")&.find { |c| c["type"] == "Ready" } %>
-        <% node_ready = ready&.dig("status") == "True" %>
-        <tr class="hover:bg-surface-inset/30 transition-colors">
-          <td class="px-4 py-3 font-mono text-text-primary"><%= name %></td>
-          <td class="px-4 py-3"><%= render(Ui::BadgeComponent.new(color: node_ready ? :green : :red, dot: true)) { node_ready ? "Ready" : "NotReady" } %></td>
-          <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= node.dig("status", "nodeInfo", "kubeletVersion") %></td>
-          <td class="px-4 py-3 text-text-secondary font-mono text-xs"><%= node.dig("status", "allocatable", "cpu") %> / <%= node.dig("status", "allocatable", "memory") %></td>
-        </tr>
-      <% end %>
-    <% end %>
-  <% end %>
-
-  <% unless @top_pods.present? %>
-    <div class="px-5 py-3 text-xs text-text-muted border-t border-border">metrics-server não detectado — colunas de uso ao vivo indisponíveis.</div>
-  <% end %>
-</div>
+<%# Nodes + the metrics-server probe are two serial API calls. Load it
+    behind a skeleton so the header paints at once — see
+    Kube::NodesController#rows. %>
+<turbo-frame id="kube-nodes-content" refresh="morph" target="_top" src="<%= kube_rows_nodes_path %>">
+  <%= render Ui::SkeletonComponent.new(:table,
+        columns: [ "w-40", "w-16", "w-20", "w-32" ], rows: 4) %>
+</turbo-frame>

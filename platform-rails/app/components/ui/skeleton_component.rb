@@ -23,21 +23,30 @@ module Ui
     # Grid used by the stat-tile rows across the app (dashboard/_stat_card).
     STATS_GRID = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6".freeze
 
-    def initialize(variant = :table, columns: nil, rows: 8, count: 5, toolbar: false, css_class: nil)
+    # `grid` overrides STATS_GRID for screens whose stat row isn't the
+    # dashboard's 5-column one (security uses 4) — a skeleton laid out on a
+    # different grid than the real content defeats the whole point.
+    def initialize(variant = :table, columns: nil, rows: 8, count: 5, toolbar: false, css_class: nil, grid: nil, card: true)
       @variant   = VARIANTS.include?(variant) ? variant : :table
       @columns   = columns.presence || [ :check, "w-40", "w-24", "w-32", "w-20", :actions ]
       @rows      = rows
       @count     = count
       @toolbar   = toolbar
       @css_class = css_class
+      @grid      = grid || STATS_GRID
+      @card      = card
     end
 
     private
 
-    attr_reader :variant, :columns, :rows, :count, :toolbar, :css_class
+    attr_reader :variant, :columns, :rows, :count, :toolbar, :css_class, :grid, :card
 
+    # `card: false` for skeletons that sit *inside* an existing card — a second
+    # bordered box nested in the first is exactly the layout noise this is
+    # supposed to avoid.
     def card_classes
-      [ "bg-surface-raised border border-border rounded-xl overflow-hidden animate-pulse", css_class ].compact.join(" ")
+      [ ("bg-surface-raised border border-border rounded-xl overflow-hidden" if card),
+        "animate-pulse", css_class ].compact.join(" ")
     end
 
     # Headers are uniform bars — matching each header's exact text width buys

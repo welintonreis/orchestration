@@ -3,6 +3,9 @@ module Kube
     include RequireKubernetes
 
     def index
+    end
+
+    def rows
       load_namespaces
       @config_maps = current_kube_client.config_maps(ns: @namespace)
     rescue KubeClient::Error => e

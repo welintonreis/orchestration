@@ -1,0 +1,121 @@
+<turbo-frame id="ai-account-<%= @account.id %>" refresh="morph">
+  <div class="bg-surface-raised border <%= @account.active? ? 'border-border' : 'border-border/50' %> rounded-xl <%= 'opacity-60' unless @account.active? %>">
+
+    <div class="flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-border/60">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-sm font-semibold text-text-primary truncate"><%= ai_provider_label(@account.provider) %></span>
+          <% if @result.plan.present? %>
+            <%= render Ui::BadgeComponent.new(color: :blue, size: :xs) { @result.plan } %>
+          <% end %>
+          <% unless @account.active? %>
+            <%= render Ui::BadgeComponent.new(color: :gray, size: :xs) { "Desligada" } %>
+          <% end %>
+        </div>
+        <p class="text-xs text-text-muted truncate"><%= @account.label %></p>
+        <% if @account.credential_source == "file" %>
+          <p class="text-[10px] font-mono text-text-muted truncate mt-0.5" title="<%= @account.credential_path %>">
+            <%= @account.credential_path %>
+          </p>
+        <% end %>
+      </div>
+
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <%= button_to refresh_ai_quota_path(@account), method: :post,
+              form: { data: { turbo_frame: "ai-account-#{@account.id}" } },
+              class: "p-1.5 rounded-lg hover:bg-surface-inset text-text-muted hover:text-text-primary transition-colors",
+              title: "Atualizar agora" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M20 9A8 8 0 006 5.3M4 15a8 8 0 0014 3.7"/>
+          </svg>
+        <% end %>
+        <%# Toggling changes the sidebar counts and the summary tiles, so it has
+            to leave the frame — a frame-scoped response would update this card
+            and leave the rest of the page lying. %>
+        <%= button_to toggle_ai_quota_path(@account), method: :post,
+              form: { data: { turbo_frame: "_top" } },
+              class: "p-1.5 rounded-lg hover:bg-surface-inset text-text-muted hover:text-text-primary transition-colors",
+              title: @account.active? ? "Desligar conta" : "Ligar conta" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.36 6.64A9 9 0 1 1 5.64 6.64M12 2v10"/>
+          </svg>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="px-5 py-4">
+      <% if !@result.ok? %>
+        <div class="flex items-start gap-2 text-xs text-red-600 dark:text-red-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 mt-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          </svg>
+          <span><%= @result.message %></span>
+        </div>
+
+      <% elsif @result.quotas.empty? %>
+        <p class="text-xs text-text-muted">Nenhuma janela de quota reportada.</p>
+
+      <% else %>
+        <% @result.quotas.each do |quota| %>
+          <div class="mb-3.5 last:mb-0">
+            <div class="flex items-baseline justify-between gap-2 mb-1.5">
+              <span class="text-xs font-medium text-text-primary truncate"><%= quota.name %></span>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <%# Trend the providers don't keep — see AiQuotaSnapshotJob. %>
+                <% series = AiQuotaSnapshot.series_for(@account, quota.name) %>
+                <% if (spark = quota_sparkline(series)) %>
+                  <span class="text-text-muted" title="Últimas <%= series.size %> leituras"><%= spark %></span>
+                <% end %>
+                <span class="text-xs font-mono text-text-secondary">
+                  <%= quota.unlimited ? "Ilimitado" : "#{quota.remaining_pct}%" %>
+                </span>
+              </div>
+            </div>
+
+            <% unless quota.unlimited %>
+              <div class="h-2 w-full bg-surface-inset rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all <%= quota_bar_color(quota) %>"
+                     style="width: <%= [quota.remaining_pct.to_i, 100].min %>%"></div>
+              </div>
+            <% end %>
+
+            <div class="flex items-baseline justify-between gap-2 mt-1">
+              <span class="text-[10px] text-text-muted font-mono"><%= quota_usage_label(quota) %></span>
+              <% if quota.reset_at.present? %>
+                <span class="text-[10px] text-text-muted" title="<%= quota_reset_at(quota.reset_at) %>">
+                  reseta em <%= quota_countdown(quota.reset_at) %> · <%= quota_reset_at(quota.reset_at) %>
+                </span>
+              <% end %>
+            </div>
+
+            <% if quota.locked? %>
+              <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1"><%= quota.locked_reason %></p>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%# Extras worth acting on: credits that cover you past the plan limit,
+            and the codex reset credits that skip a cooldown. %>
+        <% if @result.extra[:credits_limit].present? %>
+          <div class="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-[11px]">
+            <span class="text-text-muted">Créditos extras</span>
+            <span class="font-mono text-text-secondary">
+              <%= number_to_currency(@result.extra[:credits_used], unit: "$") %> /
+              <%= number_to_currency(@result.extra[:credits_limit], unit: "$") %>
+              <% unless @result.extra[:credits_enabled] %>
+                <span class="text-text-muted">(desativado)</span>
+              <% end %>
+            </span>
+          </div>
+        <% end %>
+
+        <% if @result.extra[:reset_credits].present? %>
+          <div class="mt-2 flex items-center justify-between text-[11px]">
+            <span class="text-text-muted">Créditos de reset</span>
+            <span class="font-mono text-text-secondary"><%= @result.extra[:reset_credits] %> disponíveis</span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>
