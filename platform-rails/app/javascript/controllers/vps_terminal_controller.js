@@ -163,6 +163,16 @@ export default class extends Controller {
     const swallowRight = (e) => { if (e.button === 2) { e.preventDefault(); e.stopPropagation() } }
     this.containerTarget.addEventListener("mousedown", swallowRight, true)
     this.containerTarget.addEventListener("mouseup", swallowRight, true)
+
+    // Auto-copy when a left-button drag finishes with text selected — copies
+    // inside the user gesture instead of waiting for a right-click later,
+    // which can race xterm's own SelectionService clearing on the next mousedown.
+    this.containerTarget.addEventListener("mouseup", (e) => {
+      if (e.button !== 0) return
+      const sel = this.term.getSelection()
+      if (sel) this.#writeClipboard(sel)
+    })
+
     this.containerTarget.addEventListener("contextmenu", (e) => {
       e.preventDefault(); e.stopPropagation()
       if (this.term.hasSelection()) { this.#writeClipboard(this.term.getSelection()); this.term.clearSelection() }
@@ -171,15 +181,35 @@ export default class extends Controller {
     }, true)
   }
 
+  // execCommand("copy") runs synchronously inside the user gesture and needs no
+  // secure context — try it first. Chrome silently no-ops it in some contexts,
+  // so fall back to the async Clipboard API rather than fail silently.
   #writeClipboard(text) {
-    if (!text) return
+    if (!text) return Promise.resolve(false)
+    if (this.#execCopy(text)) return Promise.resolve(true)
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(() => false)
+    }
+    return Promise.resolve(false)
+  }
+
+  #execCopy(text) {
     try {
       const ta = document.createElement("textarea")
-      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "-9999px"
-      document.body.appendChild(ta); ta.select()
-      document.execCommand("copy")
+      ta.value = text
+      ta.setAttribute("readonly", "")
+      ta.style.position = "fixed"
+      ta.style.top = "-9999px"
+      document.body.appendChild(ta)
+      const active = document.activeElement
+      ta.select()
+      const ok = document.execCommand("copy")
       document.body.removeChild(ta)
-    } catch {}
+      if (active && active.focus) active.focus()
+      return ok
+    } catch {
+      return false
+    }
   }
 
   #setStatus(status, message = null) {

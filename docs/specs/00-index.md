@@ -17,4 +17,10 @@
 | [feature-ai-quota](feature-ai-quota.md) | Quotas de IA nativas (contas próprias, refresh de token, snapshots) | 📋 | próxima |
 | [feature-runtime-abstraction-podman](feature-runtime-abstraction-podman.md) | Abstração de runtime (Podman) | 📋 | sem gatilho |
 
+## Incidentes
+
+| Doc | O quê |
+|---|---|
+| [incident-terminal-vps-selecao](incident-terminal-vps-selecao.md) | Terminal VPS: seleção/cópia morta (tmux `mouse on`), 2ª sessão impossível, shells órfãos — corrigido v0.9.60 |
+
 ✅ implementado · 📋 futura (gatilhos no doc) · ❌ decisão de não fazer

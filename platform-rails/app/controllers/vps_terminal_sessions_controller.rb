@@ -9,11 +9,15 @@ class VpsTerminalSessionsController < ApplicationController
   end
 
   def create
-    # Reuse recent session for this host (connected, connecting or disconnected)
-    # The shell process on the remote host (tmux) stays alive in the background.
-    existing = Current.user.vps_terminal_sessions.where(vps_host: @host).order(updated_at: :desc).first
-    if existing && existing.status != "error"
-      return redirect_to terminal_vps_host_terminal_session_path(@host, existing)
+    # Opening a host reuses its most recent session — the remote shell is still
+    # alive under dtach/tmux, so you land back where you left off. `?new=1` (the
+    # "+" in the tab bar) is the explicit opt-out: it forces a fresh session,
+    # which the model assigns the lowest free slot and therefore its own shell.
+    unless params[:new].present?
+      existing = Current.user.vps_terminal_sessions.where(vps_host: @host).order(updated_at: :desc).first
+      if existing && existing.status != "error"
+        return redirect_to terminal_vps_host_terminal_session_path(@host, existing)
+      end
     end
 
     active_count = Current.user.vps_terminal_sessions.active.count
@@ -32,13 +36,19 @@ class VpsTerminalSessionsController < ApplicationController
   end
 
   def destroy
-    VpsSshService.new(@session).disconnect
+    # Kill the remote shell too: once the row is gone nothing knows this slot's
+    # dtach socket / tmux name, so the shell would linger detached forever.
+    service = VpsSshService.new(@session)
+    service.disconnect
+    service.kill_remote_shell
     VpsSftpPool.release(@session.vps_host_id)
-    @session.mark_disconnected!
-    AuditLog.record(user: Current.user, action: "vps_session.disconnected", target_type: "VpsTerminalSession", target_id: @session.id)
+    host = @session.vps_host
+    session_id = @session.id
+    @session.destroy
+    AuditLog.record(user: Current.user, action: "vps_session.destroyed", target_type: "VpsTerminalSession", target_id: session_id)
     respond_to do |format|
       format.json { render json: { ok: true } }
-      format.html { redirect_to vps_host_terminal_sessions_path(@session.vps_host), notice: "Sessão encerrada." }
+      format.html { redirect_to vps_host_terminal_sessions_path(host), notice: "Sessão excluída com sucesso." }
     end
   end
 

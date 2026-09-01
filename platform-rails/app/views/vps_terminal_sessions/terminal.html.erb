@@ -40,6 +40,16 @@
       </div>
     <% end %>
 
+    <%# New session on the same host — forces a fresh slot (own remote shell)
+        instead of the reuse-most-recent default. %>
+    <%= button_to vps_host_terminal_sessions_path(@host, new: 1),
+                  method: :post,
+                  form_class: "shrink-0 flex",
+                  class: "px-3 flex items-center text-text-muted hover:text-text-primary hover:bg-surface-raised border-r border-border/50 text-sm transition-colors",
+                  title: "Nova sessão neste host" do %>
+      +
+    <% end %>
+
     <div class="flex-1"></div>
   </div>
 

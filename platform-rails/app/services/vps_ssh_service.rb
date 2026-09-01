@@ -71,6 +71,24 @@ class VpsSshService
     PENDING_RESIZE.delete(@ckey) rescue nil
   end
 
+  # Deleting the session row makes its remote shell unreachable — nothing else
+  # knows the slot's name. Without this, every closed tab leaked a detached
+  # tmux/dtach shell on the host forever.
+  def kill_remote_shell
+    cmd = "tmux kill-session -t #{session_name} 2>/dev/null; " \
+          "abduco -k #{session_name} 2>/dev/null; " \
+          "pkill -f \"dtach -A #{dtach_socket}\" 2>/dev/null; rm -f #{dtach_socket} 2>/dev/null; true"
+    Net::SSH.start(@host.hostname, @host.username,
+                   **self.class.build_options(@host, VpsHostKeyVerifier.new(@host))) do |ssh|
+      ssh.exec!("sh -c #{Shellwords.escape(cmd)}")
+    end
+    true
+  rescue => e
+    # Best effort: an unreachable host must not block deleting the row.
+    Rails.logger.warn("VpsSshService#kill_remote_shell(#{session_name}): #{e.message}")
+    false
+  end
+
   # Shared by VpsSshService and VpsSftpPool — connection options for a
   # VpsHost, keyed off its SharedCredential.
   def self.build_options(host, verifier)
@@ -184,20 +202,37 @@ class VpsSshService
     Rails.logger.error("VpsSshService [#{@session.token}]: #{e.class}: #{e.message}")
   end
 
-  # Persistent shell that survives WebSocket drops and re-renders full terminal buffer on reconnect.
-  # Preference: tmux (preserves scrollback buffer, redraws on reattach) > dtach > plain shell.
-  # Slot isolates concurrent tabs.
+  # Persistent shell that survives WebSocket drops. Slot isolates concurrent tabs.
+  #
+  # Preference: dtach > abduco > tmux. dtach is a transparent pty — it never
+  # enables xterm mouse tracking, so drag-select works. tmux with `mouse on`
+  # answers every mouse move with a report and redraws, wiping the xterm
+  # selection mid-drag (you can only copy holding Shift). tmux is kept for
+  # hosts that have nothing else, and always wins when a session under our
+  # name already exists there — installing dtach must not orphan the tmux
+  # workspace the user already lives in.
   def shell_command
-    slot   = @session.slot.to_i
-    suffix = slot.positive? ? "_s#{slot}" : ""
-    name   = "vps_#{@host.id}#{suffix}"
-    sock   = "/tmp/.vps-#{@host.id}#{suffix}.dtach"
     login_shell = "$(command -v zsh || command -v bash) -l"
+    tmux_cmd = "exec tmux new-session -A -s #{session_name} \\; set -g mouse on \\; set -g status off"
     <<~SH.strip
-      if command -v tmux >/dev/null 2>&1; then exec tmux new-session -A -s #{name} \\; set -g mouse on \\; set -g status off;
-      elif command -v dtach >/dev/null 2>&1; then exec dtach -A #{sock} -z -r winch #{login_shell};
-      elif command -v abduco >/dev/null 2>&1; then exec abduco -A #{name} #{login_shell};
+      if command -v tmux >/dev/null 2>&1 && tmux has-session -t #{session_name} 2>/dev/null; then #{tmux_cmd};
+      elif command -v dtach >/dev/null 2>&1; then exec dtach -A #{dtach_socket} -z -r winch #{login_shell};
+      elif command -v abduco >/dev/null 2>&1; then exec abduco -A #{session_name} #{login_shell};
+      elif command -v tmux >/dev/null 2>&1; then #{tmux_cmd};
       else exec #{login_shell}; fi
     SH
   end
+
+  # Slot 0 keeps the unsuffixed names so sessions opened before slots existed
+  # still re-attach.
+  def session_name
+    slot = @session.slot.to_i
+    "vps_#{@host.id}#{slot.positive? ? "_s#{slot}" : ""}"
+  end
+
+  def dtach_socket
+    slot = @session.slot.to_i
+    "/tmp/.vps-#{@host.id}#{slot.positive? ? "_s#{slot}" : ""}.dtach"
+  end
+
 end

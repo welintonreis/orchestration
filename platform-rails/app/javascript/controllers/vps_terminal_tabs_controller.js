@@ -24,7 +24,7 @@ export default class extends Controller {
     event.stopPropagation()
     const id = event.params?.sessionId || event.currentTarget.dataset.sessionId
     const hostId = event.params?.hostId || event.currentTarget.dataset.hostId
-    const msg = `Fechar sessão #${id}? O shell continua vivo no host (tmux/dtach).`
+    const msg = `Encerrar sessão #${id}? O shell remoto e tudo que estiver rodando nele são destruídos.`
     if (!window.confirm(msg)) return
 
     try {
