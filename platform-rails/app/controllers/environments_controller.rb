@@ -1,7 +1,15 @@
 class EnvironmentsController < ApplicationController
   before_action :set_environment, only: %i[destroy activate]
 
+  # The shell: cheap enough to paint immediately (one AR query, for the
+  # empty state). The per-environment Docker probing lives in #rows, which
+  # the lazy turbo-frame in index.html.erb fetches — this action used to do
+  # 7 serial socket calls PER environment before sending a single byte.
   def index
+    @environments = Environment.order(:name)
+  end
+
+  def rows
     @environments = Environment.order(:name)
     @stats = {}
 

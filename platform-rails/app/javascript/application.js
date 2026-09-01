@@ -7,6 +7,11 @@ import "controllers"
 // dropdowns to flash open briefly. Skip morphing of any x-show element so Alpine
 // retains ownership of its display state. Sibling/parent elements (e.g. bell
 // button with badge count) morph normally.
+// Show the progress bar almost immediately instead of Turbo's 500ms default:
+// most slow pages here block on the Docker socket / SSH, and half a second of
+// an apparently dead screen is exactly the "platform is slow" feeling.
+Turbo.setProgressBarDelay(100)
+
 document.addEventListener("turbo:before-morph-element", (event) => {
   if (event.target.hasAttribute("x-show")) event.preventDefault()
 })

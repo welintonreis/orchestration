@@ -1,0 +1,88 @@
+<%# aria-busy tells assistive tech the region is still loading; the bars
+    themselves are decorative and must not be announced. %>
+<div aria-busy="true" aria-live="polite">
+  <span class="sr-only">Carregando…</span>
+
+  <div aria-hidden="true">
+    <% case variant %>
+    <% when :table %>
+      <% if toolbar %>
+        <div class="mb-3 flex items-center justify-between gap-3 animate-pulse">
+          <div class="h-8 w-64 bg-surface-inset rounded-lg"></div>
+          <div class="h-8 w-28 bg-surface-inset rounded-lg"></div>
+        </div>
+      <% end %>
+      <div class="<%= card_classes %>">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border">
+              <% columns.each do |col| %>
+                <th class="px-4 py-3 <%= "w-8" if col == :check %>"><%= header_bar(col) %></th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border/60">
+            <% rows.times do %>
+              <tr>
+                <% columns.each do |col| %>
+                  <td class="px-4 py-3"><%= body_cell(col) %></td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+    <% when :stats %>
+      <div class="<%= STATS_GRID %> animate-pulse">
+        <% count.times do %>
+          <div class="bg-surface-raised border border-border rounded-xl p-5">
+            <div class="h-8 w-10 bg-surface-inset rounded mb-2"></div>
+            <div class="h-3 w-16 bg-surface-inset rounded"></div>
+          </div>
+        <% end %>
+      </div>
+
+    <% when :cards %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
+        <% count.times do %>
+          <div class="bg-surface-raised border border-border rounded-xl p-5">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-surface-inset rounded-lg flex-shrink-0"></div>
+              <div class="flex flex-col gap-1.5">
+                <div class="h-3.5 w-32 bg-surface-inset rounded"></div>
+                <div class="h-2.5 w-44 bg-surface-inset rounded"></div>
+              </div>
+            </div>
+            <% 3.times do %>
+              <div class="mb-3">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="h-2.5 w-24 bg-surface-inset rounded"></div>
+                  <div class="h-2.5 w-10 bg-surface-inset rounded"></div>
+                </div>
+                <div class="h-2 w-full bg-surface-inset rounded-full"></div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+    <% when :toolbar %>
+      <div class="mb-3 flex items-center justify-between gap-3 animate-pulse <%= css_class %>">
+        <div class="h-8 w-64 bg-surface-inset rounded-lg"></div>
+        <div class="h-8 w-28 bg-surface-inset rounded-lg"></div>
+      </div>
+
+    <% when :detail %>
+      <div class="<%= card_classes %> p-5">
+        <div class="h-5 w-48 bg-surface-inset rounded mb-4"></div>
+        <% 6.times do %>
+          <div class="flex items-center gap-4 py-2.5 border-b border-border/60 last:border-0">
+            <div class="h-3 w-32 bg-surface-inset rounded flex-shrink-0"></div>
+            <div class="h-3 w-full max-w-md bg-surface-inset rounded"></div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

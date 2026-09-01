@@ -13,6 +13,8 @@
 | [feature-kubernetes-k3s](feature-kubernetes-k3s.md) | k3s single-node | ✅ | shipped v0.9.17 |
 | [feature-kubernetes-k8s-multicluster](feature-kubernetes-k8s-multicluster.md) | k8s multi-cluster | ✅ (parcial) | shipped v0.9.17 |
 | [feature-edge-compute](feature-edge-compute.md) | Multi-endpoint via agente Go (enroll/heartbeat/tunnel — beta no repo) | 📋 | gatilho: 2º host |
+| [feature-loading-skeletons](feature-loading-skeletons.md) | Skeletons de loading + cache de capabilities + barra de progresso do Turbo | 🚧 | em andamento |
+| [feature-ai-quota](feature-ai-quota.md) | Quotas de IA nativas (contas próprias, refresh de token, snapshots) | 📋 | próxima |
 | [feature-runtime-abstraction-podman](feature-runtime-abstraction-podman.md) | Abstração de runtime (Podman) | 📋 | sem gatilho |
 
 ✅ implementado · 📋 futura (gatilhos no doc) · ❌ decisão de não fazer

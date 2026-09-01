@@ -34,8 +34,15 @@ class DockerClient
 
   # Podman never runs Swarm, regardless of what LocalNodeState reports —
   # ponytail: no separate podman probe, absence of swarm is the capability.
+  # Cached per-endpoint, not just per-instance: this is read on EVERY request
+  # (ApplicationController#runtime_capabilities feeds the sidebar, SwarmGuard
+  # re-reads it as a before_action), and the /info call behind it was hitting
+  # the socket every time — a slow or unreachable daemon stalled every page in
+  # the app, including the ones that only touch ActiveRecord.
+  # ponytail: 60s TTL, so joining/leaving a swarm takes up to a minute to show
+  # in the nav. Drop the TTL or bust the key on swarm mutations if that bites.
   def capabilities
-    @capabilities ||= begin
+    @capabilities ||= Rails.cache.fetch("docker_client/capabilities/#{@endpoint}", expires_in: 60.seconds) do
       swarm = runtime == "docker" && info["Swarm"]&.dig("LocalNodeState") == "active"
       { swarm: swarm, compose: true, pods: runtime == "podman" }
     rescue Error

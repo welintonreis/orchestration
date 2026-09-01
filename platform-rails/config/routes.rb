@@ -129,6 +129,9 @@ Rails.application.routes.draw do
     end
   end
   resources :environments do
+    collection do
+      get :rows
+    end
     member do
       post :activate
     end

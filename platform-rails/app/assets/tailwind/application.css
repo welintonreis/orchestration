@@ -262,3 +262,14 @@ input[type="checkbox"] {
 .prune-progress-bar {
   animation: prune-slide 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* ── Turbo Drive progress bar ──
+   The layout sets turbo-cache-control:no-cache globally, so a navigation keeps
+   showing the OLD page until the new one arrives. Without this the only cue is
+   Turbo's default thin blue bar after a 500ms delay, which reads as "frozen".
+   Brand-coloured, with a glow so it's visible on both the light and dark themes. */
+.turbo-progress-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand) 0%, color-mix(in srgb, var(--brand) 55%, white) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand) 60%, transparent);
+}
