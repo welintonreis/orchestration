@@ -1,29 +1,35 @@
 class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
   def up
-    # 1. vps_hosts: add uuid string column
-    add_column :vps_hosts, :uuid_id, :string
-    execute "UPDATE vps_hosts SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6)))"
+    # Clean up any partial state from previously failed run
+    drop_table :vps_hosts_new if table_exists?(:vps_hosts_new)
+    drop_table :vps_terminal_sessions_new if table_exists?(:vps_terminal_sessions_new)
+    drop_table :sessions_new if table_exists?(:sessions_new)
 
-    # 2. vps_terminal_sessions: map vps_host_id to uuid, add session uuid
-    add_column :vps_terminal_sessions, :uuid_id, :string
-    add_column :vps_terminal_sessions, :vps_host_uuid, :string
+    # 1. vps_hosts: ensure uuid_id column exists & populated
+    add_column :vps_hosts, :uuid_id, :string unless column_exists?(:vps_hosts, :uuid_id)
+    execute "UPDATE vps_hosts SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6))) WHERE uuid_id IS NULL"
+
+    # 2. vps_terminal_sessions: ensure uuid columns exist & populated
+    add_column :vps_terminal_sessions, :uuid_id, :string unless column_exists?(:vps_terminal_sessions, :uuid_id)
+    add_column :vps_terminal_sessions, :vps_host_uuid, :string unless column_exists?(:vps_terminal_sessions, :vps_host_uuid)
 
     execute <<-SQL
       UPDATE vps_terminal_sessions
       SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6)))
+      WHERE uuid_id IS NULL
     SQL
 
     execute <<-SQL
       UPDATE vps_terminal_sessions
       SET vps_host_uuid = (SELECT uuid_id FROM vps_hosts WHERE vps_hosts.id = vps_terminal_sessions.vps_host_id)
+      WHERE vps_host_uuid IS NULL
     SQL
 
-    # 3. sessions: add uuid
-    add_column :sessions, :uuid_id, :string
-    execute "UPDATE sessions SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6)))"
+    # 3. sessions: ensure uuid_id exists & populated
+    add_column :sessions, :uuid_id, :string unless column_exists?(:sessions, :uuid_id)
+    execute "UPDATE sessions SET uuid_id = lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-' || '4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6))) WHERE uuid_id IS NULL"
 
-    # SQLite recreate tables with new PKs
-    # vps_hosts
+    # --- Recreate vps_hosts without indexes initially to avoid global name collisions ---
     create_table :vps_hosts_new, id: :string, primary_key: :id, force: :cascade do |t|
       t.string "auth_method", default: "password", null: false
       t.datetime "created_at", null: false
@@ -36,8 +42,6 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
       t.integer "shared_credential_id"
       t.datetime "updated_at", null: false
       t.string "username", null: false
-      t.index ["name"], name: "index_vps_hosts_on_name", unique: true
-      t.index ["shared_credential_id"], name: "index_vps_hosts_on_shared_credential_id"
     end
 
     execute <<-SQL
@@ -47,8 +51,10 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
     SQL
     drop_table :vps_hosts
     rename_table :vps_hosts_new, :vps_hosts
+    add_index :vps_hosts, :name, unique: true
+    add_index :vps_hosts, :shared_credential_id
 
-    # vps_terminal_sessions
+    # --- Recreate vps_terminal_sessions ---
     create_table :vps_terminal_sessions_new, id: :string, primary_key: :id, force: :cascade do |t|
       t.datetime "created_at", null: false
       t.datetime "ended_at"
@@ -62,9 +68,6 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
       t.datetime "updated_at", null: false
       t.integer "user_id", null: false
       t.string "vps_host_id", null: false
-      t.index ["token"], name: "index_vps_terminal_sessions_on_token", unique: true
-      t.index ["user_id"], name: "index_vps_terminal_sessions_on_user_id"
-      t.index ["vps_host_id"], name: "index_vps_terminal_sessions_on_vps_host_id"
     end
 
     execute <<-SQL
@@ -74,15 +77,17 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
     SQL
     drop_table :vps_terminal_sessions
     rename_table :vps_terminal_sessions_new, :vps_terminal_sessions
+    add_index :vps_terminal_sessions, :token, unique: true
+    add_index :vps_terminal_sessions, :user_id
+    add_index :vps_terminal_sessions, :vps_host_id
 
-    # sessions
+    # --- Recreate sessions ---
     create_table :sessions_new, id: :string, primary_key: :id, force: :cascade do |t|
       t.datetime "created_at", null: false
       t.string "ip_address"
       t.datetime "updated_at", null: false
       t.string "user_agent"
       t.integer "user_id", null: false
-      t.index ["user_id"], name: "index_sessions_on_user_id"
     end
 
     execute <<-SQL
@@ -92,6 +97,7 @@ class ConvertVpsAndSessionsToUuid < ActiveRecord::Migration[8.1]
     SQL
     drop_table :sessions
     rename_table :sessions_new, :sessions
+    add_index :sessions, :user_id
   end
 
   def down
