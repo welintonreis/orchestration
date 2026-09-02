@@ -9,26 +9,30 @@ require "shellwords"
 # not wedge the pool.
 class VpsFilesController < ApplicationController
   before_action :set_host
+  # Split-screen view from the terminal loads this in an iframe — full sidebar
+  # layout would nest a second nav inside the pane, so swap to the bare shell.
+  layout -> { params[:embed] ? "embed" : "application" }
 
   MAX_EDIT_BYTES = 1_048_576 # editor/preview loads the whole file into RAM — cap it
   STREAM_CHUNK   = 65_536
   PREVIEWABLE_IMAGE = %w[.png .jpg .jpeg .gif .svg .webp].freeze
 
-  # The HTML render is a shell: vps_file_browser_controller.js fetches this
-  # same action as JSON on connect and paints the listing itself, so nothing
-  # in the page ever used @entries. Doing the SSH/SFTP handshake here only
-  # made the first byte wait on a connection the response threw away — the
-  # skeleton in the list target now covers the JSON roundtrip instead.
+  # The HTML render seeds the first listing into the page. It used to render a
+  # bare shell and let the JS fetch this same action as JSON on connect, which
+  # cost a second round trip *plus* the Stimulus boot between them — ~230ms of
+  # blank pane on top of the frame fetch. The terminal's split-screen prefetches
+  # this frame on hover and keeps it for the life of the page, so paying the
+  # SSH cost here is paid before the click lands, not after it.
+  #
+  # Best effort: if the host is unreachable the page still renders and the JS
+  # falls back to fetching (and surfacing the error) on connect.
   def index
     respond_to do |format|
-      format.html
+      format.html do
+        @seed = listing(params[:path].presence) rescue nil
+      end
       format.json do
-        requested = params[:path].presence
-        sftp_operation do |sftp|
-          @current_path = requested ? sanitize_path(requested) : resolve_home(sftp)
-          @entries = list_directory(sftp, @current_path)
-        end
-        render json: { path: @current_path, entries: @entries || [] }
+        render json: listing(params[:path].presence)
       rescue => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
@@ -57,8 +61,15 @@ class VpsFilesController < ApplicationController
     raise ArgumentError, "Tipo não suportado para preview" unless PREVIEWABLE_IMAGE.include?(ext)
 
     response.set_header("Content-Type", Rack::Mime.mime_type(ext, "application/octet-stream"))
-    response.set_header("Cache-Control", "no-store")
-    self.response_body = sftp_stream_enumerator(path)
+    response.set_header("Cache-Control", "private, max-age=300")
+    # ponytail: pooled (not throwaway) connection — grid view fires one raw
+    # request per thumbnail, and a throwaway Net::SFTP.start per image opened
+    # N simultaneous SSH handshakes, starving every Puma thread (incl. /up
+    # healthcheck) and getting the container killed as unhealthy. Files here
+    # are capped to small previewable images, so serializing them on the
+    # pool's per-host mutex is cheap — unlike download/archive, which stay on
+    # throwaway connections because a large abandoned transfer would wedge it.
+    self.response_body = pooled_stream_enumerator(path)
   rescue => e
     head :unprocessable_entity
   end
@@ -238,6 +249,19 @@ class VpsFilesController < ApplicationController
     out
   end
 
+  # Reads the whole file inside the pool's mutex (thumbnails are small,
+  # capped to PREVIEWABLE_IMAGE) so the SSH connection is held only for the
+  # actual transfer, not for however long the client takes to consume it.
+  # Redis-cached per host+path+mtime — grid view re-fetches the same
+  # thumbnails on every open/scroll, no need to hit SFTP each time.
+  def pooled_stream_enumerator(path)
+    mtime = VpsSftpPool.with(@host) { |sftp| sftp.stat!(path).mtime }
+    data = Rails.cache.fetch([ "vps_raw", @host.id, path, mtime ], expires_in: 1.hour) do
+      VpsSftpPool.with(@host) { |sftp| sftp.download!(path) }
+    end
+    [ data ]
+  end
+
   def sftp_stream_enumerator(path)
     Enumerator.new do |y|
       Net::SFTP.start(@host.hostname, @host.username, **VpsSshService.build_options(@host, VpsHostKeyVerifier.new(@host))) do |sftp|
@@ -270,6 +294,13 @@ class VpsFilesController < ApplicationController
 
   def join_path(dir, name)
     "#{dir}/#{name}".gsub(%r{/+}, "/")
+  end
+
+  def listing(requested)
+    sftp_operation do |sftp|
+      path = requested ? sanitize_path(requested) : resolve_home(sftp)
+      { path: path, entries: list_directory(sftp, path) }
+    end
   end
 
   def list_directory(sftp, path)

@@ -16,7 +16,7 @@ export default class extends Controller {
     "pasteBar", "clipName", "bulkBar", "bulkCount",
     "previewModal", "previewTitle", "previewBody", "previewDownloadBtn",
   ]
-  static values = { hostId: String }
+  static values = { hostId: String, seed: Object }
 
   connect() {
     this.path = ""
@@ -33,7 +33,16 @@ export default class extends Controller {
     // asks for a relist instead of refetching the whole frame.
     this._onReload = () => this.load()
     document.addEventListener("vps-files:reload", this._onReload)
-    this.load()
+    // The page already carries the first listing (see VpsFilesController#index)
+    // — paint it instead of spending a second round trip to fetch what we have.
+    if (this.seedValue?.path) {
+      this.path = this.seedValue.path
+      this.entries = this.seedValue.entries || []
+      this._renderBreadcrumb()
+      this._render()
+    } else {
+      this.load()
+    }
   }
 
   disconnect() {
