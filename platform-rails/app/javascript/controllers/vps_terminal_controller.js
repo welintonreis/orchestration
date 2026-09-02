@@ -59,13 +59,11 @@ export default class extends Controller {
     })
     this.term.onResize(({ cols, rows }) => this.subscription?.send({ action: "resize", cols, rows }))
 
-    this.resizeObserver = new ResizeObserver(() => this.#fitIfVisible())
+    this.resizeObserver = new ResizeObserver(() => this.#scheduleFit())
     this.resizeObserver.observe(this.containerTarget)
     this._onActivated = () => {
-      requestAnimationFrame(() => {
-        this.#fitIfVisible()
-        this.term?.focus()
-      })
+      this.#scheduleFit()
+      requestAnimationFrame(() => this.term?.focus())
     }
     this.element.addEventListener("terminal:activated", this._onActivated)
     this.#setupCopyPaste()
@@ -84,6 +82,7 @@ export default class extends Controller {
     this.element.removeEventListener("terminal:activated", this._onActivated)
     this.subscription?.unsubscribe()
     this.resizeObserver?.disconnect()
+    clearTimeout(this._fitTimer)
     this.term?.dispose()
   }
 
@@ -133,6 +132,19 @@ export default class extends Controller {
       this._sshDisconnected = true
       this.term.writeln("\r\n\x1b[31mFalha ao reconectar. Pressione uma tecla para tentar de novo…\x1b[0m")
     }
+  }
+
+  // Every fit that changes the column count makes xterm reflow the whole
+  // scrollback (10k lines) AND sends window-change to tmux, which answers with
+  // a full-screen repaint. During a width animation or a drag the observer
+  // fires per frame, so we paid that a dozen times — and each reflow delayed
+  // the next frame, producing yet another intermediate width. Opening the
+  // files split cost ~940ms of blocked main thread this way (closing ~640ms:
+  // widening is the cheaper direction, which is why only opening felt bad).
+  // Trailing-only: fit once, after the width stops moving.
+  #scheduleFit() {
+    clearTimeout(this._fitTimer)
+    this._fitTimer = setTimeout(() => this.#fitIfVisible(), 60)
   }
 
   #fitIfVisible() {

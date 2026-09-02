@@ -53,10 +53,35 @@
     <div class="flex-1"></div>
   </div>
 
-  <%# ── Panes (all mounted, active visible) ── %>
-  <div class="flex-1 min-h-0 flex flex-col">
-    <% @open_sessions.each do |s| %>
-      <%= render "vps_terminal_sessions/pane", session: s, active_session: @session %>
-    <% end %>
+  <%# ── Body: terminal panes + optional files split ── %>
+  <div class="flex-1 min-h-0 flex">
+    <%# min-w-0: a flex item defaults to min-width:auto, so this column refused
+        to shrink below the xterm canvas's own width and pushed the files pane
+        off the right edge (names visibly clipped). It also left the terminal
+        half-shrunk, which fed the refit churn on open. %>
+    <div class="flex-1 min-h-0 min-w-0 flex flex-col">
+      <% @open_sessions.each do |s| %>
+        <%= render "vps_terminal_sessions/pane", session: s, active_session: @session %>
+      <% end %>
+    </div>
+
+    <%# Drag handle — resizes the files split via vps-terminal-tabs#startResize.
+        Width/opacity driven by inline style (see toggleFiles) so opening
+        animates instead of an instant display:none snap. %>
+    <div data-vps-terminal-tabs-target="resizeHandle" data-action="mousedown->vps-terminal-tabs#startResize"
+         style="width:0" class="opacity-0 shrink-0 cursor-col-resize bg-border hover:bg-cyan-500/60 overflow-hidden transition-[width,opacity] duration-[30ms] ease-out"></div>
+
+    <%# Files split — collapsed to 0 width until toggled, iframe src set lazily on first open %>
+    <div data-vps-terminal-tabs-target="filesPane" style="width:0;min-width:0"
+         class="opacity-0 shrink-0 flex flex-col border-l border-border overflow-hidden transition-[width,min-width,opacity] duration-[30ms] ease-out">
+      <div class="flex items-center justify-between px-3 h-10 bg-surface-raised/90 border-b border-border shrink-0">
+        <span class="text-[11px] font-medium text-text-muted">Arquivos</span>
+        <button type="button" data-action="click->vps-terminal-tabs#toggleFiles" class="text-text-muted hover:text-text-primary" title="Fechar painel">✕</button>
+      </div>
+      <%# turbo-frame, not iframe — a real iframe does a full document nav (fresh
+          <html>, fresh JS boot); a turbo-frame fetches and splices in only the
+          matching #id subtree into this page's own already-booted runtime. %>
+      <turbo-frame id="vps-files-frame" data-vps-terminal-tabs-target="filesFrame" class="flex-1 w-full block overflow-hidden bg-surface"></turbo-frame>
+    </div>
   </div>
 </div>
