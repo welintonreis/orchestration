@@ -29,7 +29,15 @@ export default class extends Controller {
     this.cursor = -1
     this.clipboard = null // { mode: "copy"|"cut", path, name }
     this.viewMode = localStorage.getItem("tb:vpsfiles:view") || "list"
+    // The terminal's split-screen toggle reopens an already-loaded frame and
+    // asks for a relist instead of refetching the whole frame.
+    this._onReload = () => this.load()
+    document.addEventListener("vps-files:reload", this._onReload)
     this.load()
+  }
+
+  disconnect() {
+    document.removeEventListener("vps-files:reload", this._onReload)
   }
 
   // ── navigation ──────────────────────────────────────────────────────────
@@ -183,6 +191,14 @@ export default class extends Controller {
 
   downloadSelectionArchive() {
     if (!this.selection.size) return
+    // Single plain file → stream it directly, no point tar.gz-wrapping one file.
+    if (this.selection.size === 1) {
+      const entry = this.entries.find(e => e.path === [...this.selection][0])
+      if (entry && entry.type !== "directory") {
+        window.location = `${this._url("download")}?path=${encodeURIComponent(entry.path)}`
+        return
+      }
+    }
     const qs = [...this.selection].map(p => `paths[]=${encodeURIComponent(p)}`).join("&")
     window.location = `${this._url("archive")}?${qs}`
   }
@@ -191,18 +207,34 @@ export default class extends Controller {
     try { await navigator.clipboard.writeText(event.currentTarget.dataset.path) } catch {}
   }
 
-  cut(event)  { this.clipboard = { mode: "cut",  path: event.currentTarget.dataset.path, name: event.currentTarget.dataset.name }; this._renderClipboard() }
-  copy(event) { this.clipboard = { mode: "copy", path: event.currentTarget.dataset.path, name: event.currentTarget.dataset.name }; this._renderClipboard() }
+  async bulkCopyPath() {
+    if (!this.selection.size) return
+    try { await navigator.clipboard.writeText([...this.selection].join("\n")) } catch {}
+  }
+
+  // clipboard.paths is always an array — single-item cut/copy just wraps one
+  // path, so paste() has one code path for both.
+  cut(event)  { this.clipboard = { mode: "cut",  paths: [event.currentTarget.dataset.path], names: [event.currentTarget.dataset.name] }; this._renderClipboard() }
+  copy(event) { this.clipboard = { mode: "copy", paths: [event.currentTarget.dataset.path], names: [event.currentTarget.dataset.name] }; this._renderClipboard() }
+  bulkCut()  { if (this.selection.size) { this.clipboard = { mode: "cut",  paths: [...this.selection], names: this._selectionNames() }; this._renderClipboard() } }
+  bulkCopy() { if (this.selection.size) { this.clipboard = { mode: "copy", paths: [...this.selection], names: this._selectionNames() }; this._renderClipboard() } }
   clearClipboard() { this.clipboard = null; this._renderClipboard() }
+
+  _selectionNames() {
+    return [...this.selection].map(p => this.entries.find(e => e.path === p)?.name || p)
+  }
 
   async paste() {
     if (!this.clipboard) return
-    const { mode, path } = this.clipboard
+    const { mode, paths } = this.clipboard
     this._progress(mode === "cut" ? "Movendo…" : "Copiando…")
     try {
-      await this._post(mode === "cut" ? "move" : "copy", { path, dest: this.path })
+      // Backend move/copy take one path each — no bulk endpoint, so a
+      // multi-selection pastes sequentially. Small N (a selection), fine.
+      for (const path of paths) await this._post(mode === "cut" ? "move" : "copy", { path, dest: this.path })
       this.clipboard = null
       this._renderClipboard()
+      this.clearSelection()
       await this.load()
     } catch (e) { alert(`Falha: ${e.message}`) }
     finally { this._progress(null) }
@@ -332,10 +364,14 @@ export default class extends Controller {
     return `<svg class="${sz} text-text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5"/></svg>`
   }
 
+  _linkIcon() {
+    return `<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 13a5 5 0 007.07 0l1.93-1.93a5 5 0 00-7.07-7.07L10.5 5.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 11a5 5 0 00-7.07 0l-1.93 1.93a5 5 0 007.07 7.07L13.5 18.5"/></svg>`
+  }
+
   _actions(e) {
     return `
       <button data-action="click->vps-file-browser#copyPath" data-path="${e.path}" title="Copiar caminho" class="p-1 text-text-muted hover:text-text-primary">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
+        ${this._linkIcon()}
       </button>
       <button data-action="click->vps-file-browser#cut" data-path="${e.path}" data-name="${e.name}" title="Recortar" class="p-1 text-text-muted hover:text-text-primary">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg>
@@ -432,13 +468,18 @@ export default class extends Controller {
   _renderClipboard() {
     if (!this.clipboard) { this.pasteBarTarget.classList.add("hidden"); return }
     this.pasteBarTarget.classList.remove("hidden")
-    this.clipNameTarget.textContent = `${this.clipboard.mode === "cut" ? "Recortado" : "Copiado"}: ${this.clipboard.name}`
+    const { mode, names } = this.clipboard
+    const label = names.length === 1 ? names[0] : `${names.length} itens`
+    this.clipNameTarget.textContent = `${mode === "cut" ? "Recortado" : "Copiado"}: ${label}`
   }
 
   _renderBulkBar() {
-    if (this.selection.size < 2) { this.bulkBarTarget.classList.add("hidden"); return }
+    // Grid tiles have no per-item action row (unlike list/details), so this
+    // bar is the only way to download from grid mode — show it from 1
+    // selected, not just 2+.
+    if (!this.selection.size) { this.bulkBarTarget.classList.add("hidden"); return }
     this.bulkBarTarget.classList.remove("hidden")
-    this.bulkCountTarget.textContent = `${this.selection.size} selecionados`
+    this.bulkCountTarget.textContent = this.selection.size === 1 ? "1 selecionado" : `${this.selection.size} selecionados`
   }
 
   _humanSize(bytes) {
