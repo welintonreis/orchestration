@@ -1,0 +1,24 @@
+<%# locals: name, badge_label, badge_color, stat (HostStat), border_class (optional) %>
+<% border_class = local_assigns[:border_class] %>
+<div class="w-full bg-surface-raised border <%= border_class || 'border-border' %> rounded-lg px-4 py-3 shadow-sm flex flex-col items-center gap-1.5">
+  <% if stat&.vector_version %>
+    <div class="flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400" title="extensão pgvector disponível nesse host">
+      <%= action_icon(:check, css_class: "w-3 h-3") %>
+      pgvector v<%= stat.vector_version %>
+    </div>
+  <% end %>
+
+  <%= sidebar_icon(:s3_storage, css_class: "w-5 h-5 text-text-muted") %>
+  <p class="text-sm font-semibold text-text-primary whitespace-nowrap"><%= name %></p>
+  <%= render(Ui::BadgeComponent.new(color: badge_color, size: :xs)) { badge_label } %>
+
+  <% if stat %>
+    <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-text-secondary mt-1 w-full">
+      <span class="flex items-center gap-1" title="bancos"><%= sidebar_icon(:stacks, css_class: "w-3.5 h-3.5 text-text-muted") %> <%= number_with_delimiter(stat.db_count) %></span>
+      <span class="flex items-center gap-1" title="tabelas"><%= sidebar_icon(:details, css_class: "w-3.5 h-3.5 text-text-muted") %> <%= number_with_delimiter(stat.tables_count) %></span>
+      <span class="flex items-center gap-1" title="usuários (roles com login, por cluster)"><%= action_icon(:users, css_class: "w-3.5 h-3.5 text-text-muted") %> <%= number_with_delimiter(stat.roles_count) %></span>
+      <span class="flex items-center gap-1" title="procedures"><%= sidebar_icon(:configs, css_class: "w-3.5 h-3.5 text-text-muted") %> <%= number_with_delimiter(stat.procedures_count) %></span>
+    </div>
+    <p class="text-[10px] font-mono text-text-muted mt-1"><%= stat.ip || "?" %>:<%= stat.port %></p>
+  <% end %>
+</div>

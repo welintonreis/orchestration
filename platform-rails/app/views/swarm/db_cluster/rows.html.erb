@@ -1,0 +1,169 @@
+<turbo-frame id="db-cluster-content" target="_top">
+
+<%# ── Topologia animada: HAProxy → PgBouncer → master / read / analytics ── %>
+<div class="flex flex-col items-center mb-12">
+  <div class="inline-flex items-start gap-3 bg-surface-raised border-2 border-border-subtle rounded-xl px-6 py-4 shadow-sm">
+    <%= sidebar_icon(:networks, css_class: "w-6 h-6 text-text-secondary flex-shrink-0 mt-0.5") %>
+    <div class="text-left">
+      <p class="text-sm font-semibold text-text-primary">HAProxy</p>
+      <p class="text-xs text-text-muted mb-1.5">entrypoint público — DNS de cada banco (porta 5432, TLS/SNI):</p>
+      <div class="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] font-mono text-text-secondary">
+        <span title="write"><span class="text-text-muted">write:</span> pgdb-master.redhusky.com.br</span>
+        <span title="read replica"><span class="text-text-muted">read:</span> read.pgdb.redhusky.com.br</span>
+        <span title="replicação lógica seletiva"><span class="text-text-muted">analytics:</span> analytics.pgdb.redhusky.com.br</span>
+        <span title="só testes, descartável"><span class="text-text-muted">dev:</span> dev.pgdb.redhusky.com.br</span>
+      </div>
+    </div>
+    <%= render(Ui::BadgeComponent.new(color: :green, size: :sm)) { "up" } %>
+  </div>
+
+  <div class="w-px h-8 bg-border-subtle animate-heartbeat-slow"></div>
+
+  <div class="inline-flex items-center gap-3 bg-surface-raised border-2 border-border-subtle rounded-xl px-6 py-4 shadow-sm">
+    <%= sidebar_icon(:configs, css_class: "w-6 h-6 text-text-secondary flex-shrink-0") %>
+    <div class="text-left">
+      <p class="text-sm font-semibold text-text-primary">PgBouncer</p>
+      <p class="text-xs text-text-muted">pool_mode=transaction — roteia por alias/dbname</p>
+    </div>
+    <%= render(Ui::BadgeComponent.new(color: :green, size: :sm)) { "up" } %>
+  </div>
+
+  <div class="w-px h-8 bg-border-subtle animate-heartbeat-slow"></div>
+
+  <div class="flex items-end justify-center gap-4 flex-wrap w-full">
+    <%# Árvore Postgres num wrapper próprio (inline-flex = shrink-to-fit) —
+        a linha horizontal fica do tamanho exato das 4 caixinhas, nunca
+        vazando pro Redis/RabbitMQ ao lado, que não fazem parte dela. %>
+    <div class="inline-flex flex-col items-center">
+      <div class="h-px bg-border-subtle w-full"></div>
+
+      <div class="inline-flex gap-6 pt-2 items-start flex-wrap justify-center">
+        <%# postgres-master %>
+        <div class="flex flex-col items-center w-48">
+          <div class="w-px h-6 bg-border-subtle"></div>
+          <%= render "host_box", name: "postgres-master", badge_label: "write", badge_color: :green,
+                      stat: @host_stats["master"], border_class: "border-green-300 dark:border-green-500/28" %>
+        </div>
+
+        <%# postgres-read — réplica streaming do master %>
+        <div class="flex flex-col items-center w-48">
+          <div class="w-px h-6 bg-border-subtle"></div>
+          <%= render "host_box", name: "postgres-read", badge_label: "read replica", badge_color: :cyan,
+                      stat: @host_stats["read"], border_class: "border-cyan-300 dark:border-cyan-500/30" %>
+        </div>
+
+        <%# postgres-analytics — não é réplica física (não espelha o cluster
+            inteiro como postgres-read); é o alvo de replicação LÓGICA seletiva
+            (publication/subscription por banco), wal_level=logical no master
+            já está configurado pra isso. Hoje não há nenhuma subscription
+            ativa — ver DbClusterInspectorService / SPEC de replicação lógica.
+            Os contadores da caixinha (bancos/tabelas/users/procedures) já
+            deixam isso visível sem precisar do texto explicativo. %>
+        <div class="flex flex-col items-center w-48">
+          <div class="w-px h-6 bg-border-subtle"></div>
+          <%= render "host_box", name: "postgres-analytics", badge_label: "réplica lógica seletiva", badge_color: :yellow,
+                      stat: @host_stats["analytics"], border_class: "border-amber-400/60 dark:border-amber-500/40" %>
+        </div>
+
+        <%# postgres-development — destino único de todo banco de teste
+            (pgbouncer.ini tem um alias curinga "*" pra cá); descartável, sem
+            réplica/backup. %>
+        <div class="flex flex-col items-center w-48">
+          <div class="w-px h-6 bg-border-subtle"></div>
+          <%= render "host_box", name: "postgres-development", badge_label: "só testes", badge_color: :purple,
+                      stat: @host_stats["development"], border_class: "border-purple-300 dark:border-purple-500/28" %>
+        </div>
+      </div>
+    </div>
+
+    <%# Redis e RabbitMQ ficam ao lado, mas de propósito FORA da hierarquia
+        HAProxy → PgBouncer (sem linha conectora subindo) — banco é banco,
+        cache é cache, fila é fila. %>
+    <div class="w-px self-stretch border-l border-dashed border-border-subtle mx-1"></div>
+
+    <%# Lado a lado, e com items-stretch pra saírem da mesma altura. A fileira
+        inteira só cabe porque as caixinhas são w-48: com w-56 dava ~1500px de
+        conteúdo em ~1330 disponíveis e o RabbitMQ quebrava sozinho pra segunda
+        linha, parecendo maior que o resto. %>
+    <div class="flex gap-4 items-stretch">
+    <%= render "side_box", name: "redis", icon: :volumes, badge_label: "cache", badge_color: :orange,
+                border_class: "border-orange-300 dark:border-orange-500/28",
+                tooltip: "Só os índices lógicos (0-15) realmente em uso aparecem na tabela abaixo.",
+                dns: ["redis.redhusky.com.br:6380 (porta publicada direto no host)"],
+                ip: @redis_summary[:ip], port: @redis_summary[:port],
+                stat_line: "#{@redis_summary[:dbs_in_use]} índice(s) em uso · #{number_with_delimiter(@redis_summary[:total_keys])} chaves" %>
+
+    <%= render "side_box", name: "rabbitmq", icon: :networks, badge_label: "fila", badge_color: :blue,
+                border_class: "border-blue-300 dark:border-blue-500/28",
+                tooltip: "vhost = banco, fila = tabela, mensagem = registro. Um vhost por app é o padrão recomendado — hoje só existe o vhost \"/\" compartilhado.",
+                dns: ["rmq.redhusky.com.br (management, HTTPS)", "rmq.redhusky.com.br:5672 (AMQP)"],
+                ip: @rabbitmq_summary[:ip], port: @rabbitmq_summary[:port],
+                stat_line: "#{@rabbitmq_summary[:vhosts]} vhost(s) · #{@rabbitmq_summary[:queues]} filas · #{number_with_delimiter(@rabbitmq_summary[:messages])} mensagens" %>
+    </div>
+  </div>
+</div>
+
+<%# ── Tabela de bancos ── %>
+<% if @db_rows.blank? %>
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <%= sidebar_icon(:s3_storage, css_class: "w-12 h-12 text-text-muted mb-4") %>
+    <p class="text-text-secondary text-sm">Nenhum banco encontrado nos hosts do cluster.</p>
+  </div>
+<% else %>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border-subtle text-left">
+          <th class="py-2 pr-4 font-medium text-text-muted">Tipo</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">Servidor</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">Banco</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">Usuário master</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">
+            Usuários
+            <span title="Roles do Postgres com permissão de login — é uma contagem por cluster físico, não por banco: mesmo valor para todo banco dentro do mesmo cluster (master), diferente só no analytics (cluster separado).">ⓘ</span>
+          </th>
+          <th class="py-2 pr-4 font-medium text-text-muted">Procedures</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">Tabelas</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">Registros (est.)</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">7d</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">30d</th>
+          <th class="py-2 pr-4 font-medium text-text-muted">12m</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% server_colors = { "master" => :green, "read" => :cyan, "analytics" => :yellow,
+                              "development" => :purple, "redis" => :orange, "rabbitmq" => :blue } %>
+        <% @db_rows.sort_by { |r| [r.server, r.database.to_s] }.each do |row| %>
+          <% haystack = j("#{row.database} #{row.owner}".downcase) %>
+          <tr class="border-b border-border-subtle/60 hover:bg-surface-inset transition-colors"
+              x-show="(serverFilter === 'all' || serverFilter === '<%= row.server %>') &&
+                      (search === '' || '<%= haystack %>'.includes(search.toLowerCase()))">
+            <td class="py-2 pr-4 text-text-muted text-xs"><%= row.type %></td>
+            <td class="py-2 pr-4">
+              <%= render(Ui::BadgeComponent.new(color: server_colors.fetch(row.server, :gray), size: :xs)) { row.server } %>
+            </td>
+            <td class="py-2 pr-4 font-mono text-xs text-text-primary"><%= row.database %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= row.owner || "—" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= row.login_roles_count ? number_with_delimiter(row.login_roles_count) : "—" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= row.procedures_count ? number_with_delimiter(row.procedures_count) : "—" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= row.tables_count ? number_with_delimiter(row.tables_count) : "—" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= row.estimated_rows ? number_with_delimiter(row.estimated_rows) : "—" %></td>
+            <% [row.growth_7d, row.growth_30d, row.growth_365d].each do |growth| %>
+              <td class="py-2 pr-4">
+                <% if growth.nil? %>
+                  <span class="text-text-muted">—</span>
+                <% else %>
+                  <span class="<%= growth >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
+                    <%= growth >= 0 ? "↑" : "↓" %> <%= number_with_precision(growth.abs, precision: 1) %>%
+                  </span>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+</turbo-frame>

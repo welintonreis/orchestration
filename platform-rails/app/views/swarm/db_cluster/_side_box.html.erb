@@ -1,0 +1,21 @@
+<%# locals: name, icon, badge_label, badge_color, border_class, tooltip, dns (array), ip, port, stat_line %>
+<%# Sem h-full: com height:100% num pai de altura auto o stretch do flex não
+    aplica; deixando a altura auto, items-stretch iguala as duas caixinhas. %>
+<div class="w-48 bg-surface-raised border <%= local_assigns[:border_class] || 'border-border' %> rounded-lg px-4 py-3 shadow-sm flex flex-col items-center justify-center gap-1.5">
+  <%= sidebar_icon(icon, css_class: "w-5 h-5 text-text-muted") %>
+  <div class="flex items-center gap-1">
+    <p class="text-sm font-semibold text-text-primary"><%= name %></p>
+    <span class="text-text-muted text-[10px] cursor-help" title="<%= tooltip %>">ⓘ</span>
+  </div>
+  <%= render(Ui::BadgeComponent.new(color: badge_color, size: :xs)) { badge_label } %>
+
+  <% if local_assigns[:stat_line] %>
+    <p class="text-[11px] text-text-secondary"><%= stat_line %></p>
+  <% end %>
+
+  <% Array(local_assigns[:dns]).each do |line| %>
+    <p class="text-[10px] font-mono text-text-muted text-center"><%= line %></p>
+  <% end %>
+
+  <p class="text-[10px] font-mono text-text-muted"><%= ip || "?" %>:<%= port %></p>
+</div>
