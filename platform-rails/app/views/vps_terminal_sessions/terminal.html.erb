@@ -59,7 +59,10 @@
         to shrink below the xterm canvas's own width and pushed the files pane
         off the right edge (names visibly clipped). It also left the terminal
         half-shrunk, which fed the refit churn on open. %>
-    <div class="flex-1 min-h-0 min-w-0 flex flex-col">
+    <%# overflow-hidden: the refit is debounced, so for a few frames after the
+        split starts opening the xterm canvas is still at its old, wider size.
+        Without a clip it paints straight over the files pane. %>
+    <div class="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col">
       <% @open_sessions.each do |s| %>
         <%= render "vps_terminal_sessions/pane", session: s, active_session: @session %>
       <% end %>
