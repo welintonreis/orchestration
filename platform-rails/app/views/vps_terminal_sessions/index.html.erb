@@ -24,10 +24,10 @@
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
           <% if session.status == "connected" || session.status == "connecting" %>
-            <%= render Ui::ButtonComponent.new(url: terminal_vps_host_terminal_session_path(@host, session), variant: :solid_cyan, size: :sm, label: "Abrir") %>
+            <%= render Ui::ButtonComponent.new(url: terminal_vps_host_terminal_session_path(@host, session), variant: :solid_orange, size: :sm, label: "Abrir") %>
           <% else %>
             <%= button_to "Reconectar", reconnect_vps_host_terminal_session_path(@host, session), method: :post,
-                  class: "px-3 py-1.5 text-xs font-medium bg-cyan-100 dark:bg-cyan-500/12 hover:bg-cyan-200 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30 rounded-lg transition-colors" %>
+                  class: "px-3 py-1.5 text-xs font-medium bg-orange-100 dark:bg-brand/[0.12] hover:bg-orange-200 dark:hover:bg-brand/[0.20] text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-brand/30 rounded-lg transition-colors" %>
           <% end %>
           <%= render Ui::ButtonComponent.new(url: vps_host_terminal_session_path(@host, session), method: :delete, variant: :red, icon: :remove,
                 confirm: "Encerrar esta sessão?") %>

@@ -5,7 +5,7 @@
 <% end %>
 <meta name="turbo-cache-control" content="no-cache">
 
-<div class="h-full flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden border border-border bg-[#0d1117]"
+<div class="h-full flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden border border-border bg-surface-sunken"
      data-controller="vps-terminal-tabs"
      data-vps-terminal-tabs-active-value="<%= @session.id %>">
 
@@ -72,7 +72,7 @@
         Width/opacity driven by inline style (see toggleFiles) so opening
         animates instead of an instant display:none snap. %>
     <div data-vps-terminal-tabs-target="resizeHandle" data-action="mousedown->vps-terminal-tabs#startResize"
-         style="width:0" class="opacity-0 shrink-0 cursor-col-resize bg-border hover:bg-cyan-500/60 overflow-hidden transition-[width,opacity] duration-[30ms] ease-out"></div>
+         style="width:0" class="opacity-0 shrink-0 cursor-col-resize bg-border hover:bg-brand/60 overflow-hidden transition-[width,opacity] duration-[30ms] ease-out"></div>
 
     <%# Files split — collapsed to 0 width until toggled, iframe src set lazily on first open %>
     <div data-vps-terminal-tabs-target="filesPane" style="width:0;min-width:0"
@@ -84,7 +84,7 @@
       <%# turbo-frame, not iframe — a real iframe does a full document nav (fresh
           <html>, fresh JS boot); a turbo-frame fetches and splices in only the
           matching #id subtree into this page's own already-booted runtime. %>
-      <turbo-frame id="vps-files-frame" data-vps-terminal-tabs-target="filesFrame" class="flex-1 w-full block overflow-hidden bg-surface"></turbo-frame>
+      <turbo-frame id="vps-files-frame" data-vps-terminal-tabs-target="filesFrame" class="flex-1 min-h-0 w-full flex flex-col overflow-hidden bg-surface"></turbo-frame>
     </div>
   </div>
 </div>

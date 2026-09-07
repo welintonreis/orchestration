@@ -150,6 +150,10 @@ Rails.application.routes.draw do
   get  "swarm/nodes/rows",         to: "swarm/nodes#rows",      as: :rows_swarm_nodes
   get    "swarm/topology",                    to: "swarm/topology#index",          as: :swarm_topology
   get    "swarm/topology/rows",               to: "swarm/topology#rows",           as: :rows_swarm_topology
+  get    "swarm/db_cluster",                  to: "swarm/db_cluster#index",        as: :swarm_db_cluster
+  get    "swarm/db_cluster/rows",             to: "swarm/db_cluster#rows",         as: :rows_swarm_db_cluster
+  get    "swarm/db_backups",                  to: "swarm/db_backups#index",        as: :swarm_db_backups
+  get    "swarm/db_backups/rows",             to: "swarm/db_backups#rows",         as: :rows_swarm_db_backups
   delete "swarm/topology/prune_services",    to: "swarm/topology#prune_services",  as: :prune_services_swarm_topology
   delete "swarm/topology/system_prune",      to: "swarm/topology#system_prune",    as: :system_prune_swarm_topology
   get  "swarm/services",           to: "swarm/services#index",  as: :swarm_services

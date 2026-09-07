@@ -92,8 +92,9 @@ class DockerClient
     post("/containers/prune")
   end
 
-  def container_create(name: nil, image: "busybox:latest", binds: [], cmd: ["sh"])
+  def container_create(name: nil, image: "busybox:latest", binds: [], cmd: ["sh"], entrypoint: nil)
     body = { Image: image, Cmd: cmd, HostConfig: { Binds: binds }, Tty: false, AttachStdout: false, AttachStderr: false }
+    body[:Entrypoint] = entrypoint if entrypoint
     query = name ? { name: name } : {}
     post("/containers/create", query: query, body: body)
   end

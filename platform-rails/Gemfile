@@ -20,6 +20,7 @@ gem "excon"
 # Real SSH/SFTP to VPS hosts (not a container) — ported from redhusky-remote-ssh
 gem "net-ssh", "~> 7.3"
 gem "net-sftp", "~> 4.0"
+gem "redis", "~> 5.0"
 
 # WS frame codec for the edge tunnel's agent-facing side (already a
 # transitive dep via actioncable/websocket-driver) — pinning it directly

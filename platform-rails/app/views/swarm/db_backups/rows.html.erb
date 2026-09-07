@@ -1,0 +1,166 @@
+<turbo-frame id="db-backups-content" target="_top">
+
+<div class="mb-4">
+  <%= link_to "← Cluster de Bancos", swarm_db_cluster_path, class: "text-xs text-text-muted hover:text-text-secondary transition-colors" %>
+</div>
+
+<%# ── Cards de status por host — só master tem WAL-G hoje ── %>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+  <div class="bg-surface-raised border <%= @result.ok? ? 'border-green-300 dark:border-green-500/28' : 'border-red-300 dark:border-red-500/28' %> rounded-lg px-4 py-3">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-sm font-semibold text-text-primary">postgres-master</p>
+      <% if @result.ok? %>
+        <%= render(Ui::BadgeComponent.new(color: :green, size: :xs)) { "WAL-G ativo" } %>
+      <% else %>
+        <%= render(Ui::BadgeComponent.new(color: :red, size: :xs)) { "erro" } %>
+      <% end %>
+    </div>
+    <% if @result.ok? %>
+      <% latest = @result.backups.first %>
+      <p class="text-xs text-text-secondary">
+        Último backup: <% if latest %><%= render(Ui::BadgeComponent.new(color: latest.type == "FULL" ? :green : :cyan, size: :xs)) { latest.type } %>
+          <%= time_ago_in_words(Time.parse(latest.time)) %> atrás<% else %>—<% end %>
+      </p>
+      <p class="text-xs text-text-muted mt-1">
+        <%= format_bytes(@result.total_bytes) %> · <%= number_with_delimiter(@result.object_count || 0) %> objetos no R2
+      </p>
+    <% else %>
+      <p class="text-xs text-red-600 dark:text-red-400"><%= @result.error %></p>
+    <% end %>
+  </div>
+
+  <div class="bg-surface-raised border border-border rounded-lg px-4 py-3">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-sm font-semibold text-text-primary">postgres-read</p>
+      <%= render(Ui::BadgeComponent.new(color: :gray, size: :xs)) { "réplica" } %>
+    </div>
+    <p class="text-xs text-text-muted">Réplica física do master — coberta pelo backup dele, sem WAL-G próprio.</p>
+  </div>
+
+  <div class="bg-surface-raised border border-amber-400/60 dark:border-amber-500/40 rounded-lg px-4 py-3">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-sm font-semibold text-text-primary">postgres-analytics</p>
+      <%= render(Ui::BadgeComponent.new(color: :yellow, size: :xs)) { "sem backup" } %>
+    </div>
+    <p class="text-xs text-text-muted">Lacuna conhecida — vai guardar dado assinado de verdade quando as subscriptions existirem.</p>
+  </div>
+
+  <div class="bg-surface-raised border border-border rounded-lg px-4 py-3">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-sm font-semibold text-text-primary">postgres-development</p>
+      <%= render(Ui::BadgeComponent.new(color: :gray, size: :xs)) { "sem backup" } %>
+    </div>
+    <p class="text-xs text-text-muted">Descartável, só teste — nunca precisou de backup.</p>
+  </div>
+</div>
+
+<%# ── Tendência de tamanho no R2 ── %>
+<div class="mb-10">
+  <h3 class="text-sm font-semibold text-text-primary mb-2">Tendência de tamanho (R2)</h3>
+  <% if @history.present? %>
+    <div class="bg-surface-raised border border-border rounded-lg p-4">
+      <%# ponytail: sparkline_svg colore por limiar de porcentagem (0-100);
+          em bytes o valor sempre excede o limiar, então a linha fica numa
+          cor só — a forma da tendência continua correta, só a cor não
+          carrega sinal aqui. Ajustar só se isso incomodar de verdade. %>
+      <%= sparkline_svg(@history.reverse, :total_bytes, width: 600, height: 60) %>
+      <p class="text-xs text-text-muted mt-2">
+        <%= format_bytes(@history.last&.total_bytes) %> (<%= @history.last&.captured_at&.strftime("%d/%m") %>)
+        → <%= format_bytes(@history.first&.total_bytes) %> (hoje)
+      </p>
+    </div>
+  <% else %>
+    <p class="text-xs text-text-muted">Ainda sem histórico — o snapshot diário roda às 3:10h.</p>
+  <% end %>
+</div>
+
+<%# ── Histórico de backups individuais ── %>
+<div class="bg-surface-raised border border-border rounded-xl overflow-hidden mb-10">
+  <h3 class="text-sm font-semibold text-text-primary px-4 pt-4 pb-2">Histórico de backups</h3>
+  <% if @backups_page.blank? %>
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <p class="text-text-secondary text-sm">Nenhum backup encontrado.</p>
+    </div>
+  <% else %>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left bg-white/[0.02]">
+            <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Backup</th>
+            <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Tipo</th>
+            <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Iniciado em</th>
+            <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">WAL file</th>
+            <th class="px-4 py-3 text-[10px] font-mono font-semibold text-text-muted uppercase tracking-wider">Tamanho</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border/60">
+          <% @backups_page.each do |b| %>
+            <tr class="hover:bg-surface-inset/40 transition-colors">
+              <td class="px-4 py-3 font-mono text-xs text-text-primary"><%= b.name %></td>
+              <td class="px-4 py-3">
+                <%= render(Ui::BadgeComponent.new(color: b.type == "FULL" ? :green : :cyan, size: :xs)) { b.type } %>
+              </td>
+              <td class="px-4 py-3 text-xs text-text-muted whitespace-nowrap"><%= Time.parse(b.time).strftime("%Y-%m-%d %H:%M:%S") %></td>
+              <td class="px-4 py-3 font-mono text-xs text-text-muted"><%= b.wal_file_name %></td>
+              <td class="px-4 py-3 text-xs text-text-muted">—</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-4 py-3 border-t border-border flex items-center justify-between">
+      <span class="text-xs text-text-muted">
+        Mostrando <%= (@page - 1) * Swarm::DbBackupsController::PER_PAGE + 1 %>–<%= [(@page * Swarm::DbBackupsController::PER_PAGE), @total_backups].min %> de <%= @total_backups %>
+      </span>
+      <div class="flex items-center gap-2">
+        <% if @page > 1 %>
+          <%= link_to "← Prev", rows_swarm_db_backups_path(page: @page - 1),
+                class: "px-3 py-1 text-xs bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary rounded border border-border-subtle transition-colors" %>
+        <% end %>
+        <% if @page * Swarm::DbBackupsController::PER_PAGE < @total_backups %>
+          <%= link_to "Next →", rows_swarm_db_backups_path(page: @page + 1),
+                class: "px-3 py-1 text-xs bg-surface-inset hover:bg-surface-active text-text-secondary hover:text-text-primary rounded border border-border-subtle transition-colors" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<%# ── Regras atuais (informativo — fase 1 é só leitura) ── %>
+<div class="bg-surface-raised border border-border rounded-xl p-5">
+  <h3 class="text-sm font-semibold text-text-primary mb-3">Regras atuais</h3>
+  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+    <div class="flex justify-between sm:block">
+      <dt class="text-text-muted">Frequência</dt>
+      <dd class="text-text-secondary">a cada 7 dias, ou a cada restart do container (espera 120s antes do 1º backup)</dd>
+    </div>
+    <div class="flex justify-between sm:block">
+      <dt class="text-text-muted">Tipo</dt>
+      <dd class="text-text-secondary">sempre FULL (<code class="font-mono">wal-g backup-push --full</code>)</dd>
+    </div>
+    <div class="flex justify-between sm:block">
+      <dt class="text-text-muted">Retenção</dt>
+      <dd class="text-text-secondary">último 1 FULL (<code class="font-mono">wal-g delete retain FULL 1 --confirm</code>)</dd>
+    </div>
+    <div class="flex justify-between sm:block">
+      <dt class="text-text-muted">Compressão</dt>
+      <dd class="text-text-secondary">brotli</dd>
+    </div>
+    <div class="flex justify-between sm:block">
+      <dt class="text-text-muted">Credenciais</dt>
+      <dd class="text-text-secondary font-mono">r2_access_key_id / r2_secret_access_key (Docker secrets)</dd>
+    </div>
+    <div class="flex justify-between sm:block">
+      <dt class="text-text-muted">Destino</dt>
+      <dd class="text-text-secondary font-mono"><%= WalgInspectorService::R2_BUCKET %>/<%= WalgInspectorService::WALG_SUBPATH %></dd>
+    </div>
+  </dl>
+  <p class="text-[11px] text-text-muted mt-4 pt-4 border-t border-border-subtle">
+    Parâmetros vêm de <code class="font-mono">postgres-init/walg-entrypoint.sh</code> — mudar exige editar o script,
+    rebuild da imagem e redeploy do stack; não há formulário editável nesta fase.
+    "Rodar backup agora" e retenção editável ficam pra uma 2ª entrega, que move o agendamento pro orchestration via Solid Queue.
+  </p>
+</div>
+
+</turbo-frame>

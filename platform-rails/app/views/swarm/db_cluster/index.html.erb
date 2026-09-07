@@ -26,7 +26,7 @@
       <input type="text" placeholder="Buscar banco ou dono..."
              @input="setSearch($event.target.value)"
              :value="search"
-             class="bg-surface-inset border border-border-subtle rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-secondary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-cyan-600 w-56 transition-colors">
+             class="bg-surface-inset border border-border-subtle rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-secondary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-orange-500 dark:focus:ring-brand w-56 transition-colors">
       <svg class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5A6.5 6.5 0 114 10.5a6.5 6.5 0 0113 0z"/>
       </svg>
@@ -55,7 +55,7 @@
     <div class="relative">
       <select @change="setInterval($event.target.value)"
               :value="interval"
-              class="appearance-none bg-surface-inset border border-border-subtle rounded-lg pl-3 pr-7 py-1 text-xs text-text-secondary focus:outline-none focus:ring-1 focus:ring-cyan-600 cursor-pointer transition-colors">
+              class="appearance-none bg-surface-inset border border-border-subtle rounded-lg pl-3 pr-7 py-1 text-xs text-text-secondary focus:outline-none focus:ring-1 focus:ring-orange-500 dark:focus:ring-brand cursor-pointer transition-colors">
         <option value="15000">15s</option>
         <option value="30000">30s</option>
         <option value="60000">1 min</option>

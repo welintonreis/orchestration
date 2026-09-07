@@ -42,14 +42,22 @@ class VpsFilesController < ApplicationController
   # Streams the file straight from SFTP into the response body — no Tempfile.
   def download
     path = sanitize_path(params[:path])
+    slot = VpsStreamThrottle.acquire
+    if slot.nil?
+      return redirect_to vps_root,
+                         alert: "Muitos downloads simultâneos — tente de novo em alguns segundos."
+    end
+
     size = nil
     VpsSftpPool.with(@host) { |sftp| size = sftp.stat!(path).size }
 
     response.set_header("Content-Length", size.to_s) if size
     send_stream_headers(File.basename(path))
-    self.response_body = sftp_stream_enumerator(path)
+    self.response_body = sftp_stream_enumerator(path, slot: slot)
+    slot = nil # a partir daqui quem devolve o slot é o enumerator
     audit_file_action("vps_files.download", path)
   rescue => e
+    VpsStreamThrottle.release(slot) # só devolve se o enumerator ainda não assumiu
     reset_stream_headers
     redirect_to vps_root, alert: "Download falhou: #{e.message}"
   end
@@ -84,22 +92,34 @@ class VpsFilesController < ApplicationController
     names  = paths.map { |p| File.basename(p) }
     label  = names.size == 1 ? names.first : "vps-files-#{Time.now.to_i}"
 
+    slot = VpsStreamThrottle.acquire
+    if slot.nil?
+      return redirect_to vps_root,
+                         alert: "Muitos downloads simultâneos — tente de novo em alguns segundos."
+    end
+
     send_stream_headers("#{label}.tar.gz", type: "application/gzip")
     cmd = "tar -czf - -C #{Shellwords.escape(parent)} -- " + names.map { |n| Shellwords.escape(n) }.join(" ")
     self.response_body = Enumerator.new do |y|
-      Net::SSH.start(@host.hostname, @host.username, **VpsSshService.build_options(@host, VpsHostKeyVerifier.new(@host))) do |ssh|
-        ssh.open_channel do |ch|
-          ch.exec(cmd) do |_, success|
-            raise "Could not start tar" unless success
-            ch.on_data { |_, d| y << d }
-            ch.on_extended_data { |_, _, _d| } # tar warnings — ignore, exit status decides
+      begin
+        Net::SSH.start(@host.hostname, @host.username, **VpsSshService.build_options(@host, VpsHostKeyVerifier.new(@host))) do |ssh|
+          ssh.open_channel do |ch|
+            ch.exec(cmd) do |_, success|
+              raise "Could not start tar" unless success
+              ch.on_data { |_, d| y << d }
+              ch.on_extended_data { |_, _, _d| } # tar warnings — ignore, exit status decides
+            end
           end
+          ssh.loop
         end
-        ssh.loop
+      ensure
+        VpsStreamThrottle.release(slot)
       end
     end
+    slot = nil # daqui em diante o enumerator devolve
     audit_file_action("vps_files.archive", paths.join(", "))
   rescue => e
+    VpsStreamThrottle.release(slot)
     reset_stream_headers
     redirect_to vps_root, alert: "Archive falhou: #{e.message}"
   end
@@ -262,14 +282,20 @@ class VpsFilesController < ApplicationController
     [ data ]
   end
 
-  def sftp_stream_enumerator(path)
+  # O slot é tomado na action (antes de qualquer header) e devolvido aqui,
+  # quando o corpo termina de ser consumido ou o cliente desiste.
+  def sftp_stream_enumerator(path, slot: nil)
     Enumerator.new do |y|
-      Net::SFTP.start(@host.hostname, @host.username, **VpsSshService.build_options(@host, VpsHostKeyVerifier.new(@host))) do |sftp|
-        sftp.file.open(path, "r") do |f|
-          while (chunk = f.read(STREAM_CHUNK))
-            y << chunk
+      begin
+        Net::SFTP.start(@host.hostname, @host.username, **VpsSshService.build_options(@host, VpsHostKeyVerifier.new(@host))) do |sftp|
+          sftp.file.open(path, "r") do |f|
+            while (chunk = f.read(STREAM_CHUNK))
+              y << chunk
+            end
           end
         end
+      ensure
+        VpsStreamThrottle.release(slot)
       end
     end
   end

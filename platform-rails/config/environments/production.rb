@@ -44,7 +44,18 @@ Rails.application.configure do
   config.active_support.report_deprecations = false
 
   # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :solid_cache_store
+  # Secret file only exists at container runtime, not during `assets:precompile`
+  # in the image build stage — fall back to solid_cache_store there so the
+  # build doesn't need Redis reachable.
+  redis_password_file = "/run/secrets/redis_password"
+  config.cache_store = if File.exist?(redis_password_file)
+    [ :redis_cache_store, {
+      url: "redis://:#{File.read(redis_password_file).strip}@redis:6379/1",
+      expires_in: 1.hour
+    } ]
+  else
+    :solid_cache_store
+  end
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :solid_queue

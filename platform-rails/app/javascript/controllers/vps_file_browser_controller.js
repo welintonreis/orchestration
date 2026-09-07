@@ -74,8 +74,14 @@ export default class extends Controller {
   }
 
   open(entry) {
-    if (entry.type === "directory") this.load(entry.path)
-    else this.openPreview(entry)
+    if (!entry) return
+    if (entry.type === "directory") {
+      if (this._loadingPath === entry.path) return
+      this._loadingPath = entry.path
+      this.load(entry.path).finally(() => { this._loadingPath = null })
+    } else {
+      this.openPreview(entry)
+    }
   }
 
   // ── toolbar ─────────────────────────────────────────────────────────────
@@ -132,35 +138,58 @@ export default class extends Controller {
   // ── selection ───────────────────────────────────────────────────────────
 
   rowClick(event) {
+    if (event.target.closest("button, a, input")) return
+
     const path = event.currentTarget.dataset.path
     const idx  = this.entries.findIndex(e => e.path === path)
     const entry = this.entries[idx]
     if (!entry) return
 
+    // Double click fallback
+    if (event.detail === 2) {
+      this.open(entry)
+      return
+    }
+
     if (event.shiftKey && this.cursor >= 0) {
       const [a, b] = [this.cursor, idx].sort((x, y) => x - y)
       this.selection = new Set(this.entries.slice(a, b + 1).map(e => e.path))
       this.cursor = idx
-      this._render()
+      this._renderSelection()
       return
     }
     if (event.ctrlKey || event.metaKey) {
       this.selection.has(path) ? this.selection.delete(path) : this.selection.add(path)
       this.cursor = idx
-      this._render()
+      this._renderSelection()
       return
     }
 
-    if (entry.type === "directory") {
-      this.load(entry.path)
-    } else {
-      this.selection = new Set([path])
-      this.cursor = idx
-      this._render()
-    }
+    // Single click on file or folder: selects it
+    this.selection = new Set([path])
+    this.cursor = idx
+    this._renderSelection()
   }
 
-  clearSelection() { this.selection.clear(); this._render() }
+  _renderSelection() {
+    const items = this.listTarget.querySelectorAll("[data-path]")
+    items.forEach(el => {
+      const isSel = this.selection.has(el.dataset.path)
+      if (this.viewMode === "grid") {
+        el.classList.toggle("bg-cyan-500/10", isSel)
+        el.classList.toggle("border-cyan-500/30", isSel)
+        el.classList.toggle("border-transparent", !isSel)
+        el.classList.toggle("hover:bg-surface-active/50", !isSel)
+        el.classList.toggle("hover:border-border-subtle", !isSel)
+      } else {
+        el.classList.toggle("bg-cyan-500/10", isSel)
+        el.classList.toggle("hover:bg-surface-active/50", !isSel)
+      }
+    })
+    this._renderBulkBar()
+  }
+
+  clearSelection() { this.selection.clear(); this._renderSelection() }
 
   keydown(event) {
     if (!this.entries.length) return
@@ -169,7 +198,7 @@ export default class extends Controller {
       event.preventDefault()
       this.cursor = Math.min(Math.max((event.key === "ArrowDown" ? this.cursor + 1 : this.cursor - 1), 0), visible.length - 1)
       this.selection = new Set([visible[this.cursor]?.path].filter(Boolean))
-      this._render()
+      this._renderSelection()
     } else if (event.key === "Enter" && this.cursor >= 0) {
       this.open(visible[this.cursor])
     } else if (event.key === "Backspace") {
@@ -182,18 +211,20 @@ export default class extends Controller {
       event.preventDefault()
       const path = visible[this.cursor].path
       this.selection.has(path) ? this.selection.delete(path) : this.selection.add(path)
-      this._render()
+      this._renderSelection()
     }
   }
 
   // ── file ops ────────────────────────────────────────────────────────────
 
   download(event) {
+    event?.stopPropagation()
     const path = event.currentTarget.dataset.path
     window.location = `${this._url("download")}?path=${encodeURIComponent(path)}`
   }
 
   downloadArchive(event) {
+    event?.stopPropagation()
     const path = event.currentTarget.dataset.path
     window.location = `${this._url("archive")}?path=${encodeURIComponent(path)}`
   }
@@ -213,21 +244,112 @@ export default class extends Controller {
   }
 
   async copyPath(event) {
-    try { await navigator.clipboard.writeText(event.currentTarget.dataset.path) } catch {}
+    event?.stopPropagation()
+    const path = event.currentTarget.dataset.path
+    try {
+      await navigator.clipboard.writeText(path)
+    } catch {
+      this._fallbackCopy(path)
+    }
+    this._showFeedback(event.currentTarget, "Caminho copiado!")
   }
 
-  async bulkCopyPath() {
+  async bulkCopyPath(event) {
+    event?.stopPropagation()
     if (!this.selection.size) return
-    try { await navigator.clipboard.writeText([...this.selection].join("\n")) } catch {}
+    const text = [...this.selection].join("\n")
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      this._fallbackCopy(text)
+    }
+    this._showFeedback(event?.currentTarget, "Caminhos copiados!")
   }
 
   // clipboard.paths is always an array — single-item cut/copy just wraps one
   // path, so paste() has one code path for both.
-  cut(event)  { this.clipboard = { mode: "cut",  paths: [event.currentTarget.dataset.path], names: [event.currentTarget.dataset.name] }; this._renderClipboard() }
-  copy(event) { this.clipboard = { mode: "copy", paths: [event.currentTarget.dataset.path], names: [event.currentTarget.dataset.name] }; this._renderClipboard() }
-  bulkCut()  { if (this.selection.size) { this.clipboard = { mode: "cut",  paths: [...this.selection], names: this._selectionNames() }; this._renderClipboard() } }
-  bulkCopy() { if (this.selection.size) { this.clipboard = { mode: "copy", paths: [...this.selection], names: this._selectionNames() }; this._renderClipboard() } }
+  cut(event)  {
+    event?.stopPropagation()
+    const name = event.currentTarget.dataset.name
+    this.clipboard = { mode: "cut",  paths: [event.currentTarget.dataset.path], names: [name] }
+    this._renderClipboard()
+    this._showFeedback(event.currentTarget, `"${name}" recortado!`)
+  }
+  copy(event) {
+    event?.stopPropagation()
+    const name = event.currentTarget.dataset.name
+    this.clipboard = { mode: "copy", paths: [event.currentTarget.dataset.path], names: [name] }
+    this._renderClipboard()
+    this._showFeedback(event.currentTarget, `"${name}" copiado!`)
+  }
+  bulkCut(event)  {
+    event?.stopPropagation()
+    if (this.selection.size) {
+      this.clipboard = { mode: "cut",  paths: [...this.selection], names: this._selectionNames() }
+      this._renderClipboard()
+      this._showFeedback(event?.currentTarget, `${this.selection.size} item(ns) recortado(s)!`)
+    }
+  }
+  bulkCopy(event) {
+    event?.stopPropagation()
+    if (this.selection.size) {
+      this.clipboard = { mode: "copy", paths: [...this.selection], names: this._selectionNames() }
+      this._renderClipboard()
+      this._showFeedback(event?.currentTarget, `${this.selection.size} item(ns) copiado(s)!`)
+    }
+  }
   clearClipboard() { this.clipboard = null; this._renderClipboard() }
+
+  _fallbackCopy(text) {
+    const ta = document.createElement("textarea")
+    ta.value = text
+    ta.style.position = "fixed"
+    ta.style.opacity = "0"
+    document.body.appendChild(ta)
+    ta.select()
+    try { document.execCommand("copy") } catch {}
+    document.body.removeChild(ta)
+  }
+
+  _showFeedback(btn, message = "Copiado!") {
+    this._showToast(message)
+    if (!btn) return
+    const originalHtml = btn.innerHTML
+    const originalTitle = btn.getAttribute("title")
+
+    if (btn.querySelector("svg") && !btn.innerText.trim()) {
+      btn.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`
+    } else {
+      btn.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-500 font-medium"><svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> ${message}</span>`
+    }
+    btn.setAttribute("title", message)
+    btn.classList.add("text-emerald-500")
+
+    setTimeout(() => {
+      btn.innerHTML = originalHtml
+      if (originalTitle) btn.setAttribute("title", originalTitle)
+      else btn.removeAttribute("title")
+      btn.classList.remove("text-emerald-500")
+    }, 1500)
+  }
+
+  _showToast(msg) {
+    let toast = this.element.querySelector(".vps-fb-toast")
+    if (!toast) {
+      toast = document.createElement("div")
+      toast.className = "vps-fb-toast fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-surface-raised/95 border border-emerald-500/40 shadow-xl rounded-lg text-xs font-medium text-text-primary backdrop-blur-sm pointer-events-none transition-all duration-200 opacity-0 translate-y-2"
+      this.element.appendChild(toast)
+    }
+    toast.innerHTML = `<svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span>${this._esc(msg)}</span>`
+    toast.classList.remove("opacity-0", "translate-y-2")
+    toast.classList.add("opacity-100", "translate-y-0")
+
+    if (this._toastTimer) clearTimeout(this._toastTimer)
+    this._toastTimer = setTimeout(() => {
+      toast.classList.remove("opacity-100", "translate-y-0")
+      toast.classList.add("opacity-0", "translate-y-2")
+    }, 2000)
+  }
 
   _selectionNames() {
     return [...this.selection].map(p => this.entries.find(e => e.path === p)?.name || p)
@@ -250,6 +372,7 @@ export default class extends Controller {
   }
 
   async rename(event) {
+    event?.stopPropagation()
     const path = event.currentTarget.dataset.path
     const name = prompt("Novo nome:", event.currentTarget.dataset.name)
     if (!name || name === event.currentTarget.dataset.name) return
@@ -258,6 +381,7 @@ export default class extends Controller {
   }
 
   async destroy(event) {
+    event?.stopPropagation()
     const path = event.currentTarget.dataset.path
     if (!confirm(`Apagar "${event.currentTarget.dataset.name}"?`)) return
     this._progress("Apagando…")
@@ -427,7 +551,7 @@ export default class extends Controller {
       iconHolder = "h-28 w-28"
     }
     return `
-      <div class="group flex flex-col items-center justify-center gap-1.5 ${boxSz} rounded-lg border border-transparent cursor-pointer ${sel ? "bg-cyan-500/10 border-cyan-500/30" : "hover:bg-surface-active/50 hover:border-border-subtle"}"
+      <div class="group flex flex-col items-center justify-center gap-1.5 ${boxSz} rounded-lg border cursor-pointer ${sel ? "bg-cyan-500/10 border-cyan-500/30" : "border-transparent hover:bg-surface-active/50 hover:border-border-subtle"}"
            data-path="${e.path}" data-action="click->vps-file-browser#rowClick dblclick->vps-file-browser#openFromRow">
         <div class="flex items-center justify-center ${iconHolder}">${this._icon(e, true)}</div>
         <span class="text-xs text-text-primary text-center truncate w-full" title="${this._esc(e.name)}">${this._esc(e.name)}</span>
@@ -449,7 +573,7 @@ export default class extends Controller {
     }).join("")
     return `
       <table class="w-full">
-        <thead><tr class="text-left text-xs text-text-muted border-b border-border">
+        <thead class="sticky top-0 bg-surface-raised z-10 border-b border-border"><tr class="text-left text-xs text-text-muted">
           <th class="px-3 py-1.5 font-medium">Nome</th><th class="px-3 py-1.5 font-medium text-right">Tamanho</th>
           <th class="px-3 py-1.5 font-medium">Modificado</th><th class="px-3 py-1.5 font-medium">Permissões</th><th></th>
         </tr></thead>
@@ -458,6 +582,7 @@ export default class extends Controller {
   }
 
   openFromRow(event) {
+    if (event.target.closest("button, a, input")) return
     const path = event.currentTarget.dataset.path
     const entry = this.entries.find(e => e.path === path)
     if (entry) this.open(entry)

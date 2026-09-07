@@ -30,6 +30,10 @@ services:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-cfut_uKgLFWpCLG7TT8gwuMf1rQ2hJ5R5nfYN4YAXfctB12c346cf}
       CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-2abf8a465c7243bdce700ca27de558a5}
       CF_ACCOUNT_ID: ${CF_ACCOUNT_ID:-85c7ebc56fe4c6aca4939b68af878c04}
+      # Introspecção do RabbitMQ (Swarm::DbClusterController) — API de
+      # management, mesmas credenciais do RABBITMQ_DEFAULT_USER/PASS.
+      RABBITMQ_USER: ${RABBITMQ_USER:-welintonreis}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-meq9naPR}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /proc:/host/proc:ro
@@ -44,6 +48,32 @@ services:
       - /root/.codex:/root/.codex
       - /root/.gemini:/root/.gemini
       - ${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}:${GIT_WORKSPACE_HOST_PATH:-/srv/redhusky/git-stacks}
+    secrets:
+      # Introspecção do cluster de bancos (Swarm::DbClusterController) —
+      # conecta direto em postgres-master/postgres-analytics com o
+      # superusuário sa, fora do DATABASE_URL normal do app.
+      - pg_user
+      - pg_password
+      - redis_password
+      # Introspecção do WAL-G/R2 (Swarm::DbBackupsController) — soma de
+      # objetos no bucket via container amazon/aws-cli descartável.
+      - r2_access_key_id
+      - r2_secret_access_key
+    healthcheck:
+      # Sem isto o Swarm só reinicia a task se o processo morrer. O
+      # travamento de 2026-09-02 (Puma preso após blip de DNS no haproxy,
+      # 76% CPU, sem accept na 3000) manteve a task "Running" por 4h
+      # enquanto o Traefik dava 502 — só restart manual resolveu.
+      # timeout/retries folgados de propósito: em 2026-09-03 01:22 downloads
+      # simultâneos do navegador de arquivos seguraram o processo por ~5s e
+      # três checks seguidos estouraram — o Swarm matou uma task viva (137).
+      # 10s x 5 tentativas ainda derruba um Puma travado em ~1min, mas não
+      # confunde "ocupado" com "morto". Ver VpsStreamThrottle.
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:80/up"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - traefik
       - postgres-cluster
@@ -71,4 +101,16 @@ networks:
   traefik:
     external: true
   postgres-cluster:
+    external: true
+
+secrets:
+  pg_user:
+    external: true
+  pg_password:
+    external: true
+  redis_password:
+    external: true
+  r2_access_key_id:
+    external: true
+  r2_secret_access_key:
     external: true

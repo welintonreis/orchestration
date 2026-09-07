@@ -48,8 +48,8 @@
         <%# postgres-read — réplica streaming do master %>
         <div class="flex flex-col items-center w-48">
           <div class="w-px h-6 bg-border-subtle"></div>
-          <%= render "host_box", name: "postgres-read", badge_label: "read replica", badge_color: :cyan,
-                      stat: @host_stats["read"], border_class: "border-cyan-300 dark:border-cyan-500/30" %>
+          <%= render "host_box", name: "postgres-read", badge_label: "read replica", badge_color: :orange,
+                      stat: @host_stats["read"], border_class: "border-orange-300 dark:border-brand/30" %>
         </div>
 
         <%# postgres-analytics — não é réplica física (não espelha o cluster
@@ -134,7 +134,7 @@
         </tr>
       </thead>
       <tbody>
-        <% server_colors = { "master" => :green, "read" => :cyan, "analytics" => :yellow,
+        <% server_colors = { "master" => :green, "read" => :orange, "analytics" => :yellow,
                               "development" => :purple, "redis" => :orange, "rabbitmq" => :blue } %>
         <% @db_rows.sort_by { |r| [r.server, r.database.to_s] }.each do |row| %>
           <% haystack = j("#{row.database} #{row.owner}".downcase) %>

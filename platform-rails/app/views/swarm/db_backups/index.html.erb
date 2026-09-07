@@ -1,0 +1,17 @@
+<% page_title "Gestão de Backup" %>
+<% page_subtitle "WAL-G / postgres-master — visibilidade somente leitura (fase 1)" %>
+<% breadcrumb ["Cluster de Bancos", swarm_db_cluster_path], ["Gestão de Backup", nil] %>
+
+<% content_for :page_icon do %>
+  <%= sidebar_icon(:s3_storage, css_class: "w-7 h-7") %>
+<% end %>
+
+<div data-controller="metrics-refresh"
+     data-metrics-refresh-frame-value="db-backups-content"
+     data-metrics-refresh-interval-value="60000">
+  <turbo-frame id="db-backups-content" target="_top" src="<%= rows_swarm_db_backups_path %>">
+    <div class="space-y-8">
+      <%= render Ui::SkeletonComponent.new(:detail) %>
+    </div>
+  </turbo-frame>
+</div>

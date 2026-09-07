@@ -4,21 +4,23 @@
 <% unless params[:embed] %>
 <% content_for :title_actions do %>
   <%= link_to vps_host_terminal_sessions_path(@host), method: :post, data: { turbo_method: :post },
-        class: "px-3 py-1.5 text-xs font-medium bg-cyan-100 dark:bg-cyan-500/12 hover:bg-cyan-200 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30 rounded-lg transition-colors" do %>Shell<% end %>
+        class: "px-3 py-1.5 text-xs font-medium bg-orange-100 dark:bg-brand/[0.12] hover:bg-orange-200 dark:hover:bg-brand/[0.20] text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-brand/30 rounded-lg transition-colors" do %>Shell<% end %>
 <% end %>
 <% end %>
 
-<%= turbo_frame_tag "vps-files-frame" do %>
+<% content_for :main_class, "flex-1 min-h-0 flex flex-col overflow-hidden p-4 sm:p-6" %>
+<%= turbo_frame_tag "vps-files-frame", class: "flex-1 min-h-0 w-full flex flex-col overflow-hidden p-3" do %>
 <div data-controller="vps-file-browser" data-vps-file-browser-host-id-value="<%= @host.id %>"
-     data-vps-file-browser-seed-value="<%= @seed.to_json %>">
+     data-vps-file-browser-seed-value="<%= @seed.to_json %>"
+     class="flex-1 min-h-0 flex flex-col overflow-hidden">
 
   <%# ── Toolbar ── %>
-  <div class="mb-3 flex items-center justify-between flex-wrap gap-3">
+  <div class="mb-3 flex items-center justify-between flex-wrap gap-3 shrink-0">
     <nav data-vps-file-browser-target="breadcrumb" class="flex items-center gap-1 text-sm overflow-x-auto min-w-0 flex-1"></nav>
 
     <div class="flex items-center gap-2 flex-shrink-0">
       <input type="text" data-vps-file-browser-target="filter" data-action="input->vps-file-browser#setFilter"
-             placeholder="Pesquisar…" class="w-40 px-2.5 py-1.5 bg-surface-inset border border-border-subtle rounded-lg text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-cyan-600">
+             placeholder="Pesquisar…" class="w-40 px-2.5 py-1.5 bg-surface-inset border border-border-subtle rounded-lg text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-orange-500 dark:focus:border-brand">
 
       <%# View mode switch: list / grid / details %>
       <div class="flex items-center rounded-lg border border-border-subtle overflow-hidden">
@@ -64,31 +66,31 @@
   </div>
 
   <%# ── Clipboard bar ── %>
-  <div data-vps-file-browser-target="pasteBar" class="hidden mb-3 flex items-center justify-between px-3 py-2 bg-cyan-100 dark:bg-cyan-500/10 border border-cyan-300 dark:border-cyan-500/30 rounded-lg text-xs">
-    <span data-vps-file-browser-target="clipName" class="text-cyan-700 dark:text-cyan-300"></span>
+  <div data-vps-file-browser-target="pasteBar" class="hidden mb-3 flex items-center justify-between px-3 py-2 bg-orange-100 dark:bg-brand/[0.10] border border-orange-300 dark:border-brand/30 rounded-lg text-xs shrink-0">
+    <span data-vps-file-browser-target="clipName" class="text-orange-700 dark:text-orange-300"></span>
     <div class="flex items-center gap-2">
-      <button class="text-cyan-700 dark:text-cyan-300 font-medium hover:underline" data-action="click->vps-file-browser#paste">Colar aqui</button>
+      <button class="text-orange-700 dark:text-orange-300 font-medium hover:underline" data-action="click->vps-file-browser#paste">Colar aqui</button>
       <button class="text-text-muted hover:text-text-secondary" data-action="click->vps-file-browser#clearClipboard">Cancelar</button>
     </div>
   </div>
 
   <%# ── Bulk selection bar ── %>
-  <div data-vps-file-browser-target="bulkBar" class="hidden mb-3 flex items-center justify-between px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs">
+  <div data-vps-file-browser-target="bulkBar" class="hidden mb-3 flex items-center justify-between px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs shrink-0">
     <span data-vps-file-browser-target="bulkCount" class="text-text-secondary"></span>
     <div class="flex items-center gap-3">
-      <button class="flex items-center gap-1 text-text-secondary hover:text-cyan-600 dark:hover:text-cyan-400 font-medium" data-action="click->vps-file-browser#bulkCopy">
+      <button class="flex items-center gap-1 text-text-secondary hover:text-orange-600 dark:hover:text-brand font-medium" data-action="click->vps-file-browser#bulkCopy">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>
         Copiar
       </button>
-      <button class="flex items-center gap-1 text-text-secondary hover:text-cyan-600 dark:hover:text-cyan-400 font-medium" data-action="click->vps-file-browser#bulkCut">
+      <button class="flex items-center gap-1 text-text-secondary hover:text-orange-600 dark:hover:text-brand font-medium" data-action="click->vps-file-browser#bulkCut">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg>
         Recortar
       </button>
-      <button class="flex items-center gap-1 text-text-secondary hover:text-cyan-600 dark:hover:text-cyan-400 font-medium" data-action="click->vps-file-browser#bulkCopyPath">
+      <button class="flex items-center gap-1 text-text-secondary hover:text-orange-600 dark:hover:text-brand font-medium" data-action="click->vps-file-browser#bulkCopyPath">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 13a5 5 0 007.07 0l1.93-1.93a5 5 0 00-7.07-7.07L10.5 5.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 11a5 5 0 00-7.07 0l-1.93 1.93a5 5 0 007.07 7.07L13.5 18.5"/></svg>
         Copiar caminho
       </button>
-      <button class="flex items-center gap-1 text-text-secondary hover:text-cyan-600 dark:hover:text-cyan-400 font-medium" data-action="click->vps-file-browser#downloadSelectionArchive">
+      <button class="flex items-center gap-1 text-text-secondary hover:text-orange-600 dark:hover:text-brand font-medium" data-action="click->vps-file-browser#downloadSelectionArchive">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
         Baixar
       </button>
@@ -103,14 +105,14 @@
     </div>
   </div>
 
-  <div class="bg-surface-raised border border-border rounded-xl overflow-hidden" tabindex="0" data-action="keydown->vps-file-browser#keydown">
+  <div class="bg-surface-raised border border-border rounded-xl flex-1 min-h-0 flex flex-col overflow-hidden" tabindex="0" data-action="keydown->vps-file-browser#keydown">
     <%# Placeholder until the JSON listing lands — the Stimulus controller
         replaces this whole node on its first render. %>
-    <div data-vps-file-browser-target="list" class="min-h-[200px] py-1">
+    <div data-vps-file-browser-target="list" class="flex-1 min-h-0 overflow-y-auto py-1">
       <%= render Ui::SkeletonComponent.new(:table, card: false,
             columns: [ "w-56", "w-16", "w-24", "w-20" ], rows: 10) %>
     </div>
-    <div data-vps-file-browser-target="progress" class="hidden px-3 py-2 border-t border-border text-xs bg-surface-inset text-text-secondary"></div>
+    <div data-vps-file-browser-target="progress" class="hidden px-3 py-2 border-t border-border text-xs bg-surface-inset text-text-secondary shrink-0"></div>
   </div>
 </div>
 <% end %>
@@ -122,7 +124,7 @@
     <div class="px-5 py-3 border-b border-border flex items-center justify-between shrink-0">
       <h3 data-vps-file-browser-target="previewTitle" class="text-sm font-semibold text-text-primary font-mono truncate"></h3>
       <div class="flex items-center gap-2 shrink-0">
-        <button data-vps-file-browser-target="previewDownloadBtn" class="text-xs text-cyan-600 dark:text-cyan-400 hover:underline">Baixar</button>
+        <button data-vps-file-browser-target="previewDownloadBtn" class="text-xs text-orange-600 dark:text-brand hover:underline">Baixar</button>
         <button data-action="click->vps-file-browser#closePreview" class="text-text-muted hover:text-text-secondary">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>

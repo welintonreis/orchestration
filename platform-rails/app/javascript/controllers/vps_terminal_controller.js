@@ -11,6 +11,27 @@ import { SerializeAddon } from "@xterm/addon-serialize"
 let sharedConsumer = null
 const consumer = () => (sharedConsumer ||= createConsumer())
 
+// Muted ANSI palette: no near-white text, and diff-style red/green (deletions/
+// insertions from git/diff tools) desaturated instead of pure alert colors.
+const DARK_THEME = {
+  background: "#0d1117", foreground: "#c9d1d9", cursor: "#58a6ff", cursorAccent: "#0d1117",
+  selectionBackground: "rgba(88,166,255,0.3)",
+  black: "#484f58", red: "#c9706a", green: "#7a9d76", yellow: "#d29922",
+  blue: "#58a6ff", magenta: "#a98cd0", cyan: "#4fa8b0", white: "#9099a3",
+  brightBlack: "#6e7681", brightRed: "#d99089", brightGreen: "#93b98f",
+  brightYellow: "#e3b341", brightBlue: "#79c0ff", brightMagenta: "#c3aede",
+  brightCyan: "#7fc9cf", brightWhite: "#c9d1d9",
+}
+const LIGHT_THEME = {
+  background: "#e5e7eb", foreground: "#374151", cursor: "#374151", cursorAccent: "#e5e7eb",
+  selectionBackground: "rgba(55,65,81,0.2)",
+  black: "#24292f", red: "#a8534a", green: "#4b7a5c", yellow: "#6b4d00",
+  blue: "#0969da", magenta: "#8250df", cyan: "#1b7c83", white: "#6e7781",
+  brightBlack: "#57606a", brightRed: "#b96a5e", brightGreen: "#5c8f6e",
+  brightYellow: "#7d5c1c", brightBlue: "#218bff", brightMagenta: "#a475f9",
+  brightCyan: "#3f97a0", brightWhite: "#8c959f",
+}
+
 // Real SSH terminal to a VpsHost — ported from redhusky-remote-ssh's
 // terminal_controller.js (ActionCable + `transmit`, not ttyd/broadcast, see
 // SPEC-TERMINAL-TTYD.md).
@@ -27,15 +48,7 @@ export default class extends Controller {
       cursorBlink: true,
       allowProposedApi: true,
       rightClickSelectsWord: false,
-      theme: {
-        background: "#0d1117", foreground: "#e6edf3", cursor: "#58a6ff", cursorAccent: "#0d1117",
-        selectionBackground: "rgba(88,166,255,0.3)",
-        black: "#484f58", red: "#ff7b72", green: "#3fb950", yellow: "#d29922",
-        blue: "#58a6ff", magenta: "#bc8cff", cyan: "#39c5cf", white: "#b1bac4",
-        brightBlack: "#6e7681", brightRed: "#ffa198", brightGreen: "#56d364",
-        brightYellow: "#e3b341", brightBlue: "#79c0ff", brightMagenta: "#d2a8ff",
-        brightCyan: "#56d4dd", brightWhite: "#f0f6fc",
-      }
+      theme: document.documentElement.classList.contains("dark") ? DARK_THEME : LIGHT_THEME,
     })
 
     this.fitAddon = new FitAddon()

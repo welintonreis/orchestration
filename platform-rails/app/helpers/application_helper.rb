@@ -234,6 +234,14 @@ module ApplicationHelper
     )
   end
 
+  def format_bytes(bytes)
+    return "—" if bytes.nil?
+
+    units = %w[B KB MB GB TB]
+    exp = bytes.zero? ? 0 : [Math.log(bytes, 1024).floor, units.size - 1].min
+    "%.1f %s" % [bytes.to_f / 1024**exp, units[exp]]
+  end
+
   # Renders a sidebar navigation link with optional icon and Alpine.js-aware collapsed state.
   #
   # icon:               one of the symbol keys defined in NAV_ICONS below
