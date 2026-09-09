@@ -97,7 +97,7 @@
             <td class="py-2 pr-4 text-text-secondary"><%= device.agent_version.presence || "—" %></td>
             <td class="py-2 pr-4 text-right">
               <% unless device.revoked? %>
-                <%= render Ui::ButtonComponent.new(url: revoke_settings_hud_path(device), method: :post, variant: :red, size: :sm,
+                <%= render Ui::ButtonComponent.new(url: settings_revoke_hud_path(device), method: :post, variant: :red, size: :sm,
                     label: "Revogar",
                     confirm: "Revogar \"#{device.name}\"? A máquina perde acesso na hora.") %>
               <% end %>
