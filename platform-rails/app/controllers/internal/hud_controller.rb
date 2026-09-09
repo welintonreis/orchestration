@@ -1,5 +1,5 @@
 module Internal
-  # Internal::HudController — resumo da orelhinha de desktop.
+  # Internal::HudController — resumo do Notch (HUD) de desktop.
   #
   # Contrato em 00_docs/hud-contract.md do repo redhusky-hud. Máquina-a-máquina:
   # sem sessão, sem CSRF, sem flash — por isso ActionController::API e não a

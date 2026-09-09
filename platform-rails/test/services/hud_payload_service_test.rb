@@ -1,6 +1,6 @@
 require "test_helper"
 
-# O valor da orelhinha está nos denominadores: cada item tem de virar um % que
+# O valor do Notch está nos denominadores: cada item tem de virar um % que
 # significa alguma coisa. Estes testes travam justamente isso — a fração e a
 # severidade de cada janela, não o texto.
 class HudPayloadServiceTest < ActiveSupport::TestCase

@@ -1,5 +1,5 @@
 module Settings
-  # Dispositivos autorizados a ler a orelhinha (redhusky-hud). Mesmo desenho da
+  # Dispositivos autorizados a ler o Notch (redhusky-hud). Mesmo desenho da
   # tela Edge: o token aparece UMA vez, no flash, e o que fica no banco é só o
   # digest.
   class HudController < ApplicationController

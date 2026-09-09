@@ -5,7 +5,7 @@ class BackupSnapshotJob < ApplicationJob
     result = WalgInspectorService.call
     latest = result.backups.first
     # A lista já está em mãos aqui; consultá-la de novo custa um container
-    # aws-cli, o que é inaceitável no poll de 15s da orelhinha. Então o resumo
+    # aws-cli, o que é inaceitável no poll de 15s do Notch. Então o resumo
     # da corrente de deltas é gravado junto, e o HUD só lê a linha.
     chain = delta_chain(result.backups)
 

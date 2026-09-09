@@ -311,14 +311,14 @@ Rails.application.routes.draw do
     post "edge/generate_enrollment", to: "edge#generate_enrollment", as: :edge_generate_enrollment
     post "edge/nodes/:id/revoke",   to: "edge#revoke_node",        as: :edge_revoke_node
     get  "help",      to: "help#index",     as: :help
-    # Orelhinha de desktop (redhusky-hud): dispositivos autorizados a ler o
+    # Notch de desktop (redhusky-hud): dispositivos autorizados a ler o
     # resumo. O endpoint em si é máquina-a-máquina, fora do namespace.
     get  "hud",             to: "hud#index",  as: :hud
     post "hud",             to: "hud#create"
     post "hud/:id/revoke",  to: "hud#revoke", as: :revoke_hud
   end
 
-  # Resumo da orelhinha: Bearer por dispositivo, sem sessão nem CSRF.
+  # Resumo do Notch: Bearer por dispositivo, sem sessão nem CSRF.
   get "internal/hud", to: "internal/hud#show", as: :internal_hud
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

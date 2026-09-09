@@ -1,7 +1,7 @@
 require "test_helper"
 
 # A tela de dispositivos é o único caminho para emitir o token. Se ela quebrar,
-# a orelhinha não tem como ser instalada em máquina nenhuma.
+# o Notch não tem como ser instalada em máquina nenhuma.
 class Settings::HudControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:admin_user)

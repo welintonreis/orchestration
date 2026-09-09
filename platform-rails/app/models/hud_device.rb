@@ -1,6 +1,6 @@
 require "digest"
 
-# HudDevice — uma máquina autorizada a ler o resumo da orelhinha (HUD).
+# HudDevice — uma máquina autorizada a ler o resumo do Notch (HUD).
 #
 # Mesma fronteira do EdgeNode: o desktop NÃO é confiável, o servidor é a
 # autoridade. Guardamos só o digest do token, o acesso é de leitura e só do

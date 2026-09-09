@@ -2,7 +2,7 @@ require "pg"
 require "net/http"
 require "json"
 
-# HudPayloadService — as células da orelhinha de desktop (redhusky-hud).
+# HudPayloadService — as células do Notch (HUD) de desktop (redhusky-hud).
 #
 # Contrato: 00_docs/hud-contract.md do repo redhusky-hud. Três células, uma por
 # assunto, cada uma com as suas janelas no hover card:
@@ -61,7 +61,7 @@ class HudPayloadService
 
   # ── Resources ────────────────────────────────────────────────────────────
   # Os limiares são os MESMOS que já disparam alerta no MetricsJob. Uma régua
-  # só: o que acende a orelhinha é o que gera o alerta, senão a pill vira uma
+  # só: o que acende o Notch é o que gera o alerta, senão a pill vira uma
   # segunda opinião sobre a mesma máquina.
   def resources_cell
     m = HostMetric.latest
