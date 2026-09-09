@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_100100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_09_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -104,6 +104,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_100100) do
     t.index ["action"], name: "index_audit_logs_on_action"
     t.index ["created_at"], name: "index_audit_logs_on_created_at"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
+  end
+
+  create_table "backup_snapshots", force: :cascade do |t|
+    t.datetime "captured_at", null: false
+    t.datetime "created_at", null: false
+    t.integer "delta_count"
+    t.integer "deltas_since_full"
+    t.text "error"
+    t.integer "full_count"
+    t.datetime "last_backup_at"
+    t.string "last_backup_name"
+    t.string "last_backup_type"
+    t.datetime "last_full_at"
+    t.integer "object_count"
+    t.string "server", null: false
+    t.bigint "total_bytes"
+    t.datetime "updated_at", null: false
+    t.index ["server", "captured_at"], name: "index_backup_snapshots_lookup"
+  end
+
+  create_table "db_cluster_snapshots", force: :cascade do |t|
+    t.datetime "captured_at", null: false
+    t.datetime "created_at", null: false
+    t.string "database_name", null: false
+    t.bigint "row_count", null: false
+    t.string "server", null: false
+    t.datetime "updated_at", null: false
+    t.index ["server", "database_name", "captured_at"], name: "index_db_cluster_snapshots_lookup"
   end
 
   create_table "edge_commands", force: :cascade do |t|
@@ -275,6 +303,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_100100) do
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_host_metrics_on_created_at"
     t.index ["edge_node_id"], name: "index_host_metrics_on_edge_node_id"
+  end
+
+  create_table "hud_devices", force: :cascade do |t|
+    t.string "agent_version"
+    t.datetime "created_at", null: false
+    t.datetime "last_seen_at"
+    t.string "name", null: false
+    t.datetime "revoked_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token_digest"], name: "index_hud_devices_on_token_digest", unique: true
   end
 
   create_table "sessions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

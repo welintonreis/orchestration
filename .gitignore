@@ -25,3 +25,6 @@ deploy/.env.prod
 Thumbs.db
 graphify-out/
 .db_password
+# senha do role de teste (postgres-development) — nunca no git
+.db_password_test
+platform-rails/.db_password_test

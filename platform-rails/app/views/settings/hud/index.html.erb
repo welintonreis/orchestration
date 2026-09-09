@@ -1,0 +1,110 @@
+<% content_for :title, "Orelhinha (HUD)" %>
+
+<div class="mb-6">
+  <h2 class="text-xl font-bold text-text-primary">Orelhinha (HUD)</h2>
+  <p class="text-sm text-text-secondary mt-0.5">A pill de borda do desktop: Recursos, Docker e Bancos sem abrir o painel</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-surface-raised border border-border rounded-xl p-6">
+      <h3 class="text-sm font-semibold text-text-primary mb-3">Novo dispositivo</h3>
+      <p class="text-xs text-text-secondary mb-3">
+        Gera o token da máquina e o <code>config.json</code> pronto. O token é de leitura e só do resumo
+        que a pill desenha — nada de Docker, exec ou scale passa por ele.
+      </p>
+      <%= form_with url: settings_hud_path, method: :post, local: true, class: "flex items-center gap-2" do %>
+        <input type="text" name="device_name" placeholder="PC do Welinton" required
+          class="flex-1 bg-surface-inset border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-cyan-500">
+        <button type="submit" class="btn-primary whitespace-nowrap">Gerar token</button>
+      <% end %>
+
+      <% if flash[:hud_config] %>
+        <div class="mt-4">
+          <p class="text-xs text-amber-600 dark:text-amber-400 mb-2">
+            Copie agora — o token aparece uma vez só. Cole em <code>%APPDATA%\RedHuskyHUD\config.json</code>
+            (ou em Configuração → nova fonte, no próprio HUD).
+          </p>
+          <div class="flex items-start gap-2">
+            <pre id="hud-config" class="flex-1 px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs font-mono text-text-secondary whitespace-pre-wrap break-all"><%= flash[:hud_config] %></pre>
+            <%= button_to "Copiar", "#", onclick: "navigator.clipboard.writeText(document.getElementById('hud-config').textContent); this.textContent='Copiado!'; setTimeout(() => this.textContent='Copiar', 2000); return false;", class: "btn-secondary text-xs px-3 py-2 whitespace-nowrap" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="bg-surface-raised border border-border rounded-xl p-6">
+      <h3 class="text-sm font-semibold text-text-primary mb-3">Endpoint</h3>
+      <div class="flex items-center gap-2">
+        <code class="flex-1 px-3 py-2 bg-surface-inset border border-border-subtle rounded-lg text-xs font-mono text-text-secondary break-all"><%= @endpoint %></code>
+        <%= button_to "Copiar", "#", onclick: "navigator.clipboard.writeText('#{@endpoint}'); this.textContent='Copiado!'; setTimeout(() => this.textContent='Copiar', 2000); return false;", class: "btn-secondary text-xs px-3 py-2" %>
+      </div>
+      <p class="text-xs text-text-muted mt-2">Só leitura, autenticado por Bearer. Contrato: <code>00_docs/hud-contract.md</code> do repo redhusky-hud.</p>
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-primary mb-2">O que a pill mostra</h3>
+      <ul class="text-xs text-text-secondary space-y-1.5">
+        <li><b class="text-text-primary">Recursos</b> — uptime, CPU, RAM, disco, swap</li>
+        <li><b class="text-text-primary">Docker</b> — stacks, services, images, containers, volumes, networks</li>
+        <li><b class="text-text-primary">Bancos</b> — master, réplicas, analytics, rabbit, backups, deltas</li>
+      </ul>
+      <p class="text-xs text-text-muted mt-3">Cada item tem um % com denominador real: uso contra limite, no ar contra desejado, idade contra RPO.</p>
+    </div>
+    <div class="bg-surface-raised border border-border rounded-xl p-5">
+      <h3 class="text-sm font-semibold text-text-primary mb-2">Como usar</h3>
+      <ol class="text-xs text-text-secondary space-y-2 list-decimal list-inside">
+        <li>Gere o token com o nome da máquina</li>
+        <li>Instale o RedHusky HUD (release no GitHusky)</li>
+        <li>Cole o config; a pill aparece na borda direita</li>
+        <li>Revogue aqui se a máquina sair de uso</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="bg-surface-raised border border-border rounded-xl p-6 mt-6">
+  <h3 class="text-sm font-semibold text-text-primary mb-4">Dispositivos</h3>
+  <% if @devices.empty? %>
+    <p class="text-sm text-text-muted">Nenhum dispositivo autorizado ainda — gere o primeiro token acima.</p>
+  <% else %>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-text-muted uppercase tracking-wide border-b border-border">
+          <th class="py-2 pr-4">Nome</th>
+          <th class="py-2 pr-4">Status</th>
+          <th class="py-2 pr-4">Último contato</th>
+          <th class="py-2 pr-4">Agente</th>
+          <th class="py-2 pr-4"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @devices.each do |device| %>
+          <tr class="border-b border-border-subtle last:border-0">
+            <td class="py-2 pr-4 text-text-primary"><%= device.name %></td>
+            <td class="py-2 pr-4">
+              <% if device.revoked? %>
+                <%= render(Ui::BadgeComponent.new(color: :red)) { "Revogado" } %>
+              <% elsif device.last_seen_at && device.last_seen_at > 5.minutes.ago %>
+                <%= render(Ui::BadgeComponent.new(color: :green)) { "Online" } %>
+              <% else %>
+                <%= render(Ui::BadgeComponent.new(color: :gray)) { "Ocioso" } %>
+              <% end %>
+            </td>
+            <td class="py-2 pr-4 text-text-secondary"><%= device.last_seen_at ? "#{time_ago_in_words(device.last_seen_at)} atrás" : "nunca" %></td>
+            <td class="py-2 pr-4 text-text-secondary"><%= device.agent_version.presence || "—" %></td>
+            <td class="py-2 pr-4 text-right">
+              <% unless device.revoked? %>
+                <%= render Ui::ButtonComponent.new(url: revoke_settings_hud_path(device), method: :post, variant: :red, size: :sm,
+                    label: "Revogar",
+                    confirm: "Revogar \"#{device.name}\"? A máquina perde acesso na hora.") %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
