@@ -34,7 +34,7 @@
    - Todo sistema que usa dado da Senatran precisa oferecer um **módulo de perfil de acesso de auditoria
      (somente leitura)**, conforme o manual técnico.
    - Esse módulo não existe hoje em nenhum projeto.
-5. **Há 9 lacunas graves e comuns à VPS** (seção 4.1). Nenhuma pede separar o cluster Postgres. Todas se
+5. **Há 10 lacunas graves e comuns à VPS** (seção 4.1). Nenhuma pede separar o cluster Postgres. Todas se
    resolvem no host e no app, com o banco como está.
 
 ---
@@ -146,6 +146,7 @@ Host: redhusky-lab-01 (167.86.110.111, Contabo). Um nó Swarm (leader), 39 servi
 | G6 | **Postgres sem TLS** | `ssl off` no postgres-master. O tráfego app→pgbouncer→postgres corre em overlay sem cifra | `ssl on` com certificado interno + `sslmode=require` nos apps, ou overlay `encrypted` |
 | G7 | **Overlays sem criptografia** | redes `postgres-cluster` e `routing` com a opção `encrypted` vazia | recriar com `--opt encrypted` (IPsec). Nó único, então o ganho real é pequeno: G6 resolve melhor |
 | G8 | **Sem log de acesso a dado pessoal nem módulo de auditoria** | nenhum projeto registra quem consultou qual CPF/placa e quando | tabela append-only de consultas por app + perfil "auditor" só-leitura (art. 57) |
+| G10 | **cnroute: chave Lockbox de produção está escrita no código (git)** | `config/initializers/lockbox.rb` tem fallback `ENV[...] \|\| "<hex>"` desde o commit c2d8179, e o valor em produção é **o mesmo** (conferido 2026-09-17 por comparação, sem exibir). Quem lê o repo decifra `otp_secret` (2FA) de todos os usuários | gerar chave nova em `.lockbox_master_key`, re-cifrar com `Lockbox.rotate` (chave antiga em `previous_versions`), tirar o fallback (`ENV.fetch`), tratar a antiga como vazada. huskydataops tem fallback no código mas prod usa outra chave; tera-brain só tem fallback de dev |
 | G9 | **Sem documentação de governança** | não há política de segurança, plano de incidente, RIPD, inventário de dados nem registro de operações (LGPD art. 37) | produzir os 📄 da seção 5, camada 4 |
 
 ### 4.2 Lacunas médias
