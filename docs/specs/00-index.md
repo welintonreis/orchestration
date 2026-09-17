@@ -1,5 +1,7 @@
 # Orchestration RedHusky — Specs Index
 
+> ⚠️ **PENDENTE · URGENTE:** [conformidade para APIs públicas (VPS inteira)](../conformidade/README.md) — ver também SECURITY-ROADMAP.md.
+
 > Specs futuras (feature-*.md). Implementadas moram no ROADMAP.md e nos
 > SPEC-*.md do root. Lacunas vs Portainer mapeadas em
 > `githusky:docs/comparativo-plataformas.md`.

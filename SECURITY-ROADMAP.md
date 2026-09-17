@@ -1,5 +1,8 @@
 # Roadmap de Segurança — redhusky-lab-01 (167.86.110.111)
 
+> ⚠️ **PENDENTE · URGENTE (2026-09-17):** conformidade da VPS inteira para APIs públicas (Portaria SENATRAN 139/2025, LGPD) — 9 lacunas graves (disco/swap/backups sem cripto, Postgres sem TLS, sem trilha de auditoria). Levantamento completo em [`docs/conformidade/README.md`](docs/conformidade/README.md).
+
+
 > Origem: auditoria 2026-06-30. Host **não comprometido**, mas com exposição
 > crítica à internet e brute-force SSH ativo. Este roadmap prioriza por risco
 > real e casa com a aba **Segurança** do orchestration-redhusky.
