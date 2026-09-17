@@ -79,7 +79,12 @@ function abrir({ tipo, titulo, mensagem, okLabel, cancelar = true, campo = null 
     raiz.querySelector("[data-fundo]").addEventListener("click", desistir)
     document.addEventListener("keydown", teclas, true)
     document.body.appendChild(raiz)
-    if (input) { input.focus(); input.select() } else raiz.querySelector("[data-ok]").focus()
+    if (input) {
+      input.focus()
+      // Renomear arquivo: seleciona só o nome, sem a extensão — digitar não apaga o ".tar.gz".
+      const ponto = campo.semExtensao ? input.value.indexOf(".", 1) : -1
+      input.setSelectionRange(0, ponto > 0 ? ponto : input.value.length)
+    } else raiz.querySelector("[data-ok]").focus()
   })
 }
 
@@ -87,8 +92,8 @@ export function confirmDialog(mensagem, { titulo = "Confirmar ação", ok = "Con
   return abrir({ tipo: perigo ? "perigo" : "info", titulo, mensagem, okLabel: ok })
 }
 
-export function promptDialog(mensagem, valor = "", { titulo = "Informe", ok = "Salvar", placeholder = "" } = {}) {
-  return abrir({ tipo: "editar", titulo, mensagem, okLabel: ok, campo: { valor, placeholder } })
+export function promptDialog(mensagem, valor = "", { titulo = "Informe", ok = "Salvar", placeholder = "", semExtensao = false } = {}) {
+  return abrir({ tipo: "editar", titulo, mensagem, okLabel: ok, campo: { valor, placeholder, semExtensao } })
 }
 
 export function alertDialog(mensagem, { titulo = "Algo deu errado" } = {}) {

@@ -376,7 +376,7 @@ export default class extends Controller {
     event?.stopPropagation()
     const path = event.currentTarget.dataset.path
     const atual = event.currentTarget.dataset.name
-    const name = await promptDialog("Novo nome:", atual, { titulo: "Renomear" })
+    const name = await promptDialog("Novo nome:", atual, { titulo: "Renomear", semExtensao: true })
     if (!name || name === atual) return
     try { await this._patch("rename", { path, name }); await this.load() }
     catch (e) { alertDialog(`Falha: ${e.message}`) }
