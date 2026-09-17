@@ -118,7 +118,7 @@ export default class extends Controller {
     if (!name) return
     this._progress("Criando pasta…")
     try { await this._post("mkdir", { path: this.path, name }); await this.load() }
-    catch (e) { alertDialog(`Falha: ${e.message}`) }
+    catch (e) { alertDialog("Não foi possível criar a pasta.", { detalhe: e.message }) }
     finally { this._progress(null) }
   }
 
@@ -132,7 +132,7 @@ export default class extends Controller {
     try {
       await fetch(this._url("upload"), { method: "POST", headers: this._csrfHeaders(), body: fd })
       await this.load()
-    } catch (e) { alertDialog(`Upload falhou: ${e.message}`) }
+    } catch (e) { alertDialog("Não foi possível enviar os arquivos.", { detalhe: e.message }) }
     finally { this._progress(null); event.target.value = "" }
   }
 
@@ -368,7 +368,7 @@ export default class extends Controller {
       this._renderClipboard()
       this.clearSelection()
       await this.load()
-    } catch (e) { alertDialog(`Falha: ${e.message}`) }
+    } catch (e) { alertDialog(mode === "cut" ? "Não foi possível mover os itens." : "Não foi possível copiar os itens.", { detalhe: e.message }) }
     finally { this._progress(null) }
   }
 
@@ -379,25 +379,25 @@ export default class extends Controller {
     const name = await promptDialog("Novo nome:", atual, { titulo: "Renomear", semExtensao: true })
     if (!name || name === atual) return
     try { await this._patch("rename", { path, name }); await this.load() }
-    catch (e) { alertDialog(`Falha: ${e.message}`) }
+    catch (e) { alertDialog("Não foi possível renomear.", { detalhe: e.message }) }
   }
 
   async destroy(event) {
     event?.stopPropagation()
     const path = event.currentTarget.dataset.path
-    if (!(await confirmDialog(`Apagar "${event.currentTarget.dataset.name}"?`, { ok: "Apagar" }))) return
+    if (!(await confirmDialog(`Apagar **${event.currentTarget.dataset.name}**? Não dá pra desfazer.`, { titulo: "Apagar arquivo", ok: "Apagar" }))) return
     this._progress("Apagando…")
     try { await this._delete([path]); await this.load() }
-    catch (e) { alertDialog(`Falha: ${e.message}`) }
+    catch (e) { alertDialog("Não foi possível apagar.", { detalhe: e.message }) }
     finally { this._progress(null) }
   }
 
   async bulkDelete() {
     if (!this.selection.size) return
-    if (!(await confirmDialog(`Apagar ${this.selection.size} item(ns)?`, { ok: "Apagar" }))) return
+    if (!(await confirmDialog(`Apagar **${this.selection.size} item(ns)** selecionados? Não dá pra desfazer.`, { titulo: "Apagar seleção", ok: "Apagar" }))) return
     this._progress("Apagando…")
     try { await this._delete([...this.selection]); await this.load() }
-    catch (e) { alertDialog(`Falha: ${e.message}`) }
+    catch (e) { alertDialog("Não foi possível apagar.", { detalhe: e.message }) }
     finally { this._progress(null) }
   }
 

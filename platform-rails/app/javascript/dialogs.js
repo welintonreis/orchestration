@@ -5,7 +5,8 @@
 //
 //   if (!(await confirmDialog("Apagar X?"))) return
 //   const nome = await promptDialog("Nome da nova pasta:")      // null se cancelar
-//   await alertDialog(`Falha: ${e.message}`)
+//   await alertDialog("Não foi possível apagar.", { detalhe: e.message })
+//   Mensagem aceita **negrito** pro nome do arquivo ou a quantidade.
 //
 // O estilo mora aqui (CSS injetado uma vez) e usa os tokens do tema (--brand, --surface-raised…):
 // medidas exatas de espaçamento, sombra e animação que as classes utilitárias não expressam bem,
@@ -21,20 +22,26 @@ const CSS = `
 .rhd-bola { flex: none; width: 40px; height: 40px; border-radius: 9999px; display: grid; place-items: center; }
 .rhd-bola svg { width: 20px; height: 20px; }
 .rhd-bola.perigo { background: #FEE2E2; color: #DC2626; }
-:where(.dark) .rhd-bola.perigo { background: rgba(239,68,68,.15); color: #EF4444; }
+:where(.dark) .rhd-bola.perigo { background: rgba(239,68,68,.16); color: #F87171; }
 .rhd-bola.neutro { background: color-mix(in srgb, var(--brand, #E84518) 12%, transparent); color: var(--brand, #E84518); }
+:where(.dark) .rhd-bola.neutro { background: color-mix(in srgb, var(--brand, #F97316) 16%, transparent); color: color-mix(in srgb, var(--brand, #F97316) 70%, white); }
 .rhd-texto { flex: 1; min-width: 0; }
 .rhd-titulo { font-size: 16px; font-weight: 600; line-height: 1.4; margin: 0; }
-.rhd-msg { font-size: 14px; line-height: 1.5; color: #6B7280; margin: 4px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
-:where(.dark) .rhd-msg { color: #9CA3AF; }
-.rhd-rotulo { display: block; font-size: 13px; font-weight: 500; color: #374151; margin: 16px 0 6px; }
+.rhd-msg strong { color: var(--text-primary, #111827); font-weight: 600; }
+:where(.dark) .rhd-msg strong { color: #F3F4F6; }
+.rhd-detalhe { margin: 8px 0 0; font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #6B7280; overflow-wrap: anywhere; }
+:where(.dark) .rhd-detalhe { color: #8B949E; }
+.rhd-msg { font-size: 14px; line-height: 1.5; color: #4B5563; margin: 6px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
+:where(.dark) .rhd-msg { color: #A1A1AA; }
+.rhd-rotulo { display: block; font-size: 13px; font-weight: 500; color: #374151; margin: 8px 0 8px; }
 :where(.dark) .rhd-rotulo { color: #D1D5DB; }
 .rhd-campo { width: 100%; height: 40px; padding: 0 12px; font-size: 14px; border-radius: 8px; border: 1px solid #D1D5DB;
   background: var(--surface-raised, #fff); color: inherit; outline: none; transition: border-color 120ms, box-shadow 120ms; box-sizing: border-box; }
 :where(.dark) .rhd-campo { border-color: #374151; background: #161B22; }
 .rhd-campo:focus { border-color: var(--brand, #E84518); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #E84518) 25%, transparent); }
-.rhd-botoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
-.rhd-btn { height: 36px; padding: 0 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid transparent;
+:where(.dark) .rhd-campo:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #F97316) 35%, transparent); }
+.rhd-botoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.rhd-btn { min-width: 88px; height: 36px; padding: 0 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid transparent;
   outline: none; transition: background-color 120ms, box-shadow 120ms, filter 120ms; }
 .rhd-btn.secundario { background: transparent; color: #374151; border-color: #D1D5DB; }
 .rhd-btn.secundario:hover { background: #F3F4F6; }
@@ -43,7 +50,9 @@ const CSS = `
 .rhd-btn.primario { --cor: var(--brand, #E84518); background: var(--cor); color: #fff; }
 .rhd-btn.perigo { --cor: #DC2626; background: var(--cor); color: #fff; }
 :where(.dark) .rhd-btn.perigo { --cor: #EF4444; }
-.rhd-btn.primario:hover, .rhd-btn.perigo:hover { filter: brightness(1.08); }
+.rhd-btn.neutro { --cor: #1E293B; background: var(--cor); color: #fff; }
+:where(.dark) .rhd-btn.neutro { --cor: #F1F5F9; color: #0F172A; }
+.rhd-btn.primario:hover, .rhd-btn.perigo:hover, .rhd-btn.neutro:hover { filter: brightness(1.08); }
 .rhd-btn:focus-visible { box-shadow: 0 0 0 2px var(--surface-raised, #fff), 0 0 0 4px color-mix(in srgb, var(--cor, #6B7280) 50%, transparent); }
 :where(.dark) .rhd-btn:focus-visible { box-shadow: 0 0 0 2px #1C2128, 0 0 0 4px color-mix(in srgb, var(--cor, #9CA3AF) 50%, transparent); }
 @keyframes rhd-fade { from { opacity: 0 } to { opacity: 1 } }
@@ -65,14 +74,19 @@ function injetarEstilo() {
   document.head.appendChild(s)
 }
 
+// Mensagem aceita **trecho** em negrito (nome de arquivo, quantidade) — o resto é texto puro.
+function comDestaque(t) {
+  return escapar(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+}
+
 function escapar(t) {
   const d = document.createElement("div")
   d.textContent = t ?? ""
   return d.innerHTML
 }
 
-// icone: perigo | erro | editar · bola: perigo | neutro · botao: perigo | primario
-function abrir({ icone, bola, botao, titulo, mensagem, okLabel, cancelar = true, campo = null }) {
+// icone: perigo | erro | editar · bola: perigo | neutro · botao: perigo | primario | neutro
+function abrir({ icone, bola, botao, titulo, mensagem, detalhe = null, okLabel, cancelar = true, campo = null }) {
   injetarEstilo()
   return new Promise((resolve) => {
     const anterior = document.activeElement
@@ -94,7 +108,7 @@ function abrir({ icone, bola, botao, titulo, mensagem, okLabel, cancelar = true,
               ? `<label class="rhd-rotulo" for="rhd-campo">${escapar(mensagem.replace(/:\s*$/, ""))}</label>
                  <input id="rhd-campo" class="rhd-campo" data-campo type="text" autocomplete="off" spellcheck="false"
                         value="${escapar(campo.valor)}" placeholder="${escapar(campo.placeholder)}">`
-              : `<p class="rhd-msg">${escapar(mensagem)}</p>`}
+              : `<p class="rhd-msg">${comDestaque(mensagem)}</p>${detalhe ? `<p class="rhd-detalhe">${escapar(detalhe)}</p>` : ""}`}
           </div>
         </div>
         <div class="rhd-botoes">
@@ -151,6 +165,7 @@ export function promptDialog(mensagem, valor = "", { titulo = "Informe", ok = "S
   return abrir({ icone: "editar", bola: "neutro", botao: "primario", titulo, mensagem, okLabel: ok, campo: { valor, placeholder, semExtensao } })
 }
 
-export function alertDialog(mensagem, { titulo = "Algo deu errado" } = {}) {
-  return abrir({ icone: "erro", bola: "perigo", botao: "primario", titulo, mensagem, okLabel: "OK", cancelar: false })
+// detalhe: a mensagem técnica (e.message), em letra menor embaixo da frase legível.
+export function alertDialog(mensagem, { titulo = "Algo deu errado", detalhe = null } = {}) {
+  return abrir({ icone: "erro", bola: "perigo", botao: "neutro", titulo, mensagem, detalhe, okLabel: "OK", cancelar: false })
 }

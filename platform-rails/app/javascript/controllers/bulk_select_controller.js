@@ -20,7 +20,7 @@ export default class extends Controller {
     if (!ids.length) return
 
     const rotulo = { remove: "Remover", kill: "Matar" }[action]
-    if (rotulo && !(await confirmDialog(`${rotulo} ${ids.length} container(s)? Não dá pra desfazer.`, { ok: rotulo }))) return
+    if (rotulo && !(await confirmDialog(`${rotulo} **${ids.length} container(s)**? Não dá pra desfazer.`, { titulo: `${rotulo} containers`, ok: rotulo }))) return
 
     const form  = document.createElement("form")
     form.method = "POST"

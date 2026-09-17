@@ -94,7 +94,7 @@ export default class extends Controller {
     event.stopPropagation()
     const id = event.params?.sessionId || event.currentTarget.dataset.sessionId
     const hostId = event.params?.hostId || event.currentTarget.dataset.hostId
-    const msg = `Encerrar sessão #${id}? O shell remoto e tudo que estiver rodando nele são destruídos.`
+    const msg = `Encerrar a sessão **#${id}**? O shell remoto e tudo que estiver rodando nele são destruídos.`
     if (!(await confirmDialog(msg, { titulo: "Encerrar sessão", ok: "Encerrar" }))) return
 
     try {
@@ -107,7 +107,7 @@ export default class extends Controller {
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
     } catch (e) {
-      alertDialog(`Falha ao fechar: ${e.message}`)
+      alertDialog("Não foi possível encerrar a sessão.", { detalhe: e.message })
       return
     }
 
