@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { confirmDialog } from "dialogs"
 
 export default class extends Controller {
   static targets = ["checkbox", "selectAll", "count", "btn"]
@@ -18,8 +19,8 @@ export default class extends Controller {
     const ids    = this.checkboxTargets.filter(cb => cb.checked).map(cb => cb.value)
     if (!ids.length) return
 
-    if ((action === "remove" || action === "kill") &&
-        !confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${ids.length} container(s)? This cannot be undone.`)) return
+    const rotulo = { remove: "Remover", kill: "Matar" }[action]
+    if (rotulo && !(await confirmDialog(`${rotulo} ${ids.length} container(s)? Não dá pra desfazer.`, { ok: rotulo }))) return
 
     const form  = document.createElement("form")
     form.method = "POST"

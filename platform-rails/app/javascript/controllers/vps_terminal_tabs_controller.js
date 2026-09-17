@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { confirmDialog, alertDialog } from "dialogs"
 
 // Client-side tab switcher for terminal panes. Every pane stays mounted (and
 // its SSH session connected); activating a tab only flips visibility.
@@ -94,7 +95,7 @@ export default class extends Controller {
     const id = event.params?.sessionId || event.currentTarget.dataset.sessionId
     const hostId = event.params?.hostId || event.currentTarget.dataset.hostId
     const msg = `Encerrar sessão #${id}? O shell remoto e tudo que estiver rodando nele são destruídos.`
-    if (!window.confirm(msg)) return
+    if (!(await confirmDialog(msg, { titulo: "Encerrar sessão", ok: "Encerrar" }))) return
 
     try {
       const r = await fetch(`/vps_hosts/${hostId}/terminal_sessions/${id}`, {
@@ -106,7 +107,7 @@ export default class extends Controller {
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
     } catch (e) {
-      alert(`Falha ao fechar: ${e.message}`)
+      alertDialog(`Falha ao fechar: ${e.message}`)
       return
     }
 

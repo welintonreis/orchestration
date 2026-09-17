@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { confirmDialog, promptDialog, alertDialog } from "dialogs"
 
 const IMAGE_EXT = ["png", "jpg", "jpeg", "gif", "svg", "webp"]
 const TEXT_EXT   = ["rb","js","ts","erb","html","css","scss","json","yml","yaml","md","txt","sh",
@@ -113,11 +114,11 @@ export default class extends Controller {
   }
 
   async newFolder() {
-    const name = prompt("Nome da nova pasta:")
+    const name = await promptDialog("Nome da nova pasta:", "", { titulo: "Nova pasta", ok: "Criar" })
     if (!name) return
     this._progress("Criando pasta…")
     try { await this._post("mkdir", { path: this.path, name }); await this.load() }
-    catch (e) { alert(`Falha: ${e.message}`) }
+    catch (e) { alertDialog(`Falha: ${e.message}`) }
     finally { this._progress(null) }
   }
 
@@ -131,7 +132,7 @@ export default class extends Controller {
     try {
       await fetch(this._url("upload"), { method: "POST", headers: this._csrfHeaders(), body: fd })
       await this.load()
-    } catch (e) { alert(`Upload falhou: ${e.message}`) }
+    } catch (e) { alertDialog(`Upload falhou: ${e.message}`) }
     finally { this._progress(null); event.target.value = "" }
   }
 
@@ -367,35 +368,36 @@ export default class extends Controller {
       this._renderClipboard()
       this.clearSelection()
       await this.load()
-    } catch (e) { alert(`Falha: ${e.message}`) }
+    } catch (e) { alertDialog(`Falha: ${e.message}`) }
     finally { this._progress(null) }
   }
 
   async rename(event) {
     event?.stopPropagation()
     const path = event.currentTarget.dataset.path
-    const name = prompt("Novo nome:", event.currentTarget.dataset.name)
-    if (!name || name === event.currentTarget.dataset.name) return
+    const atual = event.currentTarget.dataset.name
+    const name = await promptDialog("Novo nome:", atual, { titulo: "Renomear" })
+    if (!name || name === atual) return
     try { await this._patch("rename", { path, name }); await this.load() }
-    catch (e) { alert(`Falha: ${e.message}`) }
+    catch (e) { alertDialog(`Falha: ${e.message}`) }
   }
 
   async destroy(event) {
     event?.stopPropagation()
     const path = event.currentTarget.dataset.path
-    if (!confirm(`Apagar "${event.currentTarget.dataset.name}"?`)) return
+    if (!(await confirmDialog(`Apagar "${event.currentTarget.dataset.name}"?`, { ok: "Apagar" }))) return
     this._progress("Apagando…")
     try { await this._delete([path]); await this.load() }
-    catch (e) { alert(`Falha: ${e.message}`) }
+    catch (e) { alertDialog(`Falha: ${e.message}`) }
     finally { this._progress(null) }
   }
 
   async bulkDelete() {
     if (!this.selection.size) return
-    if (!confirm(`Apagar ${this.selection.size} item(ns)?`)) return
+    if (!(await confirmDialog(`Apagar ${this.selection.size} item(ns)?`, { ok: "Apagar" }))) return
     this._progress("Apagando…")
     try { await this._delete([...this.selection]); await this.load() }
-    catch (e) { alert(`Falha: ${e.message}`) }
+    catch (e) { alertDialog(`Falha: ${e.message}`) }
     finally { this._progress(null) }
   }
 
